@@ -1,0 +1,29 @@
+{
+	"geode": "4.6.1",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+    "resources": {
+        "sprites": [
+            "resources/*.png"
+        ]
+    },
+	"id": "tjc47.betterthumbnails",
+	"name": "Better Thumbnails",
+	"version": "v1.0.0",
+	"developer": "TJC47",
+	"description": "makes level thumbnails better",
+	"dependencies": [
+		{
+			"id": "cdc.level_thumbnails",
+			"version": "v1.4.0"
+		},
+		{
+			"id": "gdutilsdevs.gdutils",
+			"version": "v1.5.2"
+		}
+	]
+}
