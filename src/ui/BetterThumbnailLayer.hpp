@@ -1,7 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include <string>
-#include "../ThumbRequest.hpp"
+#include "../webrequest/ThumbRequest.hpp"
 #include <gdutilsdevs.gdutils/include/RateEvent.hpp>
 
 using namespace geode::prelude;
@@ -13,4 +13,10 @@ public:
     static CCScene *scene();
     bool init();
     void onBackButton(CCObject *);
+    void keyBackClicked() override;
+private:
+    void onMyThumbnail(CCObject*);
+    void onRecent(CCObject*);
+    void onPending(CCObject*);
+    void onManage(CCObject*);
 };

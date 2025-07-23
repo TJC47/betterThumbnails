@@ -1,8 +1,19 @@
+#include <Geode/Geode.hpp>
+#include <Geode/ui/GeodeUI.hpp>
 #include "BetterThumbnailLayer.hpp"
 
-BetterThumbnailLayer *BetterThumbnailLayer::create() {
+CCScene *BetterThumbnailLayer::scene()
+{
+    auto scene = CCScene::create();
+    scene->addChild(BetterThumbnailLayer::create());
+    return scene;
+}
+
+BetterThumbnailLayer *BetterThumbnailLayer::create()
+{
     auto ret = new BetterThumbnailLayer;
-    if (ret->init()) {
+    if (ret->init())
+    {
         ret->autorelease();
         return ret;
     }
@@ -10,46 +21,105 @@ BetterThumbnailLayer *BetterThumbnailLayer::create() {
     return nullptr;
 }
 
-CCScene *BetterThumbnailLayer::scene() {
-    auto scene = CCScene::create();
-    scene->addChild(BetterThumbnailLayer::create());
-    return scene;
-}
-
-bool BetterThumbnailLayer::init() {
+bool BetterThumbnailLayer::init()
+{
     if (!CCLayer::init())
         return false;
 
-    CCSize screenSize = CCDirector::sharedDirector()->getWinSize();
+    auto bg = createLayerBG();
+    if (bg)
+    {
+        this->addChild(bg);
+    }
 
-    addChild(createLayerBG());
+    auto screenSize = CCDirector::sharedDirector()->getWinSize();
+
     auto menu = CCMenu::create();
-    addChild(menu);
+    this->addChild(menu);
+    menu->setPosition({0.f, 0.f});
+
+    // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png"),
+        CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
         this,
         menu_selector(BetterThumbnailLayer::onBackButton));
-    backButton->setPosition({30.f, screenSize.height - 30.f});
-    menu->setPosition({0.f, 0.f});
+    backButton->setPosition({25.f, screenSize.height - 25.f});
     menu->addChild(backButton);
 
-    auto banner = LazySprite::create({512.f, 256.f});
-    banner->setPosition({screenSize.width / 2.f, screenSize.height * 0.85f});
-    addChild(banner);
+    float buttonSize = 80.f;
+    float spacing = 30.f;
+    float centerX = screenSize.width / 2.f;
+    float centerY = screenSize.height / 2.f;
 
-    auto info = CCLabelBMFont::create("loading...", "bigFont.fnt");
-    info->setPosition({screenSize});
-    info->setAnchorPoint({1.f, 1.f});
-    info->setScale(0.5f);
-    addChild(info);
+    auto myThumbBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        this,
+        menu_selector(BetterThumbnailLayer::onMyThumbnail));
+    auto recentBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        this,
+        menu_selector(BetterThumbnailLayer::onRecent));
+    auto pendingBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        this,
+        menu_selector(BetterThumbnailLayer::onPending));
+    auto manageBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        this,
+        menu_selector(BetterThumbnailLayer::onManage));
 
-    // Setup all request logic using ThumbRequest
-    thumbRequest.setupRequests(info, banner, screenSize);
-    thumbRequest.startMetaRequest();
+    myThumbBtn->setPosition({centerX - buttonSize / 2 - spacing / 2, centerY + buttonSize / 2 + spacing / 2});
+    recentBtn->setPosition({centerX + buttonSize / 2 + spacing / 2, centerY + buttonSize / 2 + spacing / 2});
+    pendingBtn->setPosition({centerX - buttonSize / 2 - spacing / 2, centerY - buttonSize / 2 - spacing / 2});
+    manageBtn->setPosition({centerX + buttonSize / 2 + spacing / 2, centerY - buttonSize / 2 - spacing / 2});
 
+    menu->addChild(myThumbBtn);
+    menu->addChild(recentBtn);
+    menu->addChild(pendingBtn);
+    menu->addChild(manageBtn);
+
+    // funny side art
+    auto sideArtLeft = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
+    auto sideArtRight = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
+    if (sideArtLeft) {
+        sideArtLeft->setAnchorPoint({0.f, 0.f});
+        sideArtLeft->setPosition({0.f, 0.f});
+        this->addChild(sideArtLeft, 1);
+    }
+    if (sideArtRight) {
+        sideArtRight->setAnchorPoint({1.f, 0.f});
+        sideArtRight->setPosition({screenSize.width, 0.f});
+        sideArtRight->setFlipX(true);
+        this->addChild(sideArtRight, 1);
+    }
+
+    this->setKeypadEnabled(true);
     return true;
 }
 
-void BetterThumbnailLayer::onBackButton(CCObject *) {
+void BetterThumbnailLayer::onMyThumbnail(CCObject *) {
+    // to do: my thumbnails
+    FLAlertLayer::create("My Thumbnails", "This feature is not implemented yet.", "Ok")->show();
+}
+void BetterThumbnailLayer::onRecent(CCObject *) {
+    // to do: recent thumbnails
+    FLAlertLayer::create("Recent Thumbnails", "This feature is not implemented yet.", "Ok")->show();
+}
+void BetterThumbnailLayer::onPending(CCObject *) {
+    // to do: pending thumbnail
+    FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
+}
+void BetterThumbnailLayer::onManage(CCObject *) {
+    // to do: manage user
+    FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
+}
+
+void BetterThumbnailLayer::keyBackClicked()
+{
+    onBackButton(nullptr);
+}
+
+void BetterThumbnailLayer::onBackButton(CCObject *)
+{
     CCDirector::get()->pushScene(CCTransitionFade::create(.5f, CreatorLayer::scene()));
 }
