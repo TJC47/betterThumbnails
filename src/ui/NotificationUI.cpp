@@ -11,11 +11,9 @@ bool NotificationUI::init(const std::string &title, const std::string &message)
     float popupHeight = 80.f;
 
     auto bg = CCScale9Sprite::create("GJ_square05.png");
-    if (bg) {
-        bg->setContentSize({popupWidth, popupHeight});
-        bg->setAnchorPoint({0.f, 0.f});
-        this->addChild(bg, 0);
-    }
+    bg->setContentSize({popupWidth, popupHeight});
+    bg->setAnchorPoint({0.f, 0.f});
+    this->addChild(bg, 0);
 
     // Title
     auto titleLabel = CCLabelBMFont::create(title.c_str(), "goldFont.fnt");
