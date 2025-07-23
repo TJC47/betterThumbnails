@@ -1,6 +1,6 @@
 #include <Geode/Geode.hpp>
-#include <Geode/ui/GeodeUI.hpp>
 #include "BetterThumbnailLayer.hpp"
+#include "NotificationUI.hpp"
 
 CCScene *BetterThumbnailLayer::scene()
 {
@@ -81,12 +81,14 @@ bool BetterThumbnailLayer::init()
     // funny side art
     auto sideArtLeft = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
     auto sideArtRight = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
-    if (sideArtLeft) {
+    if (sideArtLeft)
+    {
         sideArtLeft->setAnchorPoint({0.f, 0.f});
         sideArtLeft->setPosition({0.f, 0.f});
         this->addChild(sideArtLeft, 1);
     }
-    if (sideArtRight) {
+    if (sideArtRight)
+    {
         sideArtRight->setAnchorPoint({1.f, 0.f});
         sideArtRight->setPosition({screenSize.width, 0.f});
         sideArtRight->setFlipX(true);
@@ -94,22 +96,34 @@ bool BetterThumbnailLayer::init()
     }
 
     this->setKeypadEnabled(true);
+
+    // notification test (do this way if you want to use notifications)
+    auto notif = NotificationUI::create("insert title", "hi there");
+    if (notif)
+    {
+        this->addChild(notif, 100);
+    }
+
     return true;
 }
 
-void BetterThumbnailLayer::onMyThumbnail(CCObject *) {
+void BetterThumbnailLayer::onMyThumbnail(CCObject *)
+{
     // to do: my thumbnails
     FLAlertLayer::create("My Thumbnails", "This feature is not implemented yet.", "Ok")->show();
 }
-void BetterThumbnailLayer::onRecent(CCObject *) {
+void BetterThumbnailLayer::onRecent(CCObject *)
+{
     // to do: recent thumbnails
     FLAlertLayer::create("Recent Thumbnails", "This feature is not implemented yet.", "Ok")->show();
 }
-void BetterThumbnailLayer::onPending(CCObject *) {
+void BetterThumbnailLayer::onPending(CCObject *)
+{
     // to do: pending thumbnail
     FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
 }
-void BetterThumbnailLayer::onManage(CCObject *) {
+void BetterThumbnailLayer::onManage(CCObject *)
+{
     // to do: manage user
     FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
 }

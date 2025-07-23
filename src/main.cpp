@@ -1,9 +1,8 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CreatorLayer.hpp>
-#include <gdutilsdevs.gdutils/include/RateEvent.hpp>
+
 #include "webrequest/ThumbRequest.hpp"
 #include "ui/BetterThumbnailLayer.hpp"
-#include <string>
 
 using namespace geode::prelude;
 
@@ -30,16 +29,6 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 		return true;
 	}
-
-	/**
-	REMINDER HOW TO USE MOD
-			EventData data = {
-			.type=EventType::Announcement, // type of notification
-			.title="Your Thumbnail for Generation retro has been accepted!", // notification title,
-
-		}; // Level ID is optional
-		GDUtils::Events::RateEvent::emit(data);
-	*/
 
 	void onMyButton(CCObject *)
 	{
