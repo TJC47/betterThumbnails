@@ -52,19 +52,19 @@ bool BetterThumbnailLayer::init()
     float centerY = screenSize.height / 2.f;
 
     auto myThumbBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        CCSprite::create("myThumbnailsButton.png"_spr),
         this,
         menu_selector(BetterThumbnailLayer::onMyThumbnail));
     auto recentBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        CCSprite::create("recentlyAddedButton.png"_spr),
         this,
         menu_selector(BetterThumbnailLayer::onRecent));
     auto pendingBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        CCSprite::create("pendingButton.png"_spr),
         this,
         menu_selector(BetterThumbnailLayer::onPending));
     auto manageBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("geode.loader/baseCategory_Big_Green.png"),
+        CCSprite::create("manageUsersButton.png"_spr),
         this,
         menu_selector(BetterThumbnailLayer::onManage));
 
