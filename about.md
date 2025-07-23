@@ -4,3 +4,6 @@ This mod ***requires*** Level Thumbnails as a dependency
 
 # Features
 - none yet lmfao
+
+# Credits
+Lots and **LOTS** of credits to arcticwoof he improved my silly code and did all to most of the ui stuff lol
