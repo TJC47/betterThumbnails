@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include "BetterThumbnailLayer.hpp"
+#include "Geode/loader/Log.hpp"
 #include "NotificationUI.hpp"
 
 CCScene *BetterThumbnailLayer::scene()
@@ -141,15 +142,15 @@ bool BetterThumbnailLayer::init()
             auto json = res->json().unwrapOrDefault();
 			log::info("{} {}",res->code(),json.dump());
 			auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+            log::debug("{}", activeThumbnailCount);
 			Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
             coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
-            delete this;
         }
     });
 
     req.header("Authorization",fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
     auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
-
+    m_listener.setFilter(task);
 
     // Main buttons
     float buttonSize = 75.f;
@@ -258,6 +259,7 @@ void BetterThumbnailLayer::onInfoButton(CCObject *)
 {
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<long>("user_id");
-    auto infoString = fmt::format("Rank: {}\nUser ID: {}", userRank, userId);
+    auto activeThumbnails = Mod::get()->getSavedValue<long>("active_thumbnail_count");
+    auto infoString = fmt::format("Rank: {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userId, activeThumbnails);
     FLAlertLayer::create(GJAccountManager::get()->m_username.c_str(), infoString, "Ok")->show();
 }

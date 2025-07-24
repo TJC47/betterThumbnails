@@ -70,12 +70,6 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 					auto req = web::WebRequest();
 
-					std::string form = fmt::format("account_id={}&&user_id={}&&username={}&&argon_token={}",
-					GJAccountManager::get()->m_accountID,
-					(int)GameManager::get()->m_playerUserID,
-					GJAccountManager::get()->m_username,
-					argon_token
-					);
 					req.bodyJSON(
 						matjson::makeObject({
 							{"account_id", GJAccountManager::get()->m_accountID},
