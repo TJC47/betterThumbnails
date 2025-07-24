@@ -36,7 +36,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token"))
+		if (Mod::get()->hasSavedValue("token") && false) // remove the && false pls
 		{
 			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 		}
@@ -76,7 +76,14 @@ class $modify(MyCreatorLayer, CreatorLayer)
 					GJAccountManager::get()->m_username,
 					argon_token
 					);
-					req.bodyString(form);
+					req.bodyJSON(
+						matjson::makeObject({
+							{"account_id", GJAccountManager::get()->m_accountID},
+							{"user_id", (int)GameManager::get()->m_playerUserID},
+							{"username", GJAccountManager::get()->m_username},
+							{"argon_token", argon_token}
+						})
+					);
 
     				auto task = req.post("https://levelthumbs.prevter.me/auth/login");
 
