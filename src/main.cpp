@@ -97,8 +97,10 @@ class $modify(MyCreatorLayer, CreatorLayer)
 							auto token = json["token"].asString().unwrapOrDefault();
 							auto role = json["user"]["role"].asString().unwrapOrDefault();
 							auto id = json["user"]["id"].asInt().unwrapOrDefault();
+							auto username = json["user"]["username"].asString().unwrapOrDefault();
 							Mod::get()->setSavedValue<std::string>("token", token);
 							Mod::get()->setSavedValue<std::string>("role", role);
+							Mod::get()->setSavedValue<std::string>("username", username);
 							Mod::get()->setSavedValue<long>("user_id", id);
 
 							CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
