@@ -40,9 +40,9 @@ bool NotificationUI::init(const std::string &title, const std::string &message)
     this->setScale(0.8f);
 
     // animation for the notification
-    auto moveIn = CCEaseIn::create(CCMoveTo::create(0.5f, {centerX, endY}), 2.0f);
-    auto delay = CCDelayTime::create(5.0f);
-    auto moveOut = CCEaseOut::create(CCMoveTo::create(0.5f, {centerX, startY}), 2.0f);
+    auto moveIn = CCEaseIn::create(CCMoveTo::create(1.f, {centerX, endY}), 2.0f);
+    auto delay = CCDelayTime::create(8.0f);
+    auto moveOut = CCEaseOut::create(CCMoveTo::create(1.f, {centerX, startY}), 2.0f);
     auto removeSelf = CCCallFunc::create(this, callfunc_selector(NotificationUI::removeFromParent));
 
     this->runAction(CCSequence::create(moveIn, delay, moveOut, removeSelf, nullptr));

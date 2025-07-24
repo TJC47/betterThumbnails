@@ -38,6 +38,40 @@ bool BetterThumbnailLayer::init()
     this->addChild(menu);
     menu->setPosition({0.f, 0.f});
 
+    // user account
+    std::string username = GJAccountManager::sharedState()->m_username;
+    auto userLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
+    userLabel->setAnchorPoint({1.f, 1.f});
+    userLabel->setScale(0.5f);
+    userLabel->setAlignment(kCCTextAlignmentRight);
+    float userLabelX = screenSize.width - 5.f;
+    float userLabelY = screenSize.height - 5.f;
+    userLabel->setPosition({userLabelX, userLabelY});
+    this->addChild(userLabel, 10);
+
+    // thumbnail coin counter
+    float coinLabelY = userLabelY - 25.f;
+
+    auto coinLabel = CCLabelBMFont::create("0", "bigFont.fnt"); // 0 as a placeholder
+    coinLabel->setAnchorPoint({0.f, 1.f});
+    coinLabel->setScale(0.5f);
+    coinLabel->setAlignment(kCCTextAlignmentRight);
+
+    float coinLabelX = userLabelX - 20.f;
+    coinLabel->setPosition({coinLabelX, coinLabelY});
+    this->addChild(coinLabel, 10);
+
+    auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
+    if (coinSprite) {
+        coinSprite->setAnchorPoint({1.f, 1.f});
+        coinSprite->setScale(0.65f);
+        float labelWidth = coinLabel->getContentSize().width * coinLabel->getScale();
+        float coinSpriteX = coinLabelX - 5.f;
+        coinSpriteX = coinLabelX - 5.f;
+        coinSprite->setPosition({coinSpriteX, coinLabelY + 2.f});
+        this->addChild(coinSprite, 10);
+    }
+
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
@@ -46,25 +80,37 @@ bool BetterThumbnailLayer::init()
     backButton->setPosition({25.f, screenSize.height - 25.f});
     menu->addChild(backButton);
 
-    float buttonSize = 80.f;
+    // Main buttons
+    float buttonSize = 75.f;
     float spacing = 30.f;
     float centerX = screenSize.width / 2.f;
     float centerY = screenSize.height / 2.f;
 
+    auto myThumbSprite = CCSprite::create("myThumbnailsButton.png"_spr);
+    myThumbSprite->setScale(1.2f);
     auto myThumbBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::create("myThumbnailsButton.png"_spr),
+        myThumbSprite,
         this,
         menu_selector(BetterThumbnailLayer::onMyThumbnail));
+
+    auto recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
+    recentSprite->setScale(1.2f);
     auto recentBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::create("recentlyAddedButton.png"_spr),
+        recentSprite,
         this,
         menu_selector(BetterThumbnailLayer::onRecent));
+
+    auto pendingSprite = CCSprite::create("pendingButton.png"_spr);
+    pendingSprite->setScale(1.2f);
     auto pendingBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::create("pendingButton.png"_spr),
+        pendingSprite,
         this,
         menu_selector(BetterThumbnailLayer::onPending));
+
+    auto manageSprite = CCSprite::create("manageUsersButton.png"_spr);
+    manageSprite->setScale(1.2f);
     auto manageBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::create("manageUsersButton.png"_spr),
+        manageSprite,
         this,
         menu_selector(BetterThumbnailLayer::onManage));
 
