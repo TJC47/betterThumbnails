@@ -50,7 +50,7 @@ bool BetterThumbnailLayer::init()
     this->addChild(userLabel, 10);
 
     // user rank
-    std::string userRank = "User"; // Right now just static for testing
+    std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userRankLabel = CCLabelBMFont::create(userRank.c_str(), "goldFont.fnt");
     userRankLabel->setAnchorPoint({1.f, 1.f});
     userRankLabel->setScale(0.3f);
