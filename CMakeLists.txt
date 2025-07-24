@@ -24,5 +24,10 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
+# add argon 
+CPMAddPackage("gh:GlobedGD/argon@1.1.6")
+target_link_libraries(${PROJECT_NAME} argon)
+
 # Set up dependencies, resources, and link Geode.
+
 setup_geode_mod(${PROJECT_NAME})
