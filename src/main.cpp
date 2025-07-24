@@ -67,11 +67,13 @@ class $modify(MyCreatorLayer, CreatorLayer)
 				this->addChild(loadingLabel, 100);
 
 				// start the argon auth process
-                auto res = argon::startAuth([this](Result<std::string> res){
-                    if (!res){
-                        FLAlertLayer::create("Oops!","The <cy>Argon</c> auth process failed.","OK")->show();
-                        return;
-                    }
+				auto res = argon::startAuth([this, bg, loadingLabel](Result<std::string> res){
+					if (!res){
+						FLAlertLayer::create("Oops!","The <cy>Argon</c> auth process failed.","OK")->show();
+						bg->removeFromParent();
+						loadingLabel->removeFromParent();
+						return;
+					}
 					auto argon_token = res.unwrap();
 					Mod::get()->setSavedValue<std::string>("token", argon_token);
 
@@ -88,12 +90,14 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
     				auto task = req.post("https://levelthumbs.prevter.me/auth/login");
 
-					m_listener.bind([this](web::WebTask::Event* e){
+					m_listener.bind([this, loadingLabel, bg](web::WebTask::Event* e){
 						if (auto res = e->getValue()){
 							auto code = res->code();
 							if (code<200||code>299){
 								auto error = res->string().unwrapOr(res->errorMessage());
 								FLAlertLayer::create("Oops",error,"OK")->show();
+								bg->removeFromParent();
+								loadingLabel->removeFromParent();
 								delete this;
 								return;
 							}
