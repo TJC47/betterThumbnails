@@ -1,9 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CreatorLayer.hpp>
-
 #include <argon/argon.hpp>
-#include "Geode/binding/FLAlertLayer.hpp"
-#include "Geode/loader/Log.hpp"
+
 #include "webrequest/ThumbRequest.hpp"
 #include "ui/BetterThumbnailLayer.hpp"
 #include "ui/NotificationUI.hpp"
@@ -44,16 +42,9 @@ class $modify(MyCreatorLayer, CreatorLayer)
 		}
 		else
 		{
-
-			createQuickPopup("Notice", "To use the Better Level Thumbnails Mod you must <cg>authenticate</c> with your Geometry Dash account and the Level Thumbnails servers.", "No", "Authenticate", [this](auto alert, bool btn2)
-							 {
+			geode::createQuickPopup("Notice", "To use the Better Level Thumbnails Mod you must <cg>authenticate</c> with your Geometry Dash account and the Level Thumbnails servers.", "No", "Authenticate", [this](auto alert, bool btn2)
+									{
             if (btn2){
-				auto notif = NotificationUI::create("Please Hold", "Authenticating with argon...");
-				if (notif)
-				{
-					this->addChild(notif, 100);
-				}
-
 				// loading background
 				auto winSize = CCDirector::sharedDirector()->getWinSize();
 				auto bg = CCLayerColor::create({0, 0, 0, 200});
