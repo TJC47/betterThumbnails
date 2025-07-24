@@ -124,6 +124,33 @@ bool BetterThumbnailLayer::init()
     infoButton->setPosition({25.f, 25.f});
     menu->addChild(infoButton);
 
+
+    // get user info
+    auto req = web::WebRequest();
+
+    m_listener.bind([this, coinLabel](web::WebTask::Event* e){
+        if (auto res = e->getValue()){
+            auto code = res->code();
+            if (code<200||code>299){
+                auto error = res->string().unwrapOr(res->errorMessage());
+                FLAlertLayer::create("Oops",error,"OK")->show();
+                delete this;
+                return;
+            }
+            geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
+            auto json = res->json().unwrapOrDefault();
+			log::info("{} {}",res->code(),json.dump());
+			auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+			Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
+            coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
+            delete this;
+        }
+    });
+
+    req.header("Authorization",fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
+
+
     // Main buttons
     float buttonSize = 75.f;
     float spacing = 30.f;

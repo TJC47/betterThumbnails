@@ -7,6 +7,7 @@ class BetterThumbnailLayer : public CCLayer
 {
 
 public:
+    EventListener<web::WebTask> m_listener;
     static BetterThumbnailLayer *create();
     static CCScene *scene();
     bool init() override;
