@@ -58,7 +58,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
                     }
 					auto argon_token = res.unwrap();
 					Mod::get()->setSavedValue<std::string>("token", argon_token);
-					FLAlertLayer::create("debug", argon_token, "ok")->show();
+
 
 
 					auto req = web::WebRequest();
