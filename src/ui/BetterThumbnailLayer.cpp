@@ -49,6 +49,17 @@ bool BetterThumbnailLayer::init()
     userLabel->setPosition({userLabelX, userLabelY});
     this->addChild(userLabel, 10);
 
+    // user rank
+    std::string userRank = "User"; // Right now just static for testing
+    auto userRankLabel = CCLabelBMFont::create(userRank.c_str(), "goldFont.fnt");
+    userRankLabel->setAnchorPoint({1.f, 1.f});
+    userRankLabel->setScale(0.3f);
+    userRankLabel->setAlignment(kCCTextAlignmentRight);
+    float userRankLabelX = screenSize.width - 5.f;
+    float userRankLabelY = userLabelY - 12.f;
+    userRankLabel->setPosition({userRankLabelX, userRankLabelY});
+    this->addChild(userRankLabel, 10);
+
     // thumbnail coin counter
     float coinLabelY = userLabelY - 25.f;
 
