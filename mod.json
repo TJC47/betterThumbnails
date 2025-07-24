@@ -11,21 +11,15 @@
             "resources/*.png"
         ]
     },
-	"id": "tjc47.betterthumbnails",
-	"name": "Better Thumbnails",
+	"id": "tjc47.better_level_thumbnails",
+	"name": "Better Level Thumbnails",
 	"version": "v1.0.0",
 	"developer": "TJC47",
 	"description": "makes level thumbnails better",
-	"dependencies": [
-		{
-			"id": "cdc.level_thumbnails",
+	"dependencies": {
+		"cdc.level_thumbnails": {
 			"importance": "required",
 			"version": ">=v1.4.0"
-		},
-		{
-			"id": "gdutilsdevs.gdutils",
-			"importance": "required",
-			"version": ">=v1.5.2"
 		}
-	]
+	}
 }
