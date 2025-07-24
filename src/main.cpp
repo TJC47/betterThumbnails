@@ -38,7 +38,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token"))
+		if (Mod::get()->hasSavedValue("token") && false)
 		{
 			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 		}
@@ -48,12 +48,6 @@ class $modify(MyCreatorLayer, CreatorLayer)
 			createQuickPopup("Notice", "To use the Better Level Thumbnails Mod you must <cg>authenticate</c> with your Geometry Dash account and the Level Thumbnails servers.", "No", "Authenticate", [this](auto alert, bool btn2)
 							 {
             if (btn2){
-				auto notif = NotificationUI::create("Please Hold", "Authenticating with argon...");
-				if (notif)
-				{
-					this->addChild(notif, 100);
-				}
-
 				// loading background
 				auto winSize = CCDirector::sharedDirector()->getWinSize();
 				auto bg = CCLayerColor::create({0, 0, 0, 200});
