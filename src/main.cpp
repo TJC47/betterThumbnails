@@ -36,7 +36,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token") && false)
+		if (Mod::get()->hasSavedValue("token"))
 		{
 			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 		}
@@ -53,7 +53,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 				auto loadingLabel = CCLabelBMFont::create("Authenticating with Argon...", "bigFont.fnt");
 				loadingLabel->setAnchorPoint({0.5f, 0.5f});
-				loadingLabel->setPosition({winSize.width / 2.f, winSize.height / 2.f - 30.f});
+				loadingLabel->setPosition({winSize.width / 2.f, winSize.height / 2.f});
 				loadingLabel->setScale(0.5f);
 				this->addChild(loadingLabel, 100);
 
@@ -78,7 +78,6 @@ class $modify(MyCreatorLayer, CreatorLayer)
 					);
 					req.bodyString(form);
 
-
     				auto task = req.post("https://levelthumbs.prevter.me/auth/login");
 
 					m_listener.bind([this, loadingLabel, bg](web::WebTask::Event* e){
@@ -93,7 +92,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 								return;
 							}
 							auto json = res->json().unwrapOrDefault();
-							geode::log::info("{} {}",res->code(),json.dump());
+							log::info("{} {}",res->code(),json.dump());
 							auto token = json["token"].asString().unwrapOrDefault();
 							auto role = json["user"]["role"].asString().unwrapOrDefault();
 							auto id = json["user"]["id"].asInt().unwrapOrDefault();
