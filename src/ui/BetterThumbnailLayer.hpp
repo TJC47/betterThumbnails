@@ -18,4 +18,5 @@ private:
     void onRecent(CCObject *);
     void onPending(CCObject *);
     void onManage(CCObject *);
+    void onInfoButton(CCObject *);
 };

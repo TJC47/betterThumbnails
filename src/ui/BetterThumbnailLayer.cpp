@@ -35,7 +35,7 @@ bool BetterThumbnailLayer::init()
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
 
     auto menu = CCMenu::create();
-    this->addChild(menu);
+    this->addChild(menu, 2);
     menu->setPosition({0.f, 0.f});
 
     // user account
@@ -90,6 +90,14 @@ bool BetterThumbnailLayer::init()
         menu_selector(BetterThumbnailLayer::onBackButton));
     backButton->setPosition({25.f, screenSize.height - 25.f});
     menu->addChild(backButton);
+
+    // info button
+    auto infoButton = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(BetterThumbnailLayer::onInfoButton));
+    infoButton->setPosition({25.f, 25.f});
+    menu->addChild(infoButton);
 
     // Main buttons
     float buttonSize = 75.f;
@@ -193,4 +201,11 @@ void BetterThumbnailLayer::keyBackClicked()
 void BetterThumbnailLayer::onBackButton(CCObject *)
 {
     CCDirector::get()->pushScene(CCTransitionFade::create(.5f, CreatorLayer::scene()));
+}
+void BetterThumbnailLayer::onInfoButton(CCObject *)
+{
+    std::string userRank = Mod::get()->getSavedValue<std::string>("role");
+    auto userId = Mod::get()->getSavedValue<long>("user_id");
+    auto infoString = fmt::format("Rank: {}\nUser ID: {}", userRank, userId);
+    FLAlertLayer::create(GJAccountManager::get()->m_username.c_str(), infoString, "Ok")->show();
 }

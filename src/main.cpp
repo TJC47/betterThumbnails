@@ -39,7 +39,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token") && false) { // right now we will force reauth every time for testing purposes
+		if (Mod::get()->hasSavedValue("token")) {
 			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 		}
 		else {
@@ -87,8 +87,10 @@ class $modify(MyCreatorLayer, CreatorLayer)
 							geode::log::info("{} {}",res->code(),json.dump());
 							auto token = json["token"].asString().unwrapOrDefault();
 							auto role = json["user"]["role"].asString().unwrapOrDefault();
+							auto id = json["user"]["id"].asInt().unwrapOrDefault();
 							Mod::get()->setSavedValue<std::string>("token", token);
 							Mod::get()->setSavedValue<std::string>("role", role);
+							Mod::get()->setSavedValue<long>("user_id", id);
 							CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 						}
 					});
