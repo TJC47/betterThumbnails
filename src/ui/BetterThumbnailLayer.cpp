@@ -33,55 +33,80 @@ bool BetterThumbnailLayer::init()
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-
+    
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
     menu->setPosition({0.f, 0.f});
-
+    
+    // Top-right user info menu
+    auto userInfoMenu = CCMenu::create();
+    userInfoMenu->setID("user-info-menu");
+    userInfoMenu->setAnchorPoint({1.f, 1.f});
+    userInfoMenu->setContentSize({100.f, 100.f});
+    userInfoMenu->ignoreAnchorPointForPosition(false);
+    userInfoMenu->setPosition({screenSize.width - 5.f, screenSize.height - 5.f});
+    this->addChild(userInfoMenu, 10);
+    
+    float menuWidth = userInfoMenu->getContentSize().width;
+    float menuHeight = userInfoMenu->getContentSize().height;
+    
     // user account
     std::string username = GJAccountManager::sharedState()->m_username;
     auto userLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
     userLabel->setAnchorPoint({1.f, 1.f});
     userLabel->setScale(0.5f);
     userLabel->setAlignment(kCCTextAlignmentRight);
-    float userLabelX = screenSize.width - 5.f;
-    float userLabelY = screenSize.height - 5.f;
-    userLabel->setPosition({userLabelX, userLabelY});
-    this->addChild(userLabel, 10);
 
     // user rank
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
-    auto userRankLabel = CCLabelBMFont::create(userRank.c_str(), "goldFont.fnt");
+    auto userRankLabel = CCLabelBMFont::create(("(" + userRank + ")").c_str(), "goldFont.fnt");
     userRankLabel->setAnchorPoint({1.f, 1.f});
     userRankLabel->setScale(0.3f);
     userRankLabel->setAlignment(kCCTextAlignmentRight);
-    float userRankLabelX = screenSize.width - 5.f;
-    float userRankLabelY = userLabelY - 12.f;
-    userRankLabel->setPosition({userRankLabelX, userRankLabelY});
-    this->addChild(userRankLabel, 10);
 
     // thumbnail coin counter
-    float coinLabelY = userLabelY - 25.f;
-
     auto coinLabel = CCLabelBMFont::create("0", "bigFont.fnt"); // 0 as a placeholder
     coinLabel->setAnchorPoint({0.f, 1.f});
     coinLabel->setScale(0.5f);
     coinLabel->setAlignment(kCCTextAlignmentRight);
 
-    float coinLabelX = userLabelX - 20.f;
-    coinLabel->setPosition({coinLabelX, coinLabelY});
-    this->addChild(coinLabel, 10);
-
     auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
     if (coinSprite) {
         coinSprite->setAnchorPoint({1.f, 1.f});
         coinSprite->setScale(0.65f);
-        float labelWidth = coinLabel->getContentSize().width * coinLabel->getScale();
-        float coinSpriteX = coinLabelX - 5.f;
-        coinSpriteX = coinLabelX - 5.f;
-        coinSprite->setPosition({coinSpriteX, coinLabelY + 2.f});
-        this->addChild(coinSprite, 10);
     }
+
+
+    auto loadingCircle = LoadingCircle::create();
+    if (loadingCircle) {
+        loadingCircle->setAnchorPoint({0.5f, 0.5f});
+        loadingCircle->setPosition({menuWidth / 2.f, menuHeight / 2.f});
+        loadingCircle->setID("user-info-loading-circle");
+        userInfoMenu->addChild(loadingCircle, 100);
+    }
+
+    float padding = 3.f;
+    float startX = menuWidth;
+    float startY = menuHeight;
+
+    userLabel->setPosition({startX, startY});
+    userInfoMenu->addChild(userLabel);
+
+    float userRankY = startY - userLabel->getContentSize().height * userLabel->getScale() - padding;
+    userRankLabel->setPosition({startX, userRankY});
+    userInfoMenu->addChild(userRankLabel);
+
+    float coinLabelY = userRankY - userRankLabel->getContentSize().height * userRankLabel->getScale() - padding - 3.f;
+    float coinLabelX = startX - 20.f;
+    coinLabel->setPosition({coinLabelX, coinLabelY});
+    userInfoMenu->addChild(coinLabel);
+
+    if (coinSprite) {
+        float coinSpriteX = coinLabelX - 5.f;
+        coinSprite->setPosition({coinSpriteX, coinLabelY + 2.f});
+        userInfoMenu->addChild(coinSprite);
+    }
+
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
