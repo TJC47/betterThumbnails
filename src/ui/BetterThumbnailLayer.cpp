@@ -94,15 +94,6 @@ bool BetterThumbnailLayer::init()
     coinLabel->setPosition({coinLabelX, coinLabelY});
     userInfoMenu->addChild(coinLabel);
 
-    auto loadingCircle = LoadingCircle::create();
-    if (loadingCircle)
-    {
-        loadingCircle->setAnchorPoint({0.5f, 0.5f});
-        loadingCircle->setPosition({menuWidth / 2.f, menuHeight / 2.f});
-        loadingCircle->setID("user-info-loading-circle");
-        userInfoMenu->addChild(loadingCircle, 100);
-    }
-
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),

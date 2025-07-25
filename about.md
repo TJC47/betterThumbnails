@@ -1,7 +1,7 @@
 # Better Level Thumbnails
-An addon mod for [**Level Thumbnails**](mod:cdc.level_thumbnails). It includes some quality of life changes that allows user to upload thumbnails directly in game.
+An addon mod for [**Level Thumbnails**](mod:cdc.level_thumbnails).
 
-### <cr>You required to have the Level Thumbnails mod already installed</c>
+### <cr>You are required to have the Level Thumbnails mod already installed</c>
 
 # Features
 - View your uploaded thumbnails
@@ -10,4 +10,6 @@ An addon mod for [**Level Thumbnails**](mod:cdc.level_thumbnails). It includes s
 - Earn **Thumbnail Points** for uploading thumbnails
 
 # Credits
-Lots and **LOTS** of credits to [ArcticWoof](user:7689052) he improved my silly code and did all to most of the ui stuff lol
+- [ArcticWoof](user:7689052) - UI Design and code cleanup
+- [prevter](https://github.com/Prevter) - Level Thumbnails API Server
+- [Sk23](https://github.com/Skepper23) - Logo and Sprites assets

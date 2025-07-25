@@ -32,7 +32,7 @@ bool NotificationUI::init(const std::string &title, const std::string &message)
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-    float centerX = winSize.width / 2.f - 149.f;
+    float centerX = winSize.width / 2.f - popupWidth / 2.f;
     float startY = winSize.height + popupHeight;
     float endY = winSize.height - popupHeight / 2.f - 50.f;
     this->setPosition({centerX, startY});
@@ -58,6 +58,6 @@ NotificationUI *NotificationUI::create(const std::string &title, const std::stri
         ret->autorelease();
         return ret;
     }
-    delete ret;
+    CC_SAFE_DELETE(ret);
     return nullptr;
 }

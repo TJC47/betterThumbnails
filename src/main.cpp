@@ -21,7 +21,6 @@ class $modify(MyCreatorLayer, CreatorLayer)
 		auto myButton = CCMenuItemSpriteExtra::create(
 			CCSprite::create("betterThumbnailButton.png"_spr),
 			this,
-
 			menu_selector(MyCreatorLayer::onMyButton));
 
 		auto menu = this->getChildByID("bottom-right-menu");
@@ -30,6 +29,8 @@ class $modify(MyCreatorLayer, CreatorLayer)
 		myButton->setID("better-thumbnails-button"_spr);
 
 		menu->updateLayout();
+
+		this->setTouchEnabled(false);
 
 		return true;
 	}
@@ -44,7 +45,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 		{
 			geode::createQuickPopup("Notice", "To use the Better Level Thumbnails Mod you must <cg>authenticate</c> with your Geometry Dash account and the Level Thumbnails servers.", "No", "Authenticate", [this](auto alert, bool btn2)
 									{
-            if (btn2){
+			if (btn2){
 				// loading background
 				auto winSize = CCDirector::sharedDirector()->getWinSize();
 				auto bg = CCLayerColor::create({0, 0, 0, 200});
@@ -56,6 +57,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 				loadingLabel->setPosition({winSize.width / 2.f, winSize.height / 2.f});
 				loadingLabel->setScale(0.5f);
 				this->addChild(loadingLabel, 100);
+				this->setTouchEnabled(false);
 
 				// start the argon auth process
 				auto res = argon::startAuth([this, bg, loadingLabel](Result<std::string> res){
@@ -63,6 +65,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 						FLAlertLayer::create("Oops!","The <cy>Argon</c> auth process failed.","OK")->show();
 						bg->removeFromParent();
 						loadingLabel->removeFromParent();
+						this->setTouchEnabled(true);
 						return;
 					}
 					auto argon_token = res.unwrap();
@@ -79,7 +82,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 						})
 					);
 
-    				auto task = req.post("https://levelthumbs.prevter.me/auth/login");
+					auto task = req.post("https://levelthumbs.prevter.me/auth/login");
 
 					m_listener.bind([this, loadingLabel, bg](web::WebTask::Event* e){
 						if (auto res = e->getValue()){
@@ -89,6 +92,7 @@ class $modify(MyCreatorLayer, CreatorLayer)
 								FLAlertLayer::create("Oops",error,"OK")->show();
 								bg->removeFromParent();
 								loadingLabel->removeFromParent();
+								this->setTouchEnabled(true);
 								delete this;
 								return;
 							}
@@ -107,8 +111,8 @@ class $modify(MyCreatorLayer, CreatorLayer)
 						}
 					});
 					m_listener.setFilter(task);
-                });
-            } });
+				});
+			} });
 		}
 	}
 };
