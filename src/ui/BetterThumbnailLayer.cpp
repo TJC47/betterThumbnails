@@ -42,7 +42,7 @@ bool BetterThumbnailLayer::init()
     bgImage->setPosition({0.f, 0.f});
 
     auto loadingImageLabel = CCLabelBMFont::create("Loading thumbnail...", "goldFont.fnt");
-    loadingImageLabel->setPosition({screenSize.width / 2.f, screenSize.height / 6.f});
+    loadingImageLabel->setPosition({screenSize.width / 2.f, screenSize.height / 8.f});
     loadingImageLabel->setScale(0.5f);
     this->addChild(loadingImageLabel, 3);
 
@@ -50,14 +50,14 @@ bool BetterThumbnailLayer::init()
                              {
         if (result.isOk() || bgImage->isLoaded())
         {
-            log::debug("Thumbnail loaded, fading out background");
+            log::info("Thumbnail loaded, fading out background");
             loadingImageLabel->removeFromParent();
             bgImage->setAnchorPoint({0.f, 0.f});
 
             auto bgDark = CCScale9Sprite::create("square02_001.png");
-            bgDark->setContentSize(screenSize);
+            bgDark->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
+            bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
             bgDark->setOpacity(175);
-            bgDark->setAnchorPoint({0.f, 0.f});
             this->addChild(bgDark, -2);
 
             bg->runAction(CCFadeTo::create(1.f, 0));
@@ -65,7 +65,7 @@ bool BetterThumbnailLayer::init()
         else
         {
             log::error("Failed to load thumbnail: {}", result.unwrapErr());
-            loadingImageLabel->setString(result.unwrapErr().c_str());
+            loadingImageLabel->setString("Failed to load thumbnail");
         }
     });
     
