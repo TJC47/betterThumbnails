@@ -317,6 +317,7 @@ void BetterThumbnailLayer::onInfoButton(CCObject *)
 {
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<long>("user_id");
-    auto infoString = fmt::format("Rank: {}\nUser ID: {}", userRank, userId);
+    auto activeThumbnails = Mod::get()->getSavedValue<long>("active_thumbnail_count");
+    auto infoString = fmt::format("Rank: {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userId, activeThumbnails);
     FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
 }
