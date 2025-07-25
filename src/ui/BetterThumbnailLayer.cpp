@@ -84,7 +84,7 @@ bool BetterThumbnailLayer::init()
     auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
     coinSprite->setAnchorPoint({1.f, 1.f});
     coinSprite->setScale(0.65f);
-    ;
+
     float coinLabelY = userRankY - userRankLabel->getContentSize().height * userRankLabel->getScale() - padding - 3.f;
     float coinLabelX = startX - 25.f;
 
