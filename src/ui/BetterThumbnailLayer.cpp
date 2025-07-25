@@ -93,7 +93,7 @@ bool BetterThumbnailLayer::init()
     float startY = menuHeight;
 
     // user account
-    std::string username = GJAccountManager::sharedState()->m_username;
+    std::string username = Mod::get()->getSavedValue<std::string>("username");
     auto userLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
     userLabel->setAnchorPoint({1.f, 1.f});
     userLabel->setScale(0.5f);
@@ -318,5 +318,5 @@ void BetterThumbnailLayer::onInfoButton(CCObject *)
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<long>("user_id");
     auto infoString = fmt::format("Rank: {}\nUser ID: {}", userRank, userId);
-    FLAlertLayer::create(GJAccountManager::get()->m_username.c_str(), infoString, "Ok")->show();
+    FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
 }
