@@ -1,6 +1,5 @@
 #include <Geode/Geode.hpp>
 #include "BetterThumbnailLayer.hpp"
-#include "Geode/loader/Log.hpp"
 #include "NotificationUI.hpp"
 
 CCScene *BetterThumbnailLayer::scene()
@@ -34,11 +33,11 @@ bool BetterThumbnailLayer::init()
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-    
+
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
     menu->setPosition({0.f, 0.f});
-    
+
     // Top-right user info menu
     auto userInfoMenu = CCMenu::create();
     userInfoMenu->setID("user-info-menu");
@@ -47,12 +46,16 @@ bool BetterThumbnailLayer::init()
     userInfoMenu->ignoreAnchorPointForPosition(false);
     userInfoMenu->setPosition({screenSize.width - 5.f, screenSize.height - 5.f});
     this->addChild(userInfoMenu, 10);
-    
+
     float menuWidth = userInfoMenu->getContentSize().width;
     float menuHeight = userInfoMenu->getContentSize().height;
-    
+
+    float padding = 3.f;
+    float startX = menuWidth;
+    float startY = menuHeight;
+
     // user account
-    std::string username =  Mod::get()->getSavedValue<std::string>("username");
+    std::string username = GJAccountManager::sharedState()->m_username;
     auto userLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
     userLabel->setAnchorPoint({1.f, 1.f});
     userLabel->setScale(0.5f);
@@ -65,31 +68,6 @@ bool BetterThumbnailLayer::init()
     userRankLabel->setScale(0.3f);
     userRankLabel->setAlignment(kCCTextAlignmentRight);
 
-    // thumbnail coin counter
-    auto coinLabel = CCLabelBMFont::create("0", "bigFont.fnt"); // 0 as a placeholder
-    coinLabel->setAnchorPoint({0.f, 1.f});
-    coinLabel->setScale(0.5f);
-    coinLabel->setAlignment(kCCTextAlignmentRight);
-
-    auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
-    if (coinSprite) {
-        coinSprite->setAnchorPoint({1.f, 1.f});
-        coinSprite->setScale(0.65f);
-    }
-
-
-    auto loadingCircle = LoadingCircle::create();
-    if (loadingCircle) {
-        loadingCircle->setAnchorPoint({0.5f, 0.5f});
-        loadingCircle->setPosition({menuWidth / 2.f, menuHeight / 2.f});
-        loadingCircle->setID("user-info-loading-circle");
-        userInfoMenu->addChild(loadingCircle, 100);
-    }
-
-    float padding = 3.f;
-    float startX = menuWidth;
-    float startY = menuHeight;
-
     userLabel->setPosition({startX, startY});
     userInfoMenu->addChild(userLabel);
 
@@ -97,17 +75,34 @@ bool BetterThumbnailLayer::init()
     userRankLabel->setPosition({startX, userRankY});
     userInfoMenu->addChild(userRankLabel);
 
+    // thumbnail coin counter
+    auto coinLabel = CCLabelBMFont::create("999", "bigFont.fnt"); // 0 as a placeholder
+    coinLabel->setAnchorPoint({1.f, 1.f});
+    coinLabel->setScale(0.5f);
+    coinLabel->setAlignment(kCCTextAlignmentRight);
+
+    
+    auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
+    coinSprite->setAnchorPoint({1.f, 1.f});
+    coinSprite->setScale(0.65f);
+;
     float coinLabelY = userRankY - userRankLabel->getContentSize().height * userRankLabel->getScale() - padding - 3.f;
-    float coinLabelX = startX - 20.f;
+    float coinLabelX = startX - 25.f;
+    
+    coinSprite->setPosition({startX, coinLabelY + 2.f});
+    userInfoMenu->addChild(coinSprite);
+
     coinLabel->setPosition({coinLabelX, coinLabelY});
     userInfoMenu->addChild(coinLabel);
 
-    if (coinSprite) {
-        float coinSpriteX = coinLabelX - 5.f;
-        coinSprite->setPosition({coinSpriteX, coinLabelY + 2.f});
-        userInfoMenu->addChild(coinSprite);
+    auto loadingCircle = LoadingCircle::create();
+    if (loadingCircle)
+    {
+        loadingCircle->setAnchorPoint({0.5f, 0.5f});
+        loadingCircle->setPosition({menuWidth / 2.f, menuHeight / 2.f});
+        loadingCircle->setID("user-info-loading-circle");
+        userInfoMenu->addChild(loadingCircle, 100);
     }
-
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
@@ -124,33 +119,6 @@ bool BetterThumbnailLayer::init()
         menu_selector(BetterThumbnailLayer::onInfoButton));
     infoButton->setPosition({25.f, 25.f});
     menu->addChild(infoButton);
-
-
-    // get user info
-    auto req = web::WebRequest();
-
-    m_listener.bind([this, coinLabel](web::WebTask::Event* e){
-        if (auto res = e->getValue()){
-            auto code = res->code();
-            if (code<200||code>299){
-                auto error = res->string().unwrapOr(res->errorMessage());
-                FLAlertLayer::create("Oops",error,"OK")->show();
-                delete this;
-                return;
-            }
-            geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
-            auto json = res->json().unwrapOrDefault();
-			log::info("{} {}",res->code(),json.dump());
-			auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
-            log::debug("{}", activeThumbnailCount);
-			Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
-            coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
-        }
-    });
-
-    req.header("Authorization",fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
-    m_listener.setFilter(task);
 
     // Main buttons
     float buttonSize = 75.f;
@@ -259,7 +227,6 @@ void BetterThumbnailLayer::onInfoButton(CCObject *)
 {
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<long>("user_id");
-    auto activeThumbnails = Mod::get()->getSavedValue<long>("active_thumbnail_count");
-    auto infoString = fmt::format("Rank: {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userId, activeThumbnails);
-    FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
+    auto infoString = fmt::format("Rank: {}\nUser ID: {}", userRank, userId);
+    FLAlertLayer::create(GJAccountManager::get()->m_username.c_str(), infoString, "Ok")->show();
 }
