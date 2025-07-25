@@ -14,7 +14,10 @@
 	"id": "tjc47.better_level_thumbnails",
 	"name": "Better Level Thumbnails",
 	"version": "v1.0.0",
-	"developer": "TJC47",
+	"developers": [
+		"TJC47",
+		"ArcticWoof"
+	],
 	"description": "makes level thumbnails better",
 	"dependencies": {
 		"cdc.level_thumbnails": {
