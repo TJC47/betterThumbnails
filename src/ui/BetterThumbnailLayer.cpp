@@ -37,19 +37,26 @@ bool BetterThumbnailLayer::init()
 
     auto bgImage = LazySprite::create(bg->getScaledContentSize(), true);
     bgImage->setID("better-thumbnail-bg");
+    bgImage->setAutoResize(true);
+    bgImage->setContentSize(bg->getScaledContentSize());
     bgImage->setPosition({0.f, 0.f});
 
-    bgImage->setLoadCallback([this, screenSize, bg, bgImage](geode::Result<void, std::string> result)
+    auto loadingImageLabel = CCLabelBMFont::create("Loading thumbnail...", "goldFont.fnt");
+    loadingImageLabel->setPosition({screenSize.width / 2.f, screenSize.height / 6.f});
+    loadingImageLabel->setScale(0.5f);
+    this->addChild(loadingImageLabel, 3);
+
+    bgImage->setLoadCallback([this, screenSize, bg, bgImage, loadingImageLabel](geode::Result<void, std::string> result)
                              {
         if (result.isOk() || bgImage->isLoaded())
         {
             log::debug("Thumbnail loaded, fading out background");
-            bgImage->setAutoResize(true);
+            loadingImageLabel->removeFromParent();
             bgImage->setAnchorPoint({0.f, 0.f});
 
             auto bgDark = CCScale9Sprite::create("square02_001.png");
             bgDark->setContentSize(screenSize);
-            bgDark->setOpacity(100);
+            bgDark->setOpacity(175);
             bgDark->setAnchorPoint({0.f, 0.f});
             this->addChild(bgDark, -2);
 
@@ -58,11 +65,12 @@ bool BetterThumbnailLayer::init()
         else
         {
             log::error("Failed to load thumbnail: {}", result.unwrapErr());
+            loadingImageLabel->setString(result.unwrapErr().c_str());
         }
     });
     
-    // please laugh, lazysprite no supports webp
-    bgImage->loadFromUrl("https://levelthumbs.prevter.me/thumbnail/random", LazySprite::Format::kFmtUnKnown, false);
+    // please laugh, lazysprite no supports webp (had to use my friend api for this)
+    bgImage->loadFromUrl("https://api.cubicstudios.xyz/avalanche/v1/fetch/random-thumbnail", LazySprite::Format::kFmtUnKnown, true);
     this->addChild(bgImage, -3);
 
     auto menu = CCMenu::create();
