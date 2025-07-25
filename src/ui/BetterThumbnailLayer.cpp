@@ -27,12 +27,43 @@ bool BetterThumbnailLayer::init()
         return false;
 
     auto bg = createLayerBG();
+
     if (bg)
     {
-        this->addChild(bg);
+        this->addChild(bg, -1);
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
+
+    auto bgImage = LazySprite::create(bg->getScaledContentSize(), true);
+    bgImage->setID("better-thumbnail-bg");
+    bgImage->setPosition({0.f, 0.f});
+
+    bgImage->setLoadCallback([this, screenSize, bg, bgImage](geode::Result<void, std::string> result)
+                             {
+        if (result.isOk() || bgImage->isLoaded())
+        {
+            log::debug("Thumbnail loaded, fading out background");
+            bgImage->setAutoResize(true);
+            bgImage->setAnchorPoint({0.f, 0.f});
+
+            auto bgDark = CCScale9Sprite::create("square02_001.png");
+            bgDark->setContentSize(screenSize);
+            bgDark->setOpacity(100);
+            bgDark->setAnchorPoint({0.f, 0.f});
+            this->addChild(bgDark, -2);
+
+            bg->runAction(CCFadeTo::create(1.f, 0));
+        }
+        else
+        {
+            log::error("Failed to load thumbnail: {}", result.unwrapErr());
+        }
+    });
+    
+    // please laugh, lazysprite no supports webp
+    bgImage->loadFromUrl("https://levelthumbs.prevter.me/thumbnail/random", LazySprite::Format::kFmtUnKnown, false);
+    this->addChild(bgImage, -3);
 
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
