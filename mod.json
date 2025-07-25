@@ -18,6 +18,11 @@
 		"TJC47",
 		"ArcticWoof"
 	],
+	"tags": [
+		"online",
+		"enhancement",
+		"utility"
+	],
 	"description": "makes level thumbnails better",
 	"dependencies": {
 		"cdc.level_thumbnails": {
