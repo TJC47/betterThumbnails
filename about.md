@@ -10,6 +10,6 @@ An addon mod for [**Level Thumbnails**](mod:cdc.level_thumbnails).
 - Earn **Thumbnail Points** for uploading thumbnails
 
 # Credits
-- [ArcticWoof](user:7689052) - UI Design and code cleanup
+- [ArcticWoof](https://github.com/DumbCaveSpider) - UI Design and code cleanup
 - [prevter](https://github.com/Prevter) - Level Thumbnails API Server
 - [Sk23](https://github.com/Skepper23) - Logo and Sprites assets

@@ -66,9 +66,8 @@ bool BetterThumbnailLayer::init()
         {
             log::error("Failed to load thumbnail: {}", result.unwrapErr());
             loadingImageLabel->setString("Failed to load thumbnail");
-        }
-    });
-    
+        } });
+
     // please laugh, lazysprite no supports webp (had to use my friend api for this)
     bgImage->loadFromUrl("https://api.cubicstudios.xyz/avalanche/v1/fetch/random-thumbnail", LazySprite::Format::kFmtUnKnown, true);
     this->addChild(bgImage, -3);
@@ -109,6 +108,42 @@ bool BetterThumbnailLayer::init()
 
     userLabel->setPosition({startX, startY});
     userInfoMenu->addChild(userLabel);
+
+    CCSprite *badgeSprite = nullptr;
+
+    if (userRank == "owner")
+    {
+        badgeSprite = CCSprite::create("ownerBadge.png"_spr);
+    }
+    else if (userRank == "admin")
+    {
+        badgeSprite = CCSprite::create("adminBadge.png"_spr);
+    }
+    else if (userRank == "mod")
+    {
+        badgeSprite = CCSprite::create("modBadge.png"_spr);
+    }
+    else if (userRank == "user") // idk the actual rank in the api so do change but using this as a placeholder
+    {
+        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr);
+    }
+    else if (userRank == "verified")
+    {
+        badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
+    }
+    else {
+        badgeSprite = nullptr;
+    }
+    
+    if (badgeSprite)
+    {
+        badgeSprite->setAnchorPoint({1.f, 1.f});
+        badgeSprite->setScale(0.45f);
+        float badgeOffset = userLabel->getContentSize().width * userLabel->getScale() + 1.f;
+        badgeSprite->setPosition({startX - badgeOffset, startY});
+        userInfoMenu->addChild(badgeSprite);
+    }
+    
 
     float userRankY = startY - userLabel->getContentSize().height * userLabel->getScale() - padding;
     userRankLabel->setPosition({startX, userRankY});
@@ -164,10 +199,10 @@ bool BetterThumbnailLayer::init()
             }
             geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
             auto json = res->json().unwrapOrDefault();
-			log::info("{} {}",res->code(),json.dump());
-			auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+            log::info("{} {}",res->code(),json.dump());
+            auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
             log::debug("{}", activeThumbnailCount);
-			Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
+            Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
             coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
         } });
 
