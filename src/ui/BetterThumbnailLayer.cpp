@@ -76,7 +76,7 @@ bool BetterThumbnailLayer::init()
     userInfoMenu->addChild(userRankLabel);
 
     // thumbnail coin counter
-    auto coinLabel = CCLabelBMFont::create("999", "bigFont.fnt"); // 0 as a placeholder
+    auto coinLabel = CCLabelBMFont::create("-", "bigFont.fnt"); // - as a placeholder
     coinLabel->setAnchorPoint({1.f, 1.f});
     coinLabel->setScale(0.5f);
     coinLabel->setAlignment(kCCTextAlignmentRight);
