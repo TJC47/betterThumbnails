@@ -81,14 +81,13 @@ bool BetterThumbnailLayer::init()
     coinLabel->setScale(0.5f);
     coinLabel->setAlignment(kCCTextAlignmentRight);
 
-    
     auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
     coinSprite->setAnchorPoint({1.f, 1.f});
     coinSprite->setScale(0.65f);
-;
+    ;
     float coinLabelY = userRankY - userRankLabel->getContentSize().height * userRankLabel->getScale() - padding - 3.f;
     float coinLabelX = startX - 25.f;
-    
+
     coinSprite->setPosition({startX, coinLabelY + 2.f});
     userInfoMenu->addChild(coinSprite);
 
@@ -119,6 +118,32 @@ bool BetterThumbnailLayer::init()
         menu_selector(BetterThumbnailLayer::onInfoButton));
     infoButton->setPosition({25.f, 25.f});
     menu->addChild(infoButton);
+
+    // get user info
+    auto req = web::WebRequest();
+
+    m_listener.bind([this, coinLabel](web::WebTask::Event *e)
+                    {
+        if (auto res = e->getValue()){
+            auto code = res->code();
+            if (code<200||code>299){
+                auto error = res->string().unwrapOr(res->errorMessage());
+                FLAlertLayer::create("Oops",error,"OK")->show();
+                delete this;
+                return;
+            }
+            geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
+            auto json = res->json().unwrapOrDefault();
+			log::info("{} {}",res->code(),json.dump());
+			auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+            log::debug("{}", activeThumbnailCount);
+			Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
+            coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
+        } });
+
+    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
+    m_listener.setFilter(task);
 
     // Main buttons
     float buttonSize = 75.f;
