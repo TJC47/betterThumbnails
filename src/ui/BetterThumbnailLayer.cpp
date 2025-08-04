@@ -125,7 +125,7 @@ bool BetterThumbnailLayer::init()
     {
         badgeSprite = CCSprite::create("adminBadge.png"_spr);
     }
-    else if (userRank == "mod")
+    else if (userRank == "moderator")
     {
         badgeSprite = CCSprite::create("modBadge.png"_spr);
     }
@@ -208,7 +208,7 @@ bool BetterThumbnailLayer::init()
             log::info("{} {}",res->code(),json.dump());
             auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
             log::debug("{}", activeThumbnailCount);
-            Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
+            Mod::get()->setSavedValue<int>("active_thumbnail_count", activeThumbnailCount);
             coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
         } });
 
@@ -236,7 +236,7 @@ bool BetterThumbnailLayer::init()
         this,
         menu_selector(BetterThumbnailLayer::onRecent));
 
-    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
+    if (Mod::get()->getSavedValue<int>("role_num") >= 20)
     {
         pendingSprite = CCSprite::create("pendingButton.png"_spr);
     }
@@ -251,7 +251,7 @@ bool BetterThumbnailLayer::init()
         this,
         menu_selector(BetterThumbnailLayer::onPending));
 
-    if (Mod::get()->getSavedValue<long>("role_num") >= 30)
+    if (Mod::get()->getSavedValue<int>("role_num") >= 30)
     {
         manageSprite = CCSprite::create("manageUsersButton.png"_spr);
     }
@@ -319,7 +319,7 @@ void BetterThumbnailLayer::onRecent(CCObject *)
 void BetterThumbnailLayer::onPending(CCObject *)
 {
     // to do: pending thumbnail
-    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
+    if (Mod::get()->getSavedValue<int>("role_num") >= 20)
     {
         CCDirector::get()->pushScene(CCTransitionFade::create(.5f, PendingThumbnailLayer::scene()));
         FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
@@ -332,7 +332,7 @@ void BetterThumbnailLayer::onPending(CCObject *)
 void BetterThumbnailLayer::onManage(CCObject *)
 {
     // to do: manage user
-    if (Mod::get()->getSavedValue<long>("role_num") >= 30)
+    if (Mod::get()->getSavedValue<int>("role_num") >= 30)
     {
         FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
     }
@@ -354,9 +354,9 @@ void BetterThumbnailLayer::onBackButton(CCObject *)
 void BetterThumbnailLayer::onInfoButton(CCObject *)
 {
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
-    auto userId = Mod::get()->getSavedValue<long>("user_id");
-    auto activeThumbnails = Mod::get()->getSavedValue<long>("active_thumbnail_count");
-    auto userRankNum = Mod::get()->getSavedValue<long>("role_num");
+    auto userId = Mod::get()->getSavedValue<int>("user_id");
+    auto activeThumbnails = Mod::get()->getSavedValue<int>("active_thumbnail_count");
+    auto userRankNum = Mod::get()->getSavedValue<int>("role_num");
     auto infoString = fmt::format("Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userRankNum, userId, activeThumbnails);
     FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
 }

@@ -14,12 +14,9 @@ bool PendingThumbnailLayer::init()
         return false;
 
     auto bg = createLayerBG();
-    if (bg != nullptr)
-    {
+    if (bg != nullptr) {
         this->addChild(bg, -1);
-    }
-    else
-    {
+    } else {
         log::error("createLayerBG returned nullptr");
         return false;
     }
@@ -29,6 +26,35 @@ bool PendingThumbnailLayer::init()
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
     menu->setPosition(CCPointZero);
+
+    // Fetch pending thumbnails from API
+    auto req = web::WebRequest();
+    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    auto task = req.get("https://levelthumbs.prevter.me/pending");
+    m_listener.bind([this](web::WebTask::Event* e) {
+        if (auto res = e->getValue()) {
+            if (res->code() < 200 || res->code() > 299) {
+                log::error("Pending API error: {} {}", res->code(), res->string().unwrapOr(""));
+                return;
+            }
+            auto json = res->json().unwrapOrDefault();
+            if (!json.isArray()) {
+                log::error("Pending API did not return an array");
+                return;
+            }
+            for (auto& item : json) {
+                auto id = item["id"].asInt().unwrapOrDefault();
+                auto user_id = item["user_id"].asInt().unwrapOrDefault();
+                auto username = item["username"].asString().unwrapOr("");
+                auto level_id = item["level_id"].asInt().unwrapOrDefault();
+                auto accepted = item["accepted"].asBool().unwrapOr(false);
+                auto upload_time = item["upload_time"].asString().unwrapOr("");
+                auto replacement = item["replacement"].asBool().unwrapOr(false);
+                log::debug("id: {}, user_id: {}, username: {}, level_id: {}, accepted: {}, upload_time: {}, replacement: {}", id, user_id, username, level_id, accepted, upload_time, replacement);
+            }
+        }
+    });
+    m_listener.setFilter(task);
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
