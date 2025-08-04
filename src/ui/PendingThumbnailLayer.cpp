@@ -14,9 +14,12 @@ bool PendingThumbnailLayer::init()
         return false;
 
     auto bg = createLayerBG();
-    if (bg != nullptr) {
+    if (bg != nullptr)
+    {
         this->addChild(bg, -1);
-    } else {
+    }
+    else
+    {
         log::error("createLayerBG returned nullptr");
         return false;
     }
@@ -31,7 +34,8 @@ bool PendingThumbnailLayer::init()
     auto req = web::WebRequest();
     req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
     auto task = req.get("https://levelthumbs.prevter.me/pending");
-    m_listener.bind([this](web::WebTask::Event* e) {
+    m_listener.bind([this](web::WebTask::Event *e)
+                    {
         if (auto res = e->getValue()) {
             if (res->code() < 200 || res->code() > 299) {
                 log::error("Pending API error: {} {}", res->code(), res->string().unwrapOr(""));
@@ -52,9 +56,26 @@ bool PendingThumbnailLayer::init()
                 auto replacement = item["replacement"].asBool().unwrapOr(false);
                 log::debug("id: {}, user_id: {}, username: {}, level_id: {}, accepted: {}, upload_time: {}, replacement: {}", id, user_id, username, level_id, accepted, upload_time, replacement);
             }
-        }
-    });
+        } });
     m_listener.setFilter(task);
+
+    // Create CCArray of items for GJListLayer
+    auto items = CCArray::create();
+    // Example: add a label for now, replace with real items later
+    auto testLabel = CCLabelBMFont::create("No pending thumbnails loaded yet", "goldFont.fnt");
+    items->addObject(testLabel);
+
+    auto listLayer = GJListLayer::create(
+        nullptr,              // BoomListView*
+        "Pending Thumbnails", // title
+        {0, 0, 0, 100},       // ccColor4B (background color RGBA)
+        356.f,                // width
+        220.f,                // height
+        0                     // list type (default)
+    );
+    this->addChild(listLayer, 1);
+    listLayer->setAnchorPoint({0.5f, 0.5f});
+    listLayer->setPosition(CCPoint(screenSize / 2 - listLayer->getScaledContentSize() / 2));
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
