@@ -74,15 +74,19 @@ bool PendingThumbnailLayer::init()
         0                     // list type (default)
     );
     this->addChild(listLayer, 1);
-    listLayer->setAnchorPoint({0.5f, 0.5f});
-    listLayer->setPosition(CCPoint(screenSize / 2 - listLayer->getScaledContentSize() / 2));
+    listLayer->setAnchorPoint(CCPoint(0.5f, 0.5f));
+    listLayer->setPosition(CCPoint(screenSize / 2 - listLayer->getScaledContentSize() / 2)); // dont change this, its a werid way to center it
+
+    // scrollable content using geode::ScrollLayer (correct signature)
+    auto scrollLayer = ScrollLayer::create(listLayer->getContentSize(), true, true); // enable scroll and touch
+    listLayer->addChild(scrollLayer);
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
         this,
         menu_selector(PendingThumbnailLayer::onBackButton));
-    backButton->setPosition(CCPoint(25.f, screenSize.height - 25.f));
+    backButton->setPosition({25.f, screenSize.height - 25.f});
     menu->addChild(backButton);
 
     this->setKeypadEnabled(true);
