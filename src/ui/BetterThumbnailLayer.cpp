@@ -296,12 +296,23 @@ void BetterThumbnailLayer::onRecent(CCObject *)
 void BetterThumbnailLayer::onPending(CCObject *)
 {
     // to do: pending thumbnail
-    FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
+    if (Mod::get()->getSavedValue<long>("role_num") >= 20) {
+        FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
+    }
+    else {
+        FLAlertLayer::create("Pending Thumbnails", "You do not have permission to access this menu.", "Ok")->show();
+    }
+    
 }
 void BetterThumbnailLayer::onManage(CCObject *)
 {
     // to do: manage user
-    FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
+    if (Mod::get()->getSavedValue<long>("role_num") >= 30) {
+        FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
+    }
+    else {
+        FLAlertLayer::create("Manage User", "You do not have permission to access this menu.", "Ok")->show();
+    }
 }
 
 void BetterThumbnailLayer::keyBackClicked()
@@ -318,6 +329,7 @@ void BetterThumbnailLayer::onInfoButton(CCObject *)
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<long>("user_id");
     auto activeThumbnails = Mod::get()->getSavedValue<long>("active_thumbnail_count");
-    auto infoString = fmt::format("Rank: {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userId, activeThumbnails);
+    auto userRankNum = Mod::get()->getSavedValue<long>("role_num");
+    auto infoString = fmt::format("Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userRankNum, userId, activeThumbnails);
     FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
 }
