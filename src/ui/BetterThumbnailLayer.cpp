@@ -52,11 +52,13 @@ bool BetterThumbnailLayer::init()
         {
             log::info("Thumbnail loaded, fading out background");
             loadingImageLabel->removeFromParent();
-            bgImage->setAnchorPoint({0.f, 0.f});
+            bgImage->setAnchorPoint({0.5, 0.5});
 
             auto bgDark = CCScale9Sprite::create("square02_001.png");
             bgDark->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
             bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
+            //bgImage->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
+            bgImage->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
             bgDark->setOpacity(175);
             this->addChild(bgDark, -2);
 
