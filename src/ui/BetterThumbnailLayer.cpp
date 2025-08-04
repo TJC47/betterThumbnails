@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include "BetterThumbnailLayer.hpp"
+#include "PendingThumbnailLayer.hpp"
 #include "NotificationUI.hpp"
 
 CCScene *BetterThumbnailLayer::scene()
@@ -27,10 +28,11 @@ bool BetterThumbnailLayer::init()
         return false;
 
     auto bg = createLayerBG();
-
-    if (bg)
-    {
+    if (bg != nullptr) {
         this->addChild(bg, -1);
+    } else {
+        log::error("createLayerBG returned nullptr");
+        return false;
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
@@ -255,23 +257,24 @@ bool BetterThumbnailLayer::init()
     }
     else
     {
-        pendingSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
+        manageSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
     }
-    manageSprite->setScale(1.2f);
-    auto manageBtn = CCMenuItemSpriteExtra::create(
-        manageSprite,
-        this,
-        menu_selector(BetterThumbnailLayer::onManage));
+    if (manageSprite != nullptr) {
+        manageSprite->setScale(1.2f);
+        auto manageBtn = CCMenuItemSpriteExtra::create(
+            manageSprite,
+            this,
+            menu_selector(BetterThumbnailLayer::onManage));
+        manageBtn->setPosition({centerX + buttonSize / 2 + spacing / 2, centerY - buttonSize / 2 - spacing / 2});
+        menu->addChild(manageBtn);
+    }
 
     myThumbBtn->setPosition({centerX - buttonSize / 2 - spacing / 2, centerY + buttonSize / 2 + spacing / 2});
     recentBtn->setPosition({centerX + buttonSize / 2 + spacing / 2, centerY + buttonSize / 2 + spacing / 2});
     pendingBtn->setPosition({centerX - buttonSize / 2 - spacing / 2, centerY - buttonSize / 2 - spacing / 2});
-    manageBtn->setPosition({centerX + buttonSize / 2 + spacing / 2, centerY - buttonSize / 2 - spacing / 2});
-
     menu->addChild(myThumbBtn);
     menu->addChild(recentBtn);
     menu->addChild(pendingBtn);
-    menu->addChild(manageBtn);
 
     // funny side art
     auto sideArtLeft = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
@@ -318,6 +321,7 @@ void BetterThumbnailLayer::onPending(CCObject *)
     // to do: pending thumbnail
     if (Mod::get()->getSavedValue<long>("role_num") >= 20)
     {
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, PendingThumbnailLayer::scene()));
         FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
     }
     else
