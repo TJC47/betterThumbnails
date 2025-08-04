@@ -78,8 +78,15 @@ bool PendingThumbnailLayer::init()
     listLayer->setPosition(CCPoint(screenSize / 2 - listLayer->getScaledContentSize() / 2)); // dont change this, its a werid way to center it
 
     // scrollable content using geode::ScrollLayer (correct signature)
-    auto scrollLayer = ScrollLayer::create(listLayer->getContentSize(), true, true); // enable scroll and touch
+    auto scrollLayer = ScrollLayer::create(listLayer->getContentSize(), true, true);
     listLayer->addChild(scrollLayer);
+
+    // Create thumbnail node with background and add to content layer of scrollLayer
+    auto thumbnailBg = CCScale9Sprite::create("GJ_square05.png");
+    thumbnailBg->setContentSize({scrollLayer->getContentSize().width, 100.f});
+    thumbnailBg->setPosition({listLayer->getContentSize().width / 2.f, listLayer->getContentSize().height / 2.f});
+    thumbnailBg->setScale(0.95f);
+    scrollLayer->m_contentLayer->addChild(thumbnailBg, 1);
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
