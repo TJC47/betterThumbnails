@@ -57,9 +57,11 @@ bool BetterThumbnailLayer::init()
             auto bgDark = CCScale9Sprite::create("square02_001.png");
             bgDark->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
             bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
-            //bgImage->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
-            bgImage->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
             bgDark->setOpacity(175);
+
+            bgImage->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
+            bgImage->setScale(screenSize.width / bgImage->getContentWidth());
+
             this->addChild(bgDark, -2);
 
             bg->runAction(CCFadeTo::create(1.f, 0));
@@ -133,10 +135,11 @@ bool BetterThumbnailLayer::init()
     {
         badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
     }
-    else {
+    else
+    {
         badgeSprite = nullptr;
     }
-    
+
     if (badgeSprite)
     {
         badgeSprite->setAnchorPoint({1.f, 1.f});
@@ -145,7 +148,6 @@ bool BetterThumbnailLayer::init()
         badgeSprite->setPosition({startX - badgeOffset, startY});
         userInfoMenu->addChild(badgeSprite);
     }
-    
 
     float userRankY = startY - userLabel->getContentSize().height * userLabel->getScale() - padding;
     userRankLabel->setPosition({startX, userRankY});
@@ -225,7 +227,15 @@ bool BetterThumbnailLayer::init()
         this,
         menu_selector(BetterThumbnailLayer::onMyThumbnail));
 
-    auto recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
+    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
+    {
+        recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
+    }
+    else
+    {
+        recentSprite = CCSpriteGrayscale::create("recentlyAddedButton.png"_spr);
+    }
+
     recentSprite->setScale(1.2f);
     auto recentBtn = CCMenuItemSpriteExtra::create(
         recentSprite,
@@ -298,21 +308,24 @@ void BetterThumbnailLayer::onRecent(CCObject *)
 void BetterThumbnailLayer::onPending(CCObject *)
 {
     // to do: pending thumbnail
-    if (Mod::get()->getSavedValue<long>("role_num") >= 20) {
+    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
+    {
         FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
     }
-    else {
+    else
+    {
         FLAlertLayer::create("Pending Thumbnails", "You do not have permission to access this menu.", "Ok")->show();
     }
-    
 }
 void BetterThumbnailLayer::onManage(CCObject *)
 {
     // to do: manage user
-    if (Mod::get()->getSavedValue<long>("role_num") >= 30) {
+    if (Mod::get()->getSavedValue<long>("role_num") >= 30)
+    {
         FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")->show();
     }
-    else {
+    else
+    {
         FLAlertLayer::create("Manage User", "You do not have permission to access this menu.", "Ok")->show();
     }
 }

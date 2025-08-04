@@ -20,4 +20,10 @@ private:
     void onPending(CCObject *);
     void onManage(CCObject *);
     void onInfoButton(CCObject *);
+
+    CCSprite *myThumbSprite = nullptr;
+    CCSprite *recentSprite = nullptr;
+    CCSprite *pendingSprite = nullptr;
+    CCSprite *manageSprite = nullptr;
+
 };
