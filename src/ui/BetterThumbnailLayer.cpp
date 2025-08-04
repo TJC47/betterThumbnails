@@ -227,29 +227,36 @@ bool BetterThumbnailLayer::init()
         this,
         menu_selector(BetterThumbnailLayer::onMyThumbnail));
 
-    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
-    {
-        recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
-    }
-    else
-    {
-        recentSprite = CCSpriteGrayscale::create("recentlyAddedButton.png"_spr);
-    }
-
+    recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
     recentSprite->setScale(1.2f);
     auto recentBtn = CCMenuItemSpriteExtra::create(
         recentSprite,
         this,
         menu_selector(BetterThumbnailLayer::onRecent));
 
-    auto pendingSprite = CCSprite::create("pendingButton.png"_spr);
+    if (Mod::get()->getSavedValue<long>("role_num") >= 20)
+    {
+        pendingSprite = CCSprite::create("pendingButton.png"_spr);
+    }
+    else
+    {
+        pendingSprite = CCSpriteGrayscale::create("pendingButton.png"_spr);
+    }
+
     pendingSprite->setScale(1.2f);
     auto pendingBtn = CCMenuItemSpriteExtra::create(
         pendingSprite,
         this,
         menu_selector(BetterThumbnailLayer::onPending));
 
-    auto manageSprite = CCSprite::create("manageUsersButton.png"_spr);
+    if (Mod::get()->getSavedValue<long>("role_num") >= 30)
+    {
+        manageSprite = CCSprite::create("manageUsersButton.png"_spr);
+    }
+    else
+    {
+        pendingSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
+    }
     manageSprite->setScale(1.2f);
     auto manageBtn = CCMenuItemSpriteExtra::create(
         manageSprite,
