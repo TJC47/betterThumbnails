@@ -29,5 +29,8 @@
 			"importance": "required",
 			"version": ">=v1.4.0"
 		}
+	},
+	"links": {
+		"source": "https://github.com/TJC47/betterThumbnails"
 	}
 }
