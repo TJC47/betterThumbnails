@@ -293,12 +293,13 @@ bool BetterThumbnailLayer::init()
     this->setKeypadEnabled(true);
 
     // notification test (do this way if you want to use notifications)
+    /*
     auto notif = NotificationUI::create("insert title", "hi there");
     if (notif)
     {
         this->addChild(notif, 100);
     }
-
+    */
     return true;
 }
 
