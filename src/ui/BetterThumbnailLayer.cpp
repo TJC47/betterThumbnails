@@ -188,6 +188,31 @@ bool BetterThumbnailLayer::init()
     infoButton->setPosition({25.f, 25.f});
     menu->addChild(infoButton);
 
+    // get user info
+    auto req = web::WebRequest();
+
+    m_listener.bind([this, coinLabel](web::WebTask::Event *e)
+                    {
+        if (auto res = e->getValue()){
+            auto code = res->code();
+            if (code<200||code>299){
+                auto error = res->string().unwrapOr(res->errorMessage());
+                FLAlertLayer::create("Oops",error,"OK")->show();
+                delete this;
+                return;
+            }
+            geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
+            auto json = res->json().unwrapOrDefault();
+            log::info("{} {}",res->code(),json.dump());
+            auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+            log::debug("{}", activeThumbnailCount);
+            Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
+            coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
+        } });
+
+    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
+    m_listener.setFilter(task);
 
     // Main buttons
     float buttonSize = 75.f;
@@ -216,23 +241,15 @@ bool BetterThumbnailLayer::init()
         recentSprite,
         this,
         menu_selector(BetterThumbnailLayer::onRecent));
-   // if (Mod::get()->getSavedValue<long>("role_num") >= 20) {
-        auto pendingSprite = CCSprite::create("pendingButton.png"_spr);
-    //}
-    //else {
-    //    auto pendingSprite = CCSpriteGrayscale::create("pendingButton.png"_spr);
-    //}
+
+    auto pendingSprite = CCSprite::create("pendingButton.png"_spr);
     pendingSprite->setScale(1.2f);
     auto pendingBtn = CCMenuItemSpriteExtra::create(
         pendingSprite,
         this,
         menu_selector(BetterThumbnailLayer::onPending));
-    //if (Mod::get()->getSavedValue<long>("role_num") >= 30) {
-        auto manageSprite = CCSprite::create("manageUsersButton.png"_spr);
-    //}
-    //else {
-    //    auto manageSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
-    //}
+
+    auto manageSprite = CCSprite::create("manageUsersButton.png"_spr);
     manageSprite->setScale(1.2f);
     auto manageBtn = CCMenuItemSpriteExtra::create(
         manageSprite,
@@ -274,33 +291,6 @@ bool BetterThumbnailLayer::init()
     {
         this->addChild(notif, 100);
     }
-
-    // get user info
-    auto req = web::WebRequest();
-
-    m_listener.bind([this, coinLabel](web::WebTask::Event *e)
-                    {
-        if (auto res = e->getValue()){
-            auto code = res->code();
-            if (code<200||code>299){
-                auto error = res->string().unwrapOr(res->errorMessage());
-                FLAlertLayer::create("Oops",error,"OK")->show();
-                delete this;
-                return;
-            }
-            geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
-            auto json = res->json().unwrapOrDefault();
-            log::info("{} {}",res->code(),json.dump());
-            auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
-            log::debug("{}", activeThumbnailCount);
-            Mod::get()->setSavedValue<long>("active_thumbnail_count", activeThumbnailCount);
-            coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
-        } });
-
-    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
-    m_listener.setFilter(task);
-
 
     return true;
 }
