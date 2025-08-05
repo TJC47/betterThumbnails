@@ -38,7 +38,8 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token") && false)
+		if (Mod::get()->hasSavedValue("token") &! Mod::get()->getSettingValue<bool>("dev-force-reauth")
+)
 		{
 			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
 		}
