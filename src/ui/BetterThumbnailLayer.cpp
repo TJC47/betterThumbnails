@@ -1,8 +1,9 @@
 #include <Geode/Geode.hpp>
 #include "BetterThumbnailLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
+/*
 #include "NotificationUI.hpp"
-
+commented out for now to shut up vscode (i dont know if we're gonna need this but the yellow is annoying sooo)*/
 CCScene *BetterThumbnailLayer::scene()
 {
     auto scene = CCScene::create();
