@@ -21,7 +21,7 @@ bool ThumbnailNode::init(const cocos2d::CCSize &size, int id, int user_id, const
     thumbnailBg->setContentSize({size.width, 100.f});
     thumbnailBg->setScale(0.95f);
     thumbnailBg->setAnchorPoint({0.5f, 0.5f});
-    thumbnailBg->setPosition({size.width / 2.f, size.height / 2.f});
+    thumbnailBg->setPosition({size.width / 2.f, 0.f});
     this->addChild(thumbnailBg);
 
     // Add label with all thumbnail info
@@ -31,7 +31,8 @@ bool ThumbnailNode::init(const cocos2d::CCSize &size, int id, int user_id, const
     );
     auto label = cocos2d::CCLabelBMFont::create(info.c_str(), "goldFont.fnt");
     label->setAnchorPoint({0.5f, 0.5f});
-    label->setPosition({size.width / 2.f, size.height / 2.f});
+    label->setPosition({size.width / 2.f, 0.f});
+    label->setScale(0.35f);
     this->addChild(label);
 
     return true;
