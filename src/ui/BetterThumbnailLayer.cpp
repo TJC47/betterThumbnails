@@ -37,47 +37,48 @@ bool BetterThumbnailLayer::init()
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-    if (Mod::get()->getSettingValue<bool>("random-thumbnail-background") == true) {
-    auto bgImage = LazySprite::create(bg->getScaledContentSize(), true);
-    bgImage->setID("better-thumbnail-bg");
-    bgImage->setAutoResize(true);
-    bgImage->setContentSize(bg->getScaledContentSize());
-    bgImage->setPosition({0.f, 0.f});
+    if (Mod::get()->getSettingValue<bool>("random-thumbnail-background") == true)
+    {
+        auto bgImage = LazySprite::create(bg->getScaledContentSize(), true);
+        bgImage->setID("better-thumbnail-bg");
+        bgImage->setAutoResize(true);
+        bgImage->setContentSize(bg->getScaledContentSize());
+        bgImage->setPosition({0.f, 0.f});
 
-    auto loadingImageLabel = CCLabelBMFont::create("Loading thumbnail...", "goldFont.fnt");
-    loadingImageLabel->setPosition({screenSize.width / 2.f, screenSize.height / 8.f});
-    loadingImageLabel->setScale(0.5f);
-    this->addChild(loadingImageLabel, 3);
+        auto loadingImageLabel = CCLabelBMFont::create("Loading thumbnail...", "goldFont.fnt");
+        loadingImageLabel->setPosition({screenSize.width / 2.f, screenSize.height / 8.f});
+        loadingImageLabel->setScale(0.5f);
+        this->addChild(loadingImageLabel, 3);
 
-    bgImage->setLoadCallback([this, screenSize, bg, bgImage, loadingImageLabel](geode::Result<void, std::string> result)
-                             {
-        if (result.isOk() || bgImage->isLoaded())
-        {
-            log::info("Thumbnail loaded, fading out background");
-            loadingImageLabel->removeFromParent();
-            bgImage->setAnchorPoint({0.5, 0.5});
+        bgImage->setLoadCallback([this, screenSize, bg, bgImage, loadingImageLabel](geode::Result<void, std::string> result)
+                                {
+            if (result.isOk() || bgImage->isLoaded())
+            {
+                log::info("Thumbnail loaded, fading out background");
+                loadingImageLabel->removeFromParent();
+                bgImage->setAnchorPoint({0.5, 0.5});
 
-            auto bgDark = CCScale9Sprite::create("square02_001.png");
-            bgDark->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
-            bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
-            bgDark->setOpacity(175);
+                auto bgDark = CCScale9Sprite::create("square02_001.png");
+                bgDark->setContentSize({screenSize.width + 10.f, screenSize.height + 10.f});
+                bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
+                bgDark->setOpacity(175);
 
-            bgImage->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
-            bgImage->setScale(screenSize.width / bgImage->getContentWidth());
+                bgImage->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
+                bgImage->setScale(screenSize.width / bgImage->getContentWidth());
 
-            this->addChild(bgDark, -2);
+                this->addChild(bgDark, -2);
 
-            bg->runAction(CCFadeTo::create(1.f, 0));
-        }
-        else
-        {
-            log::error("Failed to load thumbnail: {}", result.unwrapErr());
-            loadingImageLabel->setString("Failed to load thumbnail");
-        } });
+                bg->runAction(CCFadeTo::create(1.f, 0));
+            }
+            else
+            {
+                log::error("Failed to load thumbnail: {}", result.unwrapErr());
+                loadingImageLabel->setString("Failed to load thumbnail");
+            } });
 
-    // please laugh, lazysprite no supports webp (had to use my "proxy" for this)
-    bgImage->loadFromUrl("https://de-1.tjcsucht.net/api/thumbnails/randomProxy/", LazySprite::Format::kFmtUnKnown, true);
-    this->addChild(bgImage, -3);
+        // please laugh, lazysprite no supports webp (had to use my "proxy" for this)
+        bgImage->loadFromUrl("https://de-1.tjcsucht.net/api/thumbnails/randomProxy/", LazySprite::Format::kFmtUnKnown, true);
+        this->addChild(bgImage, -3);
     }
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
