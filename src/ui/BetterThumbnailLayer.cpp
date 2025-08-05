@@ -129,12 +129,9 @@ bool BetterThumbnailLayer::init()
     }
     else if (userRank == "moderator")
     {
-        badgeSprite = CCSprite::create("modBadge.png"_spr);
-    }
-    else if (userRank == "user") // idk the actual rank in the api so do change but using this as a placeholder
-    {
-        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr);
-    }
+        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr); // we're gonna use the thumbnail mod badge for moderators since there 
+    }                                                                        // there exists no thumbnail moderator and moderator in this case here
+                                                                             // has the same perms as thumbnail mod
     else if (userRank == "verified")
     {
         badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
