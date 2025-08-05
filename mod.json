@@ -32,5 +32,13 @@
 	},
 	"links": {
 		"source": "https://github.com/TJC47/betterThumbnails"
+	},
+	"settings": {
+		"random-thumbnail-background": {
+			"type": "bool",
+			"name": "Display random Thumbnail background",
+			"description": "Shows a random Thumbnail as background in the Better Level Thumbnails menu",
+			"default": true
+		}
 	}
 }

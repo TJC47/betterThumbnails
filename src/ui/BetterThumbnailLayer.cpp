@@ -36,7 +36,7 @@ bool BetterThumbnailLayer::init()
     }
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-
+    if (Mod::get()->getSettingValue<bool>("random-thumbnail-background") == true) {
     auto bgImage = LazySprite::create(bg->getScaledContentSize(), true);
     bgImage->setID("better-thumbnail-bg");
     bgImage->setAutoResize(true);
@@ -77,7 +77,7 @@ bool BetterThumbnailLayer::init()
     // please laugh, lazysprite no supports webp (had to use my "proxy" for this)
     bgImage->loadFromUrl("https://de-1.tjcsucht.net/api/thumbnails/randomProxy/", LazySprite::Format::kFmtUnKnown, true);
     this->addChild(bgImage, -3);
-
+    }
     auto menu = CCMenu::create();
     this->addChild(menu, 2);
     menu->setPosition({0.f, 0.f});
