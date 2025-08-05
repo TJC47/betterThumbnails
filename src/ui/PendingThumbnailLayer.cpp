@@ -1,5 +1,7 @@
 #include "PendingThumbnailLayer.hpp"
 #include "BetterThumbnailLayer.hpp"
+#include "../node/ThumbnailNode.hpp"
+#include <Geode/Geode.hpp>
 
 CCScene *PendingThumbnailLayer::scene()
 {
@@ -46,6 +48,21 @@ bool PendingThumbnailLayer::init()
                 log::error("Pending API did not return an array");
                 return;
             }
+
+            // Find the ScrollLayer and its content layer
+            auto listLayer = this->getChildren()->count() > 0 ? dynamic_cast<GJListLayer*>(this->getChildren()->objectAtIndex(1)) : nullptr;
+            auto scrollLayer = listLayer ? dynamic_cast<ScrollLayer*>(listLayer->getChildren()->objectAtIndex(listLayer->getChildrenCount() - 1)) : nullptr;
+            CCLayer* contentLayer = nullptr;
+            if (scrollLayer && scrollLayer->getChildrenCount() > 0) {
+                contentLayer = dynamic_cast<CCLayer*>(scrollLayer->getChildren()->objectAtIndex(0));
+            }
+            if (!contentLayer) {
+                log::error("ScrollLayer's content layer is nullptr");
+                return;
+            }
+
+            float y = contentLayer->getContentSize().height;
+            float nodeHeight = 100.f; // match ThumbnailNode height
             for (auto& item : json) {
                 auto id = item["id"].asInt().unwrapOrDefault();
                 auto user_id = item["user_id"].asInt().unwrapOrDefault();
@@ -54,7 +71,15 @@ bool PendingThumbnailLayer::init()
                 auto accepted = item["accepted"].asBool().unwrapOr(false);
                 auto upload_time = item["upload_time"].asString().unwrapOr("");
                 auto replacement = item["replacement"].asBool().unwrapOr(false);
-                log::debug("id: {}, user_id: {}, username: {}, level_id: {}, accepted: {}, upload_time: {}, replacement: {}", id, user_id, username, level_id, accepted, upload_time, replacement);
+                auto thumbNode = ThumbnailNode::create(contentLayer->getContentSize(), id, user_id, username, level_id, accepted, upload_time, replacement);
+                if (thumbNode != nullptr) {
+                    thumbNode->setAnchorPoint(CCPoint(0, 1));
+                    thumbNode->setPosition(CCPoint(0, y));
+                    contentLayer->addChild(thumbNode);
+                    y -= nodeHeight;
+                } else {
+                    log::error("ThumbnailNode::create returned nullptr");
+                }
             }
         } });
     m_listener.setFilter(task);
@@ -77,16 +102,52 @@ bool PendingThumbnailLayer::init()
     listLayer->setAnchorPoint(CCPoint(0.5f, 0.5f));
     listLayer->setPosition(CCPoint(screenSize / 2 - listLayer->getScaledContentSize() / 2)); // dont change this, its a werid way to center it
 
-    // scrollable content using geode::ScrollLayer (correct signature)
+    // scrollable content using ScrollLayer
     auto scrollLayer = ScrollLayer::create(listLayer->getContentSize(), true, true);
     listLayer->addChild(scrollLayer);
 
-    // Create thumbnail node with background and add to content layer of scrollLayer
-    auto thumbnailBg = CCScale9Sprite::create("GJ_square05.png");
-    thumbnailBg->setContentSize({scrollLayer->getContentSize().width, 100.f});
-    thumbnailBg->setPosition({listLayer->getContentSize().width / 2.f, listLayer->getContentSize().height / 2.f});
-    thumbnailBg->setScale(0.95f);
-    scrollLayer->m_contentLayer->addChild(thumbnailBg, 1);
+    // Add ThumbnailNode to the scrollLayer
+    if (scrollLayer != nullptr)
+    {
+        int id = 0;
+        int user_id = 0;
+        std::string username = "";
+        int level_id = 0;
+        bool accepted = false;
+        std::string upload_time = "";
+        bool replacement = false;
+        auto thumbNode = ThumbnailNode::create(listLayer->getContentSize(), id, user_id, username, level_id, accepted, upload_time, replacement);
+        if (thumbNode != nullptr)
+        {
+            // Position the node at the top left for demonstration, adjust as needed
+            thumbNode->setAnchorPoint(CCPoint(0, 1));
+            if (scrollLayer->getChildrenCount() > 0)
+            {
+                auto contentLayer = dynamic_cast<CCLayer *>(scrollLayer->getChildren()->objectAtIndex(0));
+                if (contentLayer != nullptr)
+                {
+                    thumbNode->setPosition(CCPoint(0, contentLayer->getContentSize().height));
+                    contentLayer->addChild(thumbNode);
+                }
+                else
+                {
+                    log::error("ScrollLayer's content layer is nullptr");
+                }
+            }
+            else
+            {
+                log::error("ScrollLayer has no children (content layer)");
+            }
+        }
+        else
+        {
+            log::error("ThumbnailNode::create returned nullptr");
+        }
+    }
+    else
+    {
+        log::error("ScrollLayer is nullptr");
+    }
 
     // Back button at top left
     auto backButton = CCMenuItemSpriteExtra::create(
