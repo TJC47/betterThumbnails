@@ -29,6 +29,20 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 CPMAddPackage("gh:GlobedGD/argon@1.1.9")
 target_link_libraries(${PROJECT_NAME} argon)
 
+# libwebp
+set(WEBP_BUILD_CWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_DWEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_GIF2WEBP OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)
+set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(libwebp)
+include_directories(libwebp/src/)
+target_link_libraries(${PROJECT_NAME} webp)
+
 # Set up dependencies, resources, and link Geode.
 
 setup_geode_mod(${PROJECT_NAME})
