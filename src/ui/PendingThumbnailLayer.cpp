@@ -110,6 +110,7 @@ bool PendingThumbnailLayer::init()
             }
 
             contentLayer->updateLayout();
+            scrollLayer->scrollToTop();
 
             // Show pending count
             auto countLabel = CCLabelBMFont::create(fmt::format("Pending thumbnails: {}", pendingCount).c_str(), "bigFont.fnt");                                                                           

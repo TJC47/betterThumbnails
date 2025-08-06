@@ -77,7 +77,7 @@ bool BetterThumbnailLayer::init()
             } });
 
         // please laugh, lazysprite no supports webp (had to use my "proxy" for this)
-        bgImage->loadFromUrl("https://de-1.tjcsucht.net/api/thumbnails/randomProxy/", LazySprite::Format::kFmtUnKnown, true);
+        bgImage->loadFromUrl("https://levelthumbs.prevter.me/thumbnail/random", LazySprite::Format::kFmtUnKnown, true);
         this->addChild(bgImage, -3);
     }
     auto menu = CCMenu::create();
