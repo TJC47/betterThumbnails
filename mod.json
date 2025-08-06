@@ -6,11 +6,11 @@
 		"mac": "2.2074",
 		"ios": "2.2074"
 	},
-    "resources": {
-        "sprites": [
-            "resources/*.png"
-        ]
-    },
+	"resources": {
+		"sprites": [
+			"resources/*.png"
+		]
+	},
 	"id": "tjc47.better_level_thumbnails",
 	"name": "Better Level Thumbnails",
 	"version": "v1.0.0",
@@ -28,6 +28,10 @@
 		"cdc.level_thumbnails": {
 			"importance": "required",
 			"version": ">=v1.4.0"
+		},
+		"prevter.imageplus": {
+			"importance": "suggested",
+			"version": ">=1.0.0"
 		}
 	},
 	"links": {
