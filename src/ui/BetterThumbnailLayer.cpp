@@ -29,9 +29,12 @@ bool BetterThumbnailLayer::init()
         return false;
 
     auto bg = createLayerBG();
-    if (bg != nullptr) {
+    if (bg != nullptr)
+    {
         this->addChild(bg, -1);
-    } else {
+    }
+    else
+    {
         log::error("createLayerBG returned nullptr");
         return false;
     }
@@ -51,7 +54,7 @@ bool BetterThumbnailLayer::init()
         this->addChild(loadingImageLabel, 3);
 
         bgImage->setLoadCallback([this, screenSize, bg, bgImage, loadingImageLabel](geode::Result<void, std::string> result)
-                                {
+                                 {
             if (result.isOk() || bgImage->isLoaded())
             {
                 log::info("Thumbnail loaded, fading out background");
@@ -129,9 +132,9 @@ bool BetterThumbnailLayer::init()
     }
     else if (userRank == "moderator")
     {
-        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr); // we're gonna use the thumbnail mod badge for moderators since there 
-    }                                                                        // there exists no thumbnail moderator and moderator in this case here
-                                                                             // has the same perms as thumbnail mod
+        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr); // we're gonna use the thumbnail mod badge for moderators since there
+    } // there exists no thumbnail moderator and moderator in this case here
+      // has the same perms as thumbnail mod
     else if (userRank == "verified")
     {
         badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
@@ -258,7 +261,8 @@ bool BetterThumbnailLayer::init()
     {
         manageSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
     }
-    if (manageSprite != nullptr) {
+    if (manageSprite != nullptr)
+    {
         manageSprite->setScale(1.2f);
         auto manageBtn = CCMenuItemSpriteExtra::create(
             manageSprite,
@@ -317,11 +321,9 @@ void BetterThumbnailLayer::onRecent(CCObject *)
 }
 void BetterThumbnailLayer::onPending(CCObject *)
 {
-    // to do: pending thumbnail
     if (Mod::get()->getSavedValue<int>("role_num") >= 20)
     {
         CCDirector::get()->pushScene(CCTransitionFade::create(.5f, PendingThumbnailLayer::scene()));
-        FLAlertLayer::create("Pending Thumbnails", "This feature is not implemented yet.", "Ok")->show();
     }
     else
     {
