@@ -44,26 +44,45 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     auto usernameLabel = CCLabelBMFont::create(userInfo.c_str(), "goldFont.fnt");
     usernameLabel->setAnchorPoint({0.f, 0.5f});
     usernameLabel->setPosition({rightX, usernameY});
-    usernameLabel->setScale(0.35f);
+    usernameLabel->setScale(0.5f);
     this->addChild(usernameLabel);
 
     auto levelIdLabel = CCLabelBMFont::create(fmt::format("Level ID: {}", level_id).c_str(), "bigFont.fnt");
     levelIdLabel->setAnchorPoint({0.f, 0.5f});
     levelIdLabel->setPosition({rightX, levelIdY});
-    levelIdLabel->setScale(0.35f);
+    levelIdLabel->setScale(0.3f);
     this->addChild(levelIdLabel);
 
     auto replacementLabel = CCLabelBMFont::create(fmt::format("Replacement: {}", replacement ? "Yes" : "No").c_str(), "bigFont.fnt");
     replacementLabel->setAnchorPoint({0.f, 0.5f});
     replacementLabel->setPosition({rightX, replacementY});
-    replacementLabel->setScale(0.35f);
+    replacementLabel->setScale(0.3f);
     this->addChild(replacementLabel);
+
+    // Store thumb id for use in callback
+    m_thumbId = id;
 
     auto idLabel = CCLabelBMFont::create(fmt::format("ThumbID: {}", id).c_str(), "bigFont.fnt");
     idLabel->setAnchorPoint({0.f, 0.5f});
-    idLabel->setPosition({rightX, replacementY - 15.f});
-    idLabel->setScale(0.35f);
+    float idLabelY = replacementY - 15.f;
+    idLabel->setPosition({rightX, idLabelY});
+    idLabel->setScale(0.3f);
     this->addChild(idLabel);
+
+    auto buttonSprite = ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.8f);
+    buttonSprite->setScale(0.65f);
+    auto viewBtn = CCMenuItemSpriteExtra::create(
+        buttonSprite,
+        nullptr,
+        this,
+        menu_selector(ThumbnailNode::onViewButton));
+    viewBtn->setAnchorPoint({0.f, 0.5f});
+    viewBtn->setPosition({rightX, idLabelY - 20.f});
+
+    auto menu = CCMenu::create();
+    menu->addChild(viewBtn);
+    menu->setPosition({0.f, 0.f});
+    this->addChild(menu);
 
     float bgWidth = thumbnailBg->getContentSize().width;
     auto uploadTimeLabel = CCLabelBMFont::create(fmt::format("{}", upload_time).c_str(), "chatFont.fnt");
@@ -103,4 +122,9 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     */
 
     return true;
+}
+
+void ThumbnailNode::onViewButton(CCObject *)
+{
+    geode::utils::web::openLinkInBrowser(fmt::format("https://levelthumbs.prevter.me/pending/{}/image", m_thumbId));
 }
