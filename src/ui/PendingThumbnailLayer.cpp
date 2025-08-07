@@ -39,10 +39,10 @@ bool PendingThumbnailLayer::init()
     auto listLayer = GJListLayer::create(
         nullptr,              // BoomListView*
         "Pending Thumbnails", // title
-        {0, 0, 0, 100},       
-        356.f,                // width
-        220.f,                // height
-        0                     // list type (default)
+        {0, 0, 0, 100},
+        356.f, // width
+        220.f, // height
+        0      // list type (default)
     );
     this->addChild(listLayer, 1);
     listLayer->setAnchorPoint(CCPoint(0.5f, 0.5f));
@@ -55,9 +55,9 @@ bool PendingThumbnailLayer::init()
     scrollLayer->setContentSize(listLayer->getContentSize());
 
     auto spinner = LoadingSpinner::create(100.f);
-    spinner->setPosition(listLayer->getContentSize().width / 2.f, listLayer->getContentSize().height / 2.f);
+    spinner->setPosition(this->getContentSize().width / 2.f, this->getContentSize().height / 2.f);
     spinner->setTag(9999);
-    listLayer->addChild(spinner, 10);
+    this->addChild(spinner, 2);
 
     auto columnLayout = ColumnLayout::create();
     columnLayout->setAxisReverse(true);
@@ -74,11 +74,8 @@ bool PendingThumbnailLayer::init()
     auto req = web::WebRequest();
     req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
     auto task = req.get("https://levelthumbs.prevter.me/pending");
-    m_listener.bind([this, scrollLayer, contentLayer, listLayer](web::WebTask::Event *e) {
-        // Remove spinner when fetch completes
-        auto spinner = listLayer->getChildByTag(9999);
-        if (spinner) spinner->setVisible(false);
-
+    m_listener.bind([this, scrollLayer, contentLayer, listLayer](web::WebTask::Event *e)
+                    {
         if (auto res = e->getValue()) {
             if (res->code() < 200 || res->code() > 299) {
                 log::error("Pending API error: {} {}", res->code(), res->string().unwrapOr(""));
@@ -112,13 +109,16 @@ bool PendingThumbnailLayer::init()
             contentLayer->updateLayout();
             scrollLayer->scrollToTop();
 
+            // Remove spinner when fetch completes
+            auto spinner = this->getChildByTag(9999);
+            if (spinner) spinner->setVisible(false);
+
             // Show pending count
             auto countLabel = CCLabelBMFont::create(fmt::format("Pending thumbnails: {}", pendingCount).c_str(), "bigFont.fnt");                                                                           
             countLabel->setPosition(listLayer->getContentSize().width / 2.f, -5.f);
             countLabel->setScale(0.5f);
             listLayer->addChild(countLabel, 11);
-        }
-    });
+        } });
     m_listener.setFilter(task);
 
     // Back button at top left
