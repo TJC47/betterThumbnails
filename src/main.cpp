@@ -36,11 +36,14 @@ class $modify(MyCreatorLayer, CreatorLayer)
 
 	void onMyButton(CCObject *)
 	{
-		if (Mod::get()->hasSavedValue("token") &! Mod::get()->getSettingValue<bool>("dev-force-reauth")
-)
+		if (Mod::get()->hasSavedValue("token") & !Mod::get()->getSettingValue<bool>("dev-force-reauth"))
 		{
-			CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
+			auto authLayer = AuthLayer::create();
+			auto scene = CCDirector::sharedDirector()->getRunningScene();
+			if (scene && authLayer)
+				scene->addChild(authLayer, 9999);
 		}
+
 		else
 		{
 			geode::createQuickPopup(
