@@ -201,8 +201,8 @@ bool BetterThumbnailLayer::init()
             auto code = res->code();
             if (code<200||code>299){
                 auto error = res->string().unwrapOr(res->errorMessage());
+                CCDirector::get()->pushScene(CCTransitionFade::create(0.f, CreatorLayer::scene()));
                 FLAlertLayer::create("Oops",error,"OK")->show();
-                delete this;
                 return;
             }
             geode::log::info("{} {}",res->code(),res->string().unwrapOrDefault());
