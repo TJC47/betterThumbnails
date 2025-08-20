@@ -30,7 +30,7 @@
 			"version": ">=v1.4.0"
 		},
 		"prevter.imageplus": {
-			"importance": "suggested",
+			"importance": "required",
 			"version": ">=1.0.0"
 		}
 	},
