@@ -1,5 +1,6 @@
 #include "ThumbnailInfoLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
+#include "RejectReasonPopup.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/ui/LazySprite.hpp>
 
@@ -28,6 +29,15 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username, 
 {
     if (!CCLayer::init())
         return false;
+
+    // store fields for later actions
+    m_id = id;
+    m_userId = user_id;
+    m_username = username;
+    m_levelId = level_id;
+    m_acceptedFlag = accepted;
+    m_uploadTime = upload_time;
+    m_replacementFlag = replacement;
 
     auto bg = createLayerBG();
     if (bg != nullptr)
@@ -105,7 +115,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username, 
         return lbl;
     };
 
-    //makeLine(fmt::format("Submitter: {} ({})", username, user_id));
+    // makeLine(fmt::format("Submitter: {} ({})", username, user_id));
     makeLine(fmt::format("Level ID: {}", level_id));
     makeLine(fmt::format("Accepted: {}", accepted ? "Yes" : "No"));
     makeLine(fmt::format("Replacement: {}", replacement ? "Yes" : "No"));
@@ -118,6 +128,24 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username, 
     blackbox->setOpacity(100);
     this->addChild(blackbox, -1);
 
+    // check if user role is a moderator/admin, show the button
+    if (Mod::get()->getSavedValue<int>("role_num") >= 20)
+    {
+        auto acceptBtnSprite = ButtonSprite::create("Accept", 40, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+        auto acceptBtn = CCMenuItemSpriteExtra::create(acceptBtnSprite, this, menu_selector(ThumbnailInfoLayer::onAccept));
+        acceptBtn->setPosition({panelX + 30.f, panelY - line - 40.f});
+
+        auto rejectBtnSprite = ButtonSprite::create("Reject", 40, true, "bigFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+        auto rejectBtn = CCMenuItemSpriteExtra::create(rejectBtnSprite, this, menu_selector(ThumbnailInfoLayer::onReject));
+        rejectBtn->setPosition({panelX + 110.f, panelY - line - 40.f});
+
+        auto actionMenu = CCMenu::create();
+        actionMenu->addChild(acceptBtn);
+        actionMenu->addChild(rejectBtn);
+        actionMenu->setPosition({0.f, 0.f});
+        this->addChild(actionMenu);
+    }
+
     this->setKeypadEnabled(true);
     return true;
 }
@@ -127,4 +155,48 @@ void ThumbnailInfoLayer::keyBackClicked() { onBackButton(nullptr); }
 void ThumbnailInfoLayer::onBackButton(CCObject *)
 {
     CCDirector::get()->pushScene(CCTransitionFade::create(.5f, PendingThumbnailLayer::scene()));
+}
+
+void ThumbnailInfoLayer::onAccept(CCObject *)
+{
+    auto req = web::WebRequest();
+    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    req.bodyJSON(matjson::makeObject({{"accepted", true}}));
+    auto task = req.post(fmt::format("https://levelthumbs.prevter.me/pending/{}", m_id));
+
+    m_listener.bind([this](web::WebTask::Event *e)
+                    {
+        if (auto res = e->getValue()) {
+            if (res->code() >= 200 && res->code() <= 299) {
+                CCDirector::get()->pushScene(CCTransitionFade::create(.3f, PendingThumbnailLayer::scene()));
+                Notification::create("Success! Thumbnail accepted.", NotificationIcon::Success)->show();
+            } else {
+                Notification::create("Error! Failed to accept thumbnail.", NotificationIcon::Error)->show();
+            }
+        } });
+    m_listener.setFilter(task);
+}
+
+void ThumbnailInfoLayer::onReject(CCObject *)
+{
+    auto popup = RejectReasonPopup::create(m_id, [this](std::string reason)
+                                           {
+        auto req = web::WebRequest();
+        req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+        req.bodyJSON(matjson::makeObject({ {"accepted", false}, {"reason", reason} }));
+        auto task = req.post(fmt::format("https://levelthumbs.prevter.me/pending/{}", m_id));
+
+        m_listener.bind([this](web::WebTask::Event* e){
+            if (auto res = e->getValue()) {
+                if (res->code() >= 200 && res->code() <= 299) {
+                    CCDirector::get()->pushScene(CCTransitionFade::create(.3f, PendingThumbnailLayer::scene()));
+                    Notification::create("Success! Thumbnail rejected.", NotificationIcon::Success)->show();
+                } else {
+                    Notification::create("Error! Failed to reject thumbnail.", NotificationIcon::Error)->show();
+                }
+            }
+        });
+        m_listener.setFilter(task); });
+    if (popup)
+        popup->show();
 }
