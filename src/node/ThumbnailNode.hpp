@@ -20,5 +20,5 @@ public:
     bool m_replacement = false;
     static ThumbnailNode *create(const cocos2d::CCSize &size, int id, int user_id, const std::string &username, int level_id, bool accepted, const std::string &upload_time, bool replacement);
     bool init(const cocos2d::CCSize &size, int id, int user_id, const std::string &username, int level_id, bool accepted, const std::string &upload_time, bool replacement);
-    void onViewButton(CCObject*);
+    void onViewButton(CCObject *);
 };

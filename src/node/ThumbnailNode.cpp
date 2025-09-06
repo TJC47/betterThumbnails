@@ -41,20 +41,22 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     float levelIdY = usernameY - 15.f;
     float replacementY = levelIdY - 15.f;
 
-    auto userInfo = fmt::format("{} ({})", username, user_id);
+    auto userInfo = username + std::string(" (") + std::to_string(user_id) + ")";
     auto usernameLabel = CCLabelBMFont::create(userInfo.c_str(), "goldFont.fnt");
     usernameLabel->setAnchorPoint({0.f, 0.5f});
     usernameLabel->setPosition({rightX, usernameY});
     usernameLabel->setScale(0.5f);
     this->addChild(usernameLabel);
 
-    auto levelIdLabel = CCLabelBMFont::create(fmt::format("Level ID: {}", level_id).c_str(), "bigFont.fnt");
+    auto levelIdText = std::string("Level ID: ") + std::to_string(level_id);
+    auto levelIdLabel = CCLabelBMFont::create(levelIdText.c_str(), "bigFont.fnt");
     levelIdLabel->setAnchorPoint({0.f, 0.5f});
     levelIdLabel->setPosition({rightX, levelIdY});
     levelIdLabel->setScale(0.3f);
     this->addChild(levelIdLabel);
 
-    auto replacementLabel = CCLabelBMFont::create(fmt::format("Replacement: {}", replacement ? "Yes" : "No").c_str(), "bigFont.fnt");
+    auto replacementText = std::string("Replacement: ") + (replacement ? "Yes" : "No");
+    auto replacementLabel = CCLabelBMFont::create(replacementText.c_str(), "bigFont.fnt");
     replacementLabel->setAnchorPoint({0.f, 0.5f});
     replacementLabel->setPosition({rightX, replacementY});
     replacementLabel->setScale(0.3f);
@@ -69,7 +71,8 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     m_uploadTime = upload_time;
     m_replacement = replacement;
 
-    auto idLabel = CCLabelBMFont::create(fmt::format("ThumbID: {}", id).c_str(), "bigFont.fnt");
+    auto idText = std::string("ThumbID: ") + std::to_string(id);
+    auto idLabel = CCLabelBMFont::create(idText.c_str(), "bigFont.fnt");
     idLabel->setAnchorPoint({0.f, 0.5f});
     float idLabelY = replacementY - 15.f;
     idLabel->setPosition({rightX, idLabelY});
@@ -92,7 +95,7 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     this->addChild(menu);
 
     float bgWidth = thumbnailBg->getContentSize().width;
-    auto uploadTimeLabel = CCLabelBMFont::create(fmt::format("{}", upload_time).c_str(), "chatFont.fnt");
+    auto uploadTimeLabel = CCLabelBMFont::create(upload_time.c_str(), "chatFont.fnt");
     uploadTimeLabel->setAnchorPoint({1.f, 0.f});
     uploadTimeLabel->setPosition({bgWidth - 15.f, -40.f});
     uploadTimeLabel->setScale(0.35f);
@@ -100,8 +103,8 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
 
     // Fetch image from API and apply to LazySprite
     auto req = web::WebRequest();
-    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-    auto imageTask = req.get(fmt::format("https://levelthumbs.prevter.me/pending/{}/image", id));
+    req.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
+    auto imageTask = req.get(std::string("https://levelthumbs.prevter.me/pending/") + std::to_string(id) + "/image");
     m_listener.bind([lazySprite](web::WebTask::Event *e)
                     {
         if (auto res = e->getValue()) {
@@ -136,7 +139,5 @@ void ThumbnailNode::onViewButton(CCObject *)
     CCDirector::get()->pushScene(
         CCTransitionFade::create(
             .5f,
-            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)
-        )
-    );
+            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)));
 }
