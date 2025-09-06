@@ -63,7 +63,7 @@ bool PendingThumbnailLayer::init()
     columnLayout->setAxisReverse(true);
     columnLayout->setAxisAlignment(AxisAlignment::Even);
     columnLayout->setCrossAxisAlignment(AxisAlignment::Center);
-    columnLayout->setGap(120.f);
+    columnLayout->setGap(140.f);
     columnLayout->setAutoGrowAxis(true);
 
     auto contentLayer = scrollLayer->m_contentLayer;
