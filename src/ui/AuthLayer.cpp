@@ -95,7 +95,7 @@ void AuthLayer::startAuthProcess()
             matjson::makeObject({
                 {"account_id", GJAccountManager::get()->m_accountID},
                 {"user_id", (int)GameManager::get()->m_playerUserID},
-                {"username", GJAccountManager::get()->m_username},
+                {"username", std::string(GJAccountManager::get()->m_username.c_str())},
                 {"argon_token", argon_token}
             })
         );

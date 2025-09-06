@@ -2,6 +2,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/ui/LazySprite.hpp>
 #include <Geode/loader/Mod.hpp>
+#include "../ui/ThumbnailInfoLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -59,8 +60,14 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     replacementLabel->setScale(0.3f);
     this->addChild(replacementLabel);
 
-    // Store thumb id for use in callback
+    // Store data for info view
     m_thumbId = id;
+    m_userId = user_id;
+    m_username = username;
+    m_levelId = level_id;
+    m_accepted = accepted;
+    m_uploadTime = upload_time;
+    m_replacement = replacement;
 
     auto idLabel = CCLabelBMFont::create(fmt::format("ThumbID: {}", id).c_str(), "bigFont.fnt");
     idLabel->setAnchorPoint({0.f, 0.5f});
@@ -126,5 +133,10 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
 
 void ThumbnailNode::onViewButton(CCObject *)
 {
-    geode::utils::web::openLinkInBrowser(fmt::format("https://levelthumbs.prevter.me/pending/{}/image", m_thumbId));
+    CCDirector::get()->pushScene(
+        CCTransitionFade::create(
+            .5f,
+            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)
+        )
+    );
 }
