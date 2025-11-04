@@ -1,5 +1,5 @@
 {
-	"geode": "4.7.0",
+	"geode": "4.9.0",
 	"gd": {
 		"win": "2.2074",
 		"android": "2.2074",
@@ -27,7 +27,7 @@
 	"dependencies": {
 		"cdc.level_thumbnails": {
 			"importance": "required",
-			"version": ">=v1.4.0"
+			"version": ">=v2.0.0-alpha"
 		},
 		"prevter.imageplus": {
 			"importance": "required",
