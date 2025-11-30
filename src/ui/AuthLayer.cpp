@@ -2,84 +2,77 @@
 
 using namespace geode::prelude;
 
-AuthLayer *AuthLayer::create()
-{
-    auto ret = new AuthLayer();
-    if (ret && ret->init())
-    {
-        ret->autorelease();
-        ret->startAuthProcess();
-        return ret;
-    }
-    CC_SAFE_DELETE(ret);
-    return nullptr;
+AuthLayer* AuthLayer::create() {
+      auto ret = new AuthLayer();
+      if (ret && ret->init()) {
+            ret->autorelease();
+            ret->startAuthProcess();
+            return ret;
+      }
+      CC_SAFE_DELETE(ret);
+      return nullptr;
 }
 
-bool AuthLayer::init()
-{
-    if (!CCLayerColor::initWithColor({0, 0, 0, 150}))
-        return false;
+bool AuthLayer::init() {
+      if (!CCLayerColor::initWithColor({0, 0, 0, 150}))
+            return false;
 
-    cocos2d::CCTouchDispatcher::get()->registerForcePrio(this, 2);
+      cocos2d::CCTouchDispatcher::get()->registerForcePrio(this, 2);
 
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    this->setPosition({0, 0});
+      auto winSize = CCDirector::sharedDirector()->getWinSize();
+      this->setPosition({0, 0});
 
-    // Create loading spinner at center
-    auto loadingSpinner = LoadingSpinner::create(100.f);
-    loadingSpinner->setAnchorPoint({0.5f, 0.5f});
-    loadingSpinner->setPosition({winSize.width / 2.f, winSize.height / 2.f});
-    this->addChild(loadingSpinner, 2);
+      // Create loading spinner at center
+      auto loadingSpinner = LoadingSpinner::create(100.f);
+      loadingSpinner->setAnchorPoint({0.5f, 0.5f});
+      loadingSpinner->setPosition({winSize.width / 2.f, winSize.height / 2.f});
+      this->addChild(loadingSpinner, 2);
 
-    // Move loading text above spinner
-    loadingLabel = CCLabelBMFont::create("Authenticating with Argon...", "bigFont.fnt");
-    loadingLabel->setAnchorPoint({0.5f, 0.5f});
-    loadingLabel->setPosition({winSize.width / 2.f, winSize.height / 2.f + 50});
-    loadingLabel->setScale(0.5f);
-    this->addChild(loadingLabel, 1);
+      // Move loading text above spinner
+      loadingLabel = CCLabelBMFont::create("Authenticating with Argon...", "bigFont.fnt");
+      loadingLabel->setAnchorPoint({0.5f, 0.5f});
+      loadingLabel->setPosition({winSize.width / 2.f, winSize.height / 2.f + 50});
+      loadingLabel->setScale(0.5f);
+      this->addChild(loadingLabel, 1);
 
-    // this is so stupid but it prevented the buttons behind it from being pressed
-    auto invisibleSpriteNormal = CCSprite::create();
-    invisibleSpriteNormal->setTextureRect({0, 0, winSize.width, winSize.height});
-    invisibleSpriteNormal->setColor({0, 0, 0});
-    invisibleSpriteNormal->setOpacity(0);
-    auto invisibleSpriteSelected = CCSprite::create();
-    invisibleSpriteSelected->setTextureRect({0, 0, winSize.width, winSize.height});
-    invisibleSpriteSelected->setColor({0, 0, 0});
-    invisibleSpriteSelected->setOpacity(0);
-    auto antiButton = CCMenuItemSprite::create(
-        invisibleSpriteNormal,
-        invisibleSpriteSelected,
-        this,
-        menu_selector(AuthLayer::onAntiButton));
-    antiButton->setAnchorPoint({0, 0});
-    antiButton->setPosition({0, 0});
-    auto menu = CCMenu::createWithItem(antiButton);
-    menu->setPosition({0, 0});
-    this->addChild(menu, 0);
-    this->setTouchEnabled(true);
-    this->setKeypadEnabled(true);
-    this->setZOrder(999);
+      // this is so stupid but it prevented the buttons behind it from being pressed
+      auto invisibleSpriteNormal = CCSprite::create();
+      invisibleSpriteNormal->setTextureRect({0, 0, winSize.width, winSize.height});
+      invisibleSpriteNormal->setColor({0, 0, 0});
+      invisibleSpriteNormal->setOpacity(0);
+      auto invisibleSpriteSelected = CCSprite::create();
+      invisibleSpriteSelected->setTextureRect({0, 0, winSize.width, winSize.height});
+      invisibleSpriteSelected->setColor({0, 0, 0});
+      invisibleSpriteSelected->setOpacity(0);
+      auto antiButton = CCMenuItemSprite::create(
+          invisibleSpriteNormal,
+          invisibleSpriteSelected,
+          this,
+          menu_selector(AuthLayer::onAntiButton));
+      antiButton->setAnchorPoint({0, 0});
+      antiButton->setPosition({0, 0});
+      auto menu = CCMenu::createWithItem(antiButton);
+      menu->setPosition({0, 0});
+      this->addChild(menu, 0);
+      this->setTouchEnabled(true);
+      this->setKeypadEnabled(true);
+      this->setZOrder(999);
 
-    return true;
+      return true;
 }
 
-void AuthLayer::removeLoading()
-{
-    this->removeFromParent();
+void AuthLayer::removeLoading() {
+      this->removeFromParent();
 }
 // No-op handler for invisible button
-void AuthLayer::onAntiButton(CCObject *)
-{
-    // No operation
+void AuthLayer::onAntiButton(CCObject*) {
+      // No operation
 }
 
-void AuthLayer::startAuthProcess()
-{
-    argonResponded = false;
-    this->scheduleOnce(schedule_selector(AuthLayer::onArgonTimeout), 30.0f);
-    auto res = argon::startAuth([this](Result<std::string> res)
-                                {
+void AuthLayer::startAuthProcess() {
+      argonResponded = false;
+      this->scheduleOnce(schedule_selector(AuthLayer::onArgonTimeout), 30.0f);
+      auto res = argon::startAuth([this](Result<std::string> res) {
         argonResponded = true;
         this->unschedule(schedule_selector(AuthLayer::onArgonTimeout));
         if (!res){
@@ -122,7 +115,7 @@ void AuthLayer::startAuthProcess()
                 }
                 if (code<200||code>299){
                     auto error = responseStr.empty() ? res->errorMessage() : responseStr;
-                    FLAlertLayer::create("Oops",error,"OK")->show();
+                    Notification::create(fmt::format("{}", error), NotificationIcon::Error)->show();
                     this->removeLoading();
                     delete this;
                     return;
@@ -152,20 +145,16 @@ void AuthLayer::startAuthProcess()
         m_listener.setFilter(task); });
 }
 
-void AuthLayer::onArgonTimeout(float)
-{
-    if (!argonResponded)
-    {
-        FLAlertLayer::create("Argon Timeout", "Argon authentication is taking too long. Please try again.", "OK")->show();
-        this->removeLoading();
-    }
+void AuthLayer::onArgonTimeout(float) {
+      if (!argonResponded) {
+            FLAlertLayer::create("Argon Timeout", "Argon authentication is taking too long. Please try again.", "OK")->show();
+            this->removeLoading();
+      }
 }
 
-void AuthLayer::onApiTimeout(float)
-{
-    if (!apiResponded)
-    {
-        FLAlertLayer::create("API Timeout", "API authentication request is taking too long. Please try again.", "OK")->show();
-        this->removeLoading();
-    }
+void AuthLayer::onApiTimeout(float) {
+      if (!apiResponded) {
+            FLAlertLayer::create("API Timeout", "API authentication request is taking too long. Please try again.", "OK")->show();
+            this->removeLoading();
+      }
 }

@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-class ThumbnailNode : public cocos2d::CCNode
+class ThumbnailNode : public cocos2d::CCLayer
 {
 public:
     EventListener<web::WebTask> m_listener;

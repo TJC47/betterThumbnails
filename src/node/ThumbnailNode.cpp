@@ -20,23 +20,41 @@ ThumbnailNode *ThumbnailNode::create(const CCSize &size, int id, int user_id, co
 
 bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::string &username, int level_id, bool accepted, const std::string &upload_time, bool replacement)
 {
-    if (!CCNode::init())
+    if (!CCLayer::init())
         return false;
 
-    auto thumbnailBg = CCScale9Sprite::create("GJ_square05.png");
+    auto contentHeight = 100.f; // node height
+    this->setContentSize({size.width, contentHeight});
+    this->ignoreAnchorPointForPosition(false);
+    this->setAnchorPoint({0.5f, 1.0f});
+
+    auto thumbnailBg = CCScale9Sprite::create("square02_001.png");
+    thumbnailBg->setOpacity(100);
     thumbnailBg->setContentSize({size.width, 100.f});
     thumbnailBg->setScale(0.95f);
     thumbnailBg->setAnchorPoint({0.5f, 0.5f});
-    thumbnailBg->setPosition({size.width / 2.f, 0.f});
+    thumbnailBg->setPosition({size.width / 2.f, contentHeight / 2.f});
     this->addChild(thumbnailBg);
 
     auto lazySprite = LazySprite::create({1920.f, 1080.f}, true);
-    lazySprite->setPosition({90.f, 0.f});
-    lazySprite->setScale(0.325f);
-    this->addChild(lazySprite);
+    lazySprite->setScale(0.35f);
 
-    float rightX = size.width - 185.f;
-    float baseY = 0.f;
+    auto stencil = CCScale9Sprite::create("square02_001.png");
+    stencil->setContentSize(thumbnailBg->getContentSize());
+    stencil->setScale(thumbnailBg->getScale());
+    stencil->setAnchorPoint({0.5f, 0.5f});
+    stencil->setPosition({thumbnailBg->getContentSize().width / 2.f, thumbnailBg->getContentSize().height / 2.f});
+
+    auto clip = CCClippingNode::create(stencil);
+    clip->setAnchorPoint({0.f, 0.f});
+    clip->setPosition({0.f, 5.f});
+    clip->setAlphaThreshold(0.01f);
+    lazySprite->setPosition({thumbnailBg->getContentSize().width / 2.f, contentHeight / 2.f});
+    clip->addChild(lazySprite);
+    this->addChild(clip, -2);
+
+    float rightX = 20.f;
+    float baseY = contentHeight / 2.f;
     float usernameY = baseY + 35.f;
     float levelIdY = usernameY - 15.f;
     float replacementY = levelIdY - 15.f;
@@ -45,7 +63,7 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     auto usernameLabel = CCLabelBMFont::create(userInfo.c_str(), "goldFont.fnt");
     usernameLabel->setAnchorPoint({0.f, 0.5f});
     usernameLabel->setPosition({rightX, usernameY});
-    usernameLabel->setScale(0.5f);
+    usernameLabel->setScale(0.725f);
     this->addChild(usernameLabel);
 
     auto levelIdText = std::string("Level ID: ") + std::to_string(level_id);
@@ -97,7 +115,7 @@ bool ThumbnailNode::init(const CCSize &size, int id, int user_id, const std::str
     float bgWidth = thumbnailBg->getContentSize().width;
     auto uploadTimeLabel = CCLabelBMFont::create(upload_time.c_str(), "chatFont.fnt");
     uploadTimeLabel->setAnchorPoint({1.f, 0.f});
-    uploadTimeLabel->setPosition({bgWidth - 15.f, -40.f});
+    uploadTimeLabel->setPosition({bgWidth - 15.f, 10.f});
     uploadTimeLabel->setScale(0.35f);
     this->addChild(uploadTimeLabel);
 
