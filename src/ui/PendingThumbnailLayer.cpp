@@ -98,26 +98,53 @@ bool PendingThumbnailLayer::init() {
       m_navMenu->setVisible(false);
 
       auto listBottomY = screenSize.height / 2.f - listLayer->getContentSize().height / 2.f - 30.f;
-      auto toggleY = listBottomY + 18.f;
+      auto toggleY = listBottomY + 20.f;
       auto centerX = screenSize.width / 2.f;
       // 'All'
-      auto allOff = ButtonSprite::create("All", "bigFont.fnt", "GJ_button_01.png", 0.8f);
-      auto allOn = ButtonSprite::create("All", "bigFont.fnt", "GJ_button_02.png", 0.8f);
-      allOff->setScale(0.7f);
-      allOn->setScale(0.7f);
-      m_allFilterBtn = CCMenuItemToggler::create(allOff, allOn, this, menu_selector(PendingThumbnailLayer::onFilterAll));
-      m_allFilterBtn->setPosition({centerX - 95.f, toggleY});
+      // compute consistent width for all filter buttons
+      float labelScale = 0.7f;
+      auto measureLabel = [&](const char* text) -> float {
+            auto tmp = CCLabelBMFont::create(text, "bigFont.fnt");
+            tmp->setScale(labelScale);
+            auto size = tmp->getContentSize();
+            return size.width * labelScale;
+      };
+      auto widthAll = measureLabel("All");
+      auto widthNew = measureLabel("New");
+      auto widthRep = measureLabel("Replacement");
+
+      // add some padding
+      int commonDesiredPixels = (int)std::ceil(std::max({widthAll, widthNew, widthRep}) + 5.0f);
+
+      // create a single button sprite and a MenuItem for 'All'
+      int widthParam = 100.f;
+      auto allSpr = ButtonSprite::create("All", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
+      allSpr->setScale(labelScale);
+      m_allFilterBtn = CCMenuItemSpriteExtra::create(allSpr, this, menu_selector(PendingThumbnailLayer::onFilterAll));
+      m_allFilterBtnSpr = allSpr;
+      float gap = 1.f;
+      float offset = (float)commonDesiredPixels + gap;
+      m_allFilterBtn->setPosition({centerX - offset, toggleY});
       m_filterMenu->addChild(m_allFilterBtn);
-      m_allFilterBtn->toggle(true); // all is enabled by default
+      // mark all as selected by updating BG image
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      // 'New'
+      auto newSpr = ButtonSprite::create("New", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
+      newSpr->setScale(labelScale);
+      m_newFilterBtn = CCMenuItemSpriteExtra::create(newSpr, this, menu_selector(PendingThumbnailLayer::onFilterNew));
+      m_newFilterBtnSpr = newSpr;
+      m_newFilterBtn->setPosition({centerX, toggleY});
+      m_filterMenu->addChild(m_newFilterBtn);
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+
       // 'Replacement'
-      auto repOff = ButtonSprite::create("Replacement", "bigFont.fnt", "GJ_button_01.png", 0.75f);
-      auto repOn = ButtonSprite::create("Replacement", "bigFont.fnt", "GJ_button_02.png", 0.75f);
-      repOff->setScale(0.7f);
-      repOn->setScale(0.7f);
-      m_replacementFilterBtn = CCMenuItemToggler::create(repOff, repOn, this, menu_selector(PendingThumbnailLayer::onFilterReplacement));
-      m_replacementFilterBtn->setPosition({centerX + 95.f, toggleY});
+      auto repSpr = ButtonSprite::create("Replacement", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
+      repSpr->setScale(labelScale);
+      m_replacementFilterBtn = CCMenuItemSpriteExtra::create(repSpr, this, menu_selector(PendingThumbnailLayer::onFilterReplacement));
+      m_replacementFilterBtnSpr = repSpr;
+      m_replacementFilterBtn->setPosition({centerX + offset, toggleY});
       m_filterMenu->addChild(m_replacementFilterBtn);
-      m_replacementFilterBtn->toggle(false);
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
 
       // Fetch pending thumbnails from API
       auto req = web::WebRequest();
@@ -165,8 +192,27 @@ bool PendingThumbnailLayer::init() {
             // Remove spinner when fetch completes
             auto spinner = this->getChildByTag(9999);
             if (spinner) spinner->setVisible(false);
-            // Show filter menu now that data is loaded
-            if (m_filterMenu) m_filterMenu->setVisible(true);
+            // Show filter menu now that data is loaded and ensure it reflects the current filter state
+            if (m_filterMenu) {
+                  m_filterMenu->setVisible(true);
+                  switch (m_filterMode) {
+                  case FilterMode::All:
+                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
+                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        break;
+                  case FilterMode::NewOnly:
+                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
+                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        break;
+                  case FilterMode::ReplacementOnly:
+                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
+                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+                        break;
+                  }
+            }
         } });
       m_listener.setFilter(task);
 
@@ -209,10 +255,16 @@ void PendingThumbnailLayer::refreshPage() {
       std::vector<PendingThumbEntry> filtered;
       filtered.reserve(m_pendingItems.size());
       for (auto& it : m_pendingItems) {
-            if (m_showReplacementOnly) {
-                  if (it.replacement) filtered.push_back(it);
-            } else {
-                  filtered.push_back(it);
+            switch (m_filterMode) {
+                  case PendingThumbnailLayer::FilterMode::All:
+                        filtered.push_back(it);
+                        break;
+                  case PendingThumbnailLayer::FilterMode::NewOnly:
+                        if (!it.replacement) filtered.push_back(it);
+                        break;
+                  case PendingThumbnailLayer::FilterMode::ReplacementOnly:
+                        if (it.replacement) filtered.push_back(it);
+                        break;
             }
       }
       auto total = (int)filtered.size();
@@ -265,11 +317,17 @@ void PendingThumbnailLayer::onPrevPage(CCObject*) {
 void PendingThumbnailLayer::onNextPage(CCObject*) {
       // filtered total
       int filteredTotal = 0;
-      for (auto &it : m_pendingItems) {
-            if (m_showReplacementOnly) {
-                  if (it.replacement) ++filteredTotal;
-            } else {
-                  ++filteredTotal;
+      for (auto& it : m_pendingItems) {
+            switch (m_filterMode) {
+                  case FilterMode::All:
+                        ++filteredTotal;
+                        break;
+                  case FilterMode::NewOnly:
+                        if (!it.replacement) ++filteredTotal;
+                        break;
+                  case FilterMode::ReplacementOnly:
+                        if (it.replacement) ++filteredTotal;
+                        break;
             }
       }
       int totalPages = (filteredTotal + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
@@ -281,19 +339,31 @@ void PendingThumbnailLayer::onNextPage(CCObject*) {
 }
 
 void PendingThumbnailLayer::onFilterAll(CCObject*) {
-      //show all items
-      m_showReplacementOnly = false;
-      if (m_allFilterBtn) m_allFilterBtn->toggle(true);
-      if (m_replacementFilterBtn) m_replacementFilterBtn->toggle(false);
+      // show all items
+      m_filterMode = FilterMode::All;
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
       m_currentPage = 1;
       refreshPage();
 }
 
 void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
-      //show replacement-only items
-      m_showReplacementOnly = true;
-      if (m_replacementFilterBtn) m_replacementFilterBtn->toggle(true);
-      if (m_allFilterBtn) m_allFilterBtn->toggle(false);
+      // show replacement-only items
+      m_filterMode = FilterMode::ReplacementOnly;
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      m_currentPage = 1;
+      refreshPage();
+}
+
+void PendingThumbnailLayer::onFilterNew(CCObject*) {
+      // show new items (not replacements)
+      m_filterMode = FilterMode::NewOnly;
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
       m_currentPage = 1;
       refreshPage();
 }
