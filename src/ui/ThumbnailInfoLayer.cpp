@@ -84,57 +84,76 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       thumbBg->setContentSize({300.f, 170.f});
       this->addChild(thumbBg);
 
-      // Thumbnail
-      auto thumb = LazySprite::create({1920.f, 1080.f}, true);
-      thumb->setVisible(false);
-      thumb->setScale(.625f);
-      thumb->setAnchorPoint({0.5f, 0.5f});
+      // Thumbnail (replacement + original)
+      auto thumbReplacement = LazySprite::create({300.f, 170.f}, true);
+      thumbReplacement->setVisible(true);  // show replacement first by default
+      thumbReplacement->setAutoResize(true);
+      thumbReplacement->setAnchorPoint({0.5f, 0.5f});
+      m_thumbReplacement = thumbReplacement;
+
+      auto thumbOriginal = LazySprite::create({300.f, 170.f}, true);
+      thumbOriginal->setVisible(false);  // original starts hidden by default
+      thumbOriginal->setAutoResize(true);
+      thumbOriginal->setAnchorPoint({0.5f, 0.5f});
+      m_thumbOriginal = thumbOriginal;
 
       auto stencil = CCScale9Sprite::create("GJ_square06.png");
       stencil->setContentSize(thumbBg->getContentSize());
+      stencil->setPosition({0, 0});
 
       auto clip = CCClippingNode::create(stencil);
       clip->setAnchorPoint(thumbBg->getAnchorPoint());
       clip->setPosition(thumbBg->getContentSize());
       thumbBg->addChild(clip);
-      clip->addChild(thumb);
+
+      // add both sprites to the clipped area
+      clip->addChild(thumbReplacement);
+      clip->addChild(thumbOriginal);
 
       auto spinner = LoadingSpinner::create(30.f);
-      spinner->setPosition(thumb->getPosition());
+      spinner->setPosition({thumbBg->getContentSize().width / 2.f, thumbBg->getContentSize().height / 2.f});
       clip->addChild(spinner);
       clip->setContentSize(thumbBg->getContentSize());
       spinner->setVisible(true);
+      m_thumbSpinner = spinner;
 
-      {
-            auto req = web::WebRequest();
-            req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-            auto imageTask = req.get(fmt::format("https://levelthumbs.prevter.me/pending/{}/image", id));
-            m_listener.bind([this, thumb, thumbBg, id, spinner](web::WebTask::Event* e) {
+      // Label above thumbnail indicating which image is shown
+      auto thumbLabel = CCLabelBMFont::create(m_replacementFlag ? "Replacement" : "Original", "bigFont.fnt");
+      thumbLabel->setScale(0.5f);
+      thumbLabel->setAnchorPoint({0.5f, 0.5f});
+      thumbLabel->setPosition({thumbBg->getPositionX(), thumbBg->getPositionY() + thumbBg->getContentSize().height / 2.f + 12.f});
+      this->addChild(thumbLabel, 2);
+      m_thumbLabel = thumbLabel;
+
+      if (!m_replacementFlag) thumbLabel->setVisible(false);  // hide label if no replacement
+
+      auto req = web::WebRequest();
+      req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+      auto imageTask = req.get(fmt::format("https://levelthumbs.prevter.me/pending/{}/image", id));
+      m_listener.bind([this, thumbReplacement, thumbOriginal, thumbBg, id, spinner](web::WebTask::Event* e) {
         if (auto res = e->getValue()) {
             if (res->code() >= 200 && res->code() <= 299) {
                 auto data = res->data();
                                     if (!data.empty()) {
-                    thumb->loadFromData(data);
-                    // After loading, compute proper scale to fit inside thumbBg while preserving aspect
-                    auto contentSize = thumb->getContentSize();
-                    if (contentSize.width > 0 && contentSize.height > 0) {
-                        const float padding = 4.f; // small padding inside bg
-                        float targetW = thumbBg->getContentSize().width - padding;
-                        float targetH = thumbBg->getContentSize().height - padding;
-                        float scaleX = targetW / contentSize.width;
-                        float scaleY = targetH / contentSize.height;
-                        const float forcedScale = 0.625f;
-                        thumb->setScale(forcedScale);
-                        thumb->setVisible(true);
+                                    thumbReplacement->loadFromData(data);
                         if (spinner) spinner->setVisible(false);
-                    }
                 }
             } else {
                 log::error("Image fetch error: {} {}", res->code(), res->string().unwrapOr(""));
                 if (spinner) spinner->setVisible(false);
             }
         } });
-            m_listener.setFilter(imageTask);
+      m_listener.setFilter(imageTask);
+
+      // If this thumbnail is a replacement, add a Show original button under the thumb
+      if (m_replacementFlag) {
+            auto showSpr = ButtonSprite::create("Show original", 140, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            m_showOriginalBtn = CCMenuItemSpriteExtra::create(showSpr, this, menu_selector(ThumbnailInfoLayer::onShowOriginal));
+            // position beneath the thumb background
+            float btnX = thumbBg->getPositionX();
+            float btnY = thumbBg->getPositionY() - thumbBg->getContentSize().height / 2.f - 26.f;
+            m_showOriginalBtn->setPosition({btnX, btnY});
+            menu->addChild(m_showOriginalBtn);
       }
 
       // Info box
@@ -177,7 +196,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             auto actionMenu = CCMenu::create();
             actionMenu->addChild(acceptBtn);
             actionMenu->addChild(rejectBtn);
-            auto playBtnSprite = ButtonSprite::create("Play Level", 80, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto playBtnSprite = ButtonSprite::create("Play Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             auto playBtn = CCMenuItemSpriteExtra::create(playBtnSprite, this, menu_selector(ThumbnailInfoLayer::onPlayLevelButton));
             playBtn->setPosition({panelX + 70.f, panelY - line - 80.f});
             actionMenu->addChild(playBtn);
@@ -238,4 +257,70 @@ void ThumbnailInfoLayer::onReject(CCObject*) {
 void ThumbnailInfoLayer::onPlayLevelButton(CCObject*) {
       auto search = GJSearchObject::create(SearchType::Type19, std::to_string(m_levelId));
       CCDirector::get()->pushScene(CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+}
+
+void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
+      // Toggle back to the replacement
+      if (m_showingOriginal) {
+            if (m_thumbOriginal) m_thumbOriginal->setVisible(false);
+            if (m_thumbReplacement) m_thumbReplacement->setVisible(true);
+            if (m_thumbLabel) m_thumbLabel->setString("Replacement");
+            m_showingOriginal = false;
+            // update the button label back to 'Show original'
+            if (m_showOriginalBtn) {
+                  auto newSprite = ButtonSprite::create("Show original", 140, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                  m_showOriginalBtn->setNormalImage(newSprite);
+            }
+            return;
+      }
+
+      // If original already loaded, just show it and hide replacement
+      if (m_originalLoaded) {
+            if (m_thumbOriginal) m_thumbOriginal->setVisible(true);
+            if (m_thumbReplacement) m_thumbReplacement->setVisible(false);
+            if (m_thumbLabel) m_thumbLabel->setString("Original");
+            m_showingOriginal = true;
+            if (m_showOriginalBtn) {
+                  auto newSprite = ButtonSprite::create("Show replacement", 160, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                  m_showOriginalBtn->setNormalImage(newSprite);
+            }
+            return;
+      }
+
+      // Otherwise, fetch original image
+      if (!m_thumbOriginal || !m_thumbSpinner) return;
+      m_thumbSpinner->setVisible(true);
+      auto req = web::WebRequest();
+      req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+      auto task = req.get(fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", m_levelId));
+
+      m_listener.bind([this, task](web::WebTask::Event* e) {
+            if (auto res = e->getValue()) {
+                  if (res->code() >= 200 && res->code() <= 299) {
+                        auto data = res->data();
+                        if (!data.empty()) {
+                              if (m_thumbOriginal) {
+                                    m_thumbOriginal->loadFromData(data);
+                                    m_thumbOriginal->setVisible(true);
+                                    if (m_thumbLabel) m_thumbLabel->setString("Original");
+                              }
+                              if (m_thumbReplacement) {
+                                    m_thumbReplacement->setVisible(false);
+                              }
+                              m_originalLoaded = true;
+                              m_showingOriginal = true;
+                              if (m_thumbSpinner) m_thumbSpinner->setVisible(false);
+                              if (m_showOriginalBtn) {
+                                    auto newSprite = ButtonSprite::create("Show replacement", 160, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                                    m_showOriginalBtn->setNormalImage(newSprite);
+                              }
+                        }
+                  } else {
+                        log::error("Original image fetch error: {} {}", res->code(), res->string().unwrapOr(""));
+                        if (m_thumbSpinner) m_thumbSpinner->setVisible(false);
+                        Notification::create("Error loading original image.", NotificationIcon::Error)->show();
+                  }
+            }
+      });
+      m_listener.setFilter(task);
 }

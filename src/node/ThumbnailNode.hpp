@@ -10,6 +10,7 @@ using namespace geode::prelude;
 class ThumbnailNode : public cocos2d::CCLayer {
      public:
       EventListener<web::WebTask> m_listener;
+      LazySprite* m_backdrop = nullptr;
       // Stored data from API for opening the info layer
       int m_thumbId = 0;
       int m_userId = 0;

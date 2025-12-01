@@ -20,6 +20,7 @@ class ThumbnailInfoLayer : public CCLayer {
       void onAccept(CCObject*);
       void onReject(CCObject*);
       void onPlayLevelButton(CCObject*);
+      void onShowOriginal(CCObject*);
 
      private:
       // Stored for API calls
@@ -32,4 +33,11 @@ class ThumbnailInfoLayer : public CCLayer {
       bool m_replacementFlag = false;
 
       EventListener<web::WebTask> m_listener;
+      LazySprite* m_thumbReplacement = nullptr;
+      LazySprite* m_thumbOriginal = nullptr;
+      LoadingSpinner* m_thumbSpinner = nullptr;
+      CCMenuItemSpriteExtra* m_showOriginalBtn = nullptr;
+      bool m_showingOriginal = false;
+      bool m_originalLoaded = false;
+      CCLabelBMFont* m_thumbLabel = nullptr;
 };

@@ -35,8 +35,9 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       thumbnailBg->setPosition({size.width / 2.f, contentHeight / 2.f});
       this->addChild(thumbnailBg);
 
-      auto lazySprite = LazySprite::create({1920.f, 1080.f}, true);
+      auto lazySprite = LazySprite::create({180.f, 101.25f}, true);
       lazySprite->setVisible(false);
+      lazySprite->setAutoResize(true);
 
       auto stencil = CCScale9Sprite::create("square02_small.png");
       stencil->setContentSize(thumbnailBg->getContentSize());
@@ -51,6 +52,14 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       thumbnailBg->addChild(clip);
       // position clip in the center of the thumbnail background so stencil size matches
       lazySprite->setPosition({thumbnailBg->getContentSize().width / 2.f + 85.f, thumbnailBg->getContentSize().height / 2.f});  // offset to the right a bit
+      // // backdrop lazy sprite to display the same image behind the thumbnail inside the same clip
+      // auto backdropSprite = LazySprite::create({960, 540}, false);
+      // backdropSprite->setVisible(false);
+      // backdropSprite->setAnchorPoint({0.5f, 0.5f});
+      // backdropSprite->setPosition({thumbnailBg->getContentSize().width / 2.f, thumbnailBg->getContentSize().height / 2.f});
+      // backdropSprite->setOpacity(100);
+      // clip->addChild(backdropSprite, -1);  // add behind other clip children (add before lazySprite filled when executed)
+      // m_backdrop = backdropSprite;
       clip->addChild(lazySprite);
       auto spinner = LoadingSpinner::create(30.f);
       spinner->setPosition(lazySprite->getPosition());
@@ -140,11 +149,14 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
                         auto data = res->data();
                         if (!data.empty()) {
                               lazySprite->loadFromData(data);
+                              // if (m_backdrop) {
+                              //       m_backdrop->loadFromData(data);
+                              //       m_backdrop->setVisible(true);
+                              //       m_backdrop->setOpacity(100);
+                              // }
                               auto contentSize = lazySprite->getContentSize();
                               if (contentSize.width > 0 && contentSize.height > 0) {
                                     // force a fixed scale for list thumbnails so they are consistent
-                                    const float forcedScale = 0.375f;
-                                    lazySprite->setScale(forcedScale);
                                     lazySprite->setPosition({thumbnailBg->getContentSize().width / 2.f + 85.f, thumbnailBg->getContentSize().height / 2.f});
                                     lazySprite->setVisible(true);
                                     if (spinner) spinner->setVisible(false);

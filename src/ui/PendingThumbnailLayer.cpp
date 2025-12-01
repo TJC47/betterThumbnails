@@ -97,7 +97,7 @@ bool PendingThumbnailLayer::init() {
       // hide pagination controls until eaten the data
       m_navMenu->setVisible(false);
 
-      auto listBottomY = screenSize.height / 2.f - listLayer->getContentSize().height / 2.f - 30.f;
+      auto listBottomY = screenSize.height / 2.f - listLayer->getContentSize().height / 2.f - 50.f;
       auto toggleY = listBottomY + 20.f;
       auto centerX = screenSize.width / 2.f;
       // 'All'
@@ -117,7 +117,7 @@ bool PendingThumbnailLayer::init() {
       int commonDesiredPixels = (int)std::ceil(std::max({widthAll, widthNew, widthRep}) + 5.0f);
 
       // create a single button sprite and a MenuItem for 'All'
-      int widthParam = 100.f;
+      int widthParam = 130.f;
       auto allSpr = ButtonSprite::create("All", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
       allSpr->setScale(labelScale);
       m_allFilterBtn = CCMenuItemSpriteExtra::create(allSpr, this, menu_selector(PendingThumbnailLayer::onFilterAll));
