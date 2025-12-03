@@ -102,7 +102,7 @@ bool PendingThumbnailLayer::init() {
 
       int commonDesiredPixels = (int)std::ceil(std::max({widthAll, widthNew, widthRep}) + 5.0f);
 
-      int widthParam = 180.f;
+      int widthParam = 150.f;
       auto allSpr = ButtonSprite::create("All", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
       allSpr->setScale(labelScale);
       m_allFilterBtn = CCMenuItemSpriteExtra::create(allSpr, this, menu_selector(PendingThumbnailLayer::onFilterAll));
@@ -175,6 +175,9 @@ void PendingThumbnailLayer::onFilterAll(CCObject*) {
       if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      m_queryUsername.clear();
+      m_queryHasLevelId = false;
+      m_queryLevelId = 0;
       fetchPage(m_currentPage);
 }
 void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
@@ -183,6 +186,9 @@ void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
       if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      m_queryUsername.clear();
+      m_queryHasLevelId = false;
+      m_queryLevelId = 0;
       fetchPage(m_currentPage);
 }
 void PendingThumbnailLayer::onFilterNew(CCObject*) {
@@ -191,6 +197,9 @@ void PendingThumbnailLayer::onFilterNew(CCObject*) {
       if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      m_queryUsername.clear();
+      m_queryHasLevelId = false;
+      m_queryLevelId = 0;
       fetchPage(m_currentPage);
 }
 

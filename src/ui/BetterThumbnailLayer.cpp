@@ -72,7 +72,7 @@ bool BetterThumbnailLayer::init() {
                 loadingImageLabel->setString("Failed to load thumbnail");
             } });
 
-            // please laugh, lazysprite no supports webp (had to use my "proxy" for this)
+            // please laugh, lazysprite no supports webp
             bgImage->loadFromUrl("https://levelthumbs.prevter.me/thumbnail/random", LazySprite::Format::kFmtUnKnown, true);
             this->addChild(bgImage, -3);
       }
@@ -120,10 +120,8 @@ bool BetterThumbnailLayer::init() {
       } else if (userRank == "admin") {
             badgeSprite = CCSprite::create("adminBadge.png"_spr);
       } else if (userRank == "moderator") {
-            badgeSprite = CCSprite::create("thumbmodBadge.png"_spr);  // we're gonna use the thumbnail mod badge for moderators since there
-      }  // there exists no thumbnail moderator and moderator in this case here
-         // has the same perms as thumbnail mod
-      else if (userRank == "verified") {
+            badgeSprite = CCSprite::create("thumbmodBadge.png"_spr);
+      } else if (userRank == "verified") {
             badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
       } else {
             badgeSprite = nullptr;
