@@ -55,7 +55,7 @@ class PendingThumbnailLayer : public CCLayer {
       ButtonSprite* m_replacementFilterBtnSpr = nullptr;
       FilterMode m_filterMode = FilterMode::All;
 
-      void refreshPage();
+      void updateUI();
       void onPrevPage(CCObject*);
       void onNextPage(CCObject*);
       void fetchPage(int page);
