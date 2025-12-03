@@ -30,7 +30,7 @@ class PendingThumbnailLayer : public CCLayer {
             NewOnly = 1,
             ReplacementOnly = 2,
       };
-      static constexpr int ITEMS_PER_PAGE = 24;
+      static constexpr int ITEMS_PER_PAGE = 12;
       int m_currentPage = 1;
       std::vector<PendingThumbEntry> m_pendingItems;
 
@@ -49,11 +49,19 @@ class PendingThumbnailLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_allFilterBtn = nullptr;
       CCMenuItemSpriteExtra* m_newFilterBtn = nullptr;
       CCMenuItemSpriteExtra* m_replacementFilterBtn = nullptr;
+      CCMenuItemSpriteExtra* m_searchFilterBtn = nullptr;
 
       ButtonSprite* m_allFilterBtnSpr = nullptr;
       ButtonSprite* m_newFilterBtnSpr = nullptr;
       ButtonSprite* m_replacementFilterBtnSpr = nullptr;
+      AccountButtonSprite* m_searchFilterBtnSpr = nullptr;
       FilterMode m_filterMode = FilterMode::All;
+
+      std::string m_queryUsername;
+      bool m_queryHasLevelId = false;
+      int m_queryLevelId = 0;
+
+      void onOpenFilterPopup(CCObject*);
 
       void updateUI();
       void onPrevPage(CCObject*);

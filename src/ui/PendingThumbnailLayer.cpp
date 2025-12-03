@@ -4,6 +4,7 @@
 
 #include "../node/ThumbnailNode.hpp"
 #include "BetterThumbnailLayer.hpp"
+#include "FilterThumbnailPopup.hpp"
 
 CCScene* PendingThumbnailLayer::scene() {
       auto scene = CCScene::create();
@@ -101,7 +102,7 @@ bool PendingThumbnailLayer::init() {
 
       int commonDesiredPixels = (int)std::ceil(std::max({widthAll, widthNew, widthRep}) + 5.0f);
 
-      int widthParam = 130.f;
+      int widthParam = 180.f;
       auto allSpr = ButtonSprite::create("All", widthParam, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
       allSpr->setScale(labelScale);
       m_allFilterBtn = CCMenuItemSpriteExtra::create(allSpr, this, menu_selector(PendingThumbnailLayer::onFilterAll));
@@ -127,6 +128,14 @@ bool PendingThumbnailLayer::init() {
       m_replacementFilterBtn->setPosition({centerX + offset, toggleY});
       m_filterMenu->addChild(m_replacementFilterBtn);
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+
+      // @geode-ignore(unknown-resource)
+      auto searchIcon = CCSprite::createWithSpriteFrameName("geode.loader/search.png");
+      auto searchSpr = AccountButtonSprite::create(searchIcon, AccountBaseColor::Gray, AccountBaseSize::Normal);
+      m_searchFilterBtn = CCMenuItemSpriteExtra::create(searchSpr, this, menu_selector(PendingThumbnailLayer::onOpenFilterPopup));
+      m_searchFilterBtnSpr = searchSpr;
+      m_searchFilterBtn->setPosition({listLayer->getPositionX() - 40, listLayer->getContentHeight()});
+      m_filterMenu->addChild(m_searchFilterBtn);
 
       auto backButton = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png"), this, menu_selector(PendingThumbnailLayer::onBackButton));
       backButton->setPosition({25.f, screenSize.height - 25.f});
@@ -163,23 +172,46 @@ void PendingThumbnailLayer::onNextPage(CCObject*) { fetchPage(m_currentPage + 1)
 void PendingThumbnailLayer::onFilterAll(CCObject*) {
       m_filterMode = FilterMode::All;
       m_currentPage = 1;
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
       fetchPage(m_currentPage);
 }
 void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
       m_filterMode = FilterMode::ReplacementOnly;
       m_currentPage = 1;
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
       fetchPage(m_currentPage);
 }
 void PendingThumbnailLayer::onFilterNew(CCObject*) {
       m_filterMode = FilterMode::NewOnly;
       m_currentPage = 1;
+      if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
+      if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
       fetchPage(m_currentPage);
+}
+
+void PendingThumbnailLayer::onOpenFilterPopup(CCObject*) {
+      auto popup = FilterThumbnailPopup::create([this](std::string username, bool hasLevel, int levelId) {
+            this->m_queryUsername = std::move(username);
+            this->m_queryHasLevelId = hasLevel;
+            this->m_queryLevelId = levelId;
+            this->m_currentPage = 1;
+            this->fetchPage(this->m_currentPage);
+            if (this->m_allFilterBtnSpr) this->m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
+            if (this->m_newFilterBtnSpr) this->m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
+            if (this->m_replacementFilterBtnSpr) this->m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+      });
+      if (popup) popup->show();
 }
 
 void PendingThumbnailLayer::fetchPage(int page) {
       auto req = web::WebRequest();
       req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-      auto url = fmt::format("https://levelthumbs.prevter.me/pending?page={}&per_page=24", page);
+      auto url = fmt::format("https://levelthumbs.prevter.me/pending?page={}&per_page=12", page);
       switch (this->m_filterMode) {
             case FilterMode::NewOnly:
                   url += "&new_only=true";
@@ -190,6 +222,17 @@ void PendingThumbnailLayer::fetchPage(int page) {
             case FilterMode::All:
             default:
                   break;
+      }
+      // Apply optional query filters (username, level id)
+      if (!m_queryUsername.empty()) {
+            // naive url encoding for spaces
+            auto encoded = m_queryUsername;
+            for (auto& c : encoded)
+                  if (c == ' ') c = '+';
+            url += fmt::format("&username={}", encoded);
+      }
+      if (m_queryHasLevelId) {
+            url += fmt::format("&level_id={}", m_queryLevelId);
       }
       auto token = Mod::get()->getSavedValue<std::string>("token");
       if (token.empty()) {
@@ -254,12 +297,9 @@ void PendingThumbnailLayer::fetchPage(int page) {
                   if (this->m_filterMenu) this->m_filterMenu->setVisible(true);
             }
       });
-            // Ensure loading spinner shows while we're fetching
-            if (auto spinner = this->getChildByTag(9999)) spinner->setVisible(true);
-            // Clear content layer so stale items aren't visible while we're fetching
-            if (m_contentLayer) m_contentLayer->removeAllChildrenWithCleanup(true);
-            // Hide pagination until we have fresh data
-            if (m_navMenu) m_navMenu->setVisible(false);
+      if (auto spinner = this->getChildByTag(9999)) spinner->setVisible(true);
+      if (m_contentLayer) m_contentLayer->removeAllChildrenWithCleanup(true);
+      if (m_navMenu) m_navMenu->setVisible(false);
       m_listener.setFilter(task);
 }
 
