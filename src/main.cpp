@@ -18,7 +18,7 @@ class $modify(MyCreatorLayer, CreatorLayer) {
             auto myButton = CCMenuItemSpriteExtra::create(
                 CCSprite::create("betterThumbnailButton.png"_spr),
                 this,
-                menu_selector(MyCreatorLayer::onMyButton));
+                menu_selector(MyCreatorLayer::onBTNButton));
 
             auto menu = this->getChildByID("bottom-right-menu");
             menu->addChild(myButton);
@@ -32,12 +32,20 @@ class $modify(MyCreatorLayer, CreatorLayer) {
             return true;
       }
 
-      void onMyButton(CCObject*) {
+      void onBTNButton(CCObject*) {
             if (Mod::get()->hasSavedValue("token") & !Mod::get()->getSettingValue<bool>("dev-force-reauth")) {
-                  CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
-            }
-
-            else {
+                  auto authLayer = AuthLayer::create();
+                  auto scene = CCDirector::sharedDirector()->getRunningScene();
+                  if (scene && authLayer) {
+                        scene->addChild(authLayer, 9999);
+                  } else {
+                        FLAlertLayer::create(
+                            "Error",
+                            "Could not open authentication layer.",
+                            "OK")
+                            ->show();
+                  }
+            } else {
                   geode::createQuickPopup(
                       "Notice",
                       "To use the Better Level Thumbnails Mod you must <cg>authenticate</c> with your Geometry Dash account and the Level Thumbnails servers.",
@@ -49,6 +57,12 @@ class $modify(MyCreatorLayer, CreatorLayer) {
                                   auto scene = CCDirector::sharedDirector()->getRunningScene();
                                   if (scene && authLayer) {
                                         scene->addChild(authLayer, 9999);
+                                  } else {
+                                        FLAlertLayer::create(
+                                            "Error",
+                                            "Could not open authentication layer.",
+                                            "OK")
+                                            ->show();
                                   }
                             }
                       });

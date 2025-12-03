@@ -159,7 +159,7 @@ PendingThumbnailLayer* PendingThumbnailLayer::create() {
 }
 
 void PendingThumbnailLayer::keyBackClicked() { onBackButton(nullptr); }
-void PendingThumbnailLayer::onBackButton(CCObject*) { CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene())); }
+void PendingThumbnailLayer::onBackButton(CCObject*) { CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade); }
 
 void PendingThumbnailLayer::onPrevPage(CCObject*) {
       if (m_currentPage > 1) {

@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-class AuthLayer : public CCLayerColor {
+class AuthLayer : public CCBlockLayer {
 public:
     CCLabelBMFont *loadingLabel = nullptr;
     CCSprite *loadingSpinner = nullptr;
@@ -20,5 +20,4 @@ public:
     void startAuthProcess();
     void onArgonTimeout(float);
     void onApiTimeout(float);
-    void onAntiButton(CCObject *sender);
 };

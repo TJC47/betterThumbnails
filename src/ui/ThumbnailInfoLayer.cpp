@@ -211,7 +211,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 void ThumbnailInfoLayer::keyBackClicked() { onBackButton(nullptr); }
 
 void ThumbnailInfoLayer::onBackButton(CCObject*) {
-      CCDirector::get()->pushScene(CCTransitionFade::create(.5f, PendingThumbnailLayer::scene()));
+      CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 }
 
 void ThumbnailInfoLayer::onAccept(CCObject*) {

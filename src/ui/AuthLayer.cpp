@@ -14,7 +14,7 @@ AuthLayer* AuthLayer::create() {
 }
 
 bool AuthLayer::init() {
-      if (!CCLayerColor::initWithColor({0, 0, 0, 150}))
+      if (!CCBlockLayer::init())
             return false;
 
       cocos2d::CCTouchDispatcher::get()->registerForcePrio(this, 2);
@@ -35,38 +35,11 @@ bool AuthLayer::init() {
       loadingLabel->setScale(0.5f);
       this->addChild(loadingLabel, 1);
 
-      // this is so stupid but it prevented the buttons behind it from being pressed
-      auto invisibleSpriteNormal = CCSprite::create();
-      invisibleSpriteNormal->setTextureRect({0, 0, winSize.width, winSize.height});
-      invisibleSpriteNormal->setColor({0, 0, 0});
-      invisibleSpriteNormal->setOpacity(0);
-      auto invisibleSpriteSelected = CCSprite::create();
-      invisibleSpriteSelected->setTextureRect({0, 0, winSize.width, winSize.height});
-      invisibleSpriteSelected->setColor({0, 0, 0});
-      invisibleSpriteSelected->setOpacity(0);
-      auto antiButton = CCMenuItemSprite::create(
-          invisibleSpriteNormal,
-          invisibleSpriteSelected,
-          this,
-          menu_selector(AuthLayer::onAntiButton));
-      antiButton->setAnchorPoint({0, 0});
-      antiButton->setPosition({0, 0});
-      auto menu = CCMenu::createWithItem(antiButton);
-      menu->setPosition({0, 0});
-      this->addChild(menu, 0);
-      this->setTouchEnabled(true);
-      this->setKeypadEnabled(true);
-      this->setZOrder(999);
-
       return true;
 }
 
 void AuthLayer::removeLoading() {
       this->removeFromParent();
-}
-// No-op handler for invisible button
-void AuthLayer::onAntiButton(CCObject*) {
-      // No operation
 }
 
 void AuthLayer::startAuthProcess() {
@@ -76,7 +49,7 @@ void AuthLayer::startAuthProcess() {
         argonResponded = true;
         this->unschedule(schedule_selector(AuthLayer::onArgonTimeout));
         if (!res){
-            FLAlertLayer::create("Oops!","The <cy>Argon</c> auth process failed.","OK")->show();
+            FLAlertLayer::create("Oops!","<cy>Argon</c> auth process <cr>failed</c>.","OK")->show();
             this->removeLoading();
             return;
         }
@@ -87,7 +60,7 @@ void AuthLayer::startAuthProcess() {
         req.bodyJSON(
             matjson::makeObject({
                 {"account_id", GJAccountManager::get()->m_accountID},
-                {"user_id", (int)GameManager::get()->m_playerUserID},
+                {"user_id", static_cast<int>(GameManager::get()->m_playerUserID)},
                 {"username", std::string(GJAccountManager::get()->m_username.c_str())},
                 {"argon_token", argon_token}
             })
