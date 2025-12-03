@@ -223,7 +223,7 @@ void ThumbnailInfoLayer::onAccept(CCObject*) {
       m_listener.bind([this](web::WebTask::Event* e) {
         if (auto res = e->getValue()) {
             if (res->code() >= 200 && res->code() <= 299) {
-                CCDirector::get()->pushScene(CCTransitionFade::create(.3f, PendingThumbnailLayer::scene()));
+                CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
                 Notification::create("Success! Thumbnail accepted.", NotificationIcon::Success)->show();
             } else {
                 Notification::create("Error! Failed to accept thumbnail.", NotificationIcon::Error)->show();
@@ -242,7 +242,7 @@ void ThumbnailInfoLayer::onReject(CCObject*) {
         m_listener.bind([this](web::WebTask::Event* e){
             if (auto res = e->getValue()) {
                 if (res->code() >= 200 && res->code() <= 299) {
-                    CCDirector::get()->pushScene(CCTransitionFade::create(.3f, PendingThumbnailLayer::scene()));
+                    CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
                     Notification::create("Success! Thumbnail rejected.", NotificationIcon::Success)->show();
                 } else {
                     Notification::create("Error! Failed to reject thumbnail.", NotificationIcon::Error)->show();
