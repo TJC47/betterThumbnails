@@ -146,75 +146,7 @@ bool PendingThumbnailLayer::init() {
       m_filterMenu->addChild(m_replacementFilterBtn);
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
 
-      // Fetch pending thumbnails from API
-      auto req = web::WebRequest();
-      req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-      auto task = req.get("https://levelthumbs.prevter.me/pending");
-      m_listener.bind([this, scrollLayer, contentLayer, listLayer](web::WebTask::Event* e) {
-        if (auto res = e->getValue()) {
-            if (res->code() < 200 || res->code() > 299) {
-                log::error("Pending API error: {} {}", res->code(), res->string().unwrapOr(""));
-                Notification::create(fmt::format("Pending API error: {}", res->string().unwrapOr("")), NotificationIcon::Error)->show();
-                return;
-            }
-            auto json = res->json().unwrapOrDefault();
-            if (!json.isArray()) {
-                log::error("Pending API did not return an array");
-                Notification::create("Pending API error: Invalid response format", NotificationIcon::Error)->show();
-                return;
-            }
-
-            // Gather results into pending vector
-            m_pendingItems.clear();
-            for (auto& item : json) {
-                auto id = item["id"].asInt().unwrapOrDefault();
-                auto user_id = item["user_id"].asInt().unwrapOrDefault();
-                auto username = item["username"].asString().unwrapOr("");
-                auto level_id = item["level_id"].asInt().unwrapOrDefault();
-                auto accepted = item["accepted"].asBool().unwrapOr(false);
-                auto upload_time = item["upload_time"].asString().unwrapOr("");
-                auto replacement = item["replacement"].asBool().unwrapOr(false);
-                PendingThumbEntry e;
-                e.id = id;
-                e.user_id = user_id;
-                e.username = username;
-                e.level_id = level_id;
-                e.accepted = accepted;
-                e.upload_time = upload_time;
-                e.replacement = replacement;
-                m_pendingItems.push_back(e);
-            }
-
-            // Update the UI once all items are stored
-            m_currentPage = 1;
-            refreshPage();
-
-            // Remove spinner when fetch completes
-            auto spinner = this->getChildByTag(9999);
-            if (spinner) spinner->setVisible(false);
-            // Show filter menu now that data is loaded and ensure it reflects the current filter state
-            if (m_filterMenu) {
-                  m_filterMenu->setVisible(true);
-                  switch (m_filterMode) {
-                  case FilterMode::All:
-                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
-                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        break;
-                  case FilterMode::NewOnly:
-                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
-                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        break;
-                  case FilterMode::ReplacementOnly:
-                        if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
-                        if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
-                        break;
-                  }
-            }
-        } });
-      m_listener.setFilter(task);
+      fetchPage(m_currentPage);
 
       // Back button at top left
       auto backButton = CCMenuItemSpriteExtra::create(
@@ -267,14 +199,20 @@ void PendingThumbnailLayer::refreshPage() {
                         break;
             }
       }
-      auto total = (int)filtered.size();
-      auto totalPages = (total + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
+      int total = 0;
+      int totalPages = 1;
+      int start = 0;
+      int end = (int)filtered.size();
+      // Only server-side paging is supported: filtered contains the items for the current page
+      total = m_apiTotal;
+      int perPage = m_apiPerPage > 0 ? m_apiPerPage : ITEMS_PER_PAGE;
+      totalPages = (total + perPage - 1) / perPage;
       if (totalPages <= 0) totalPages = 1;
       if (m_currentPage < 1) m_currentPage = 1;
       if (m_currentPage > totalPages) m_currentPage = totalPages;
-
-      auto start = (m_currentPage - 1) * ITEMS_PER_PAGE;
-      auto end = std::min(start + ITEMS_PER_PAGE, total);
+      // filtered contains only that page's items, so show all of filtered
+      start = 0;
+      end = (int)filtered.size();
 
       for (int i = start; i < end; ++i) {
             auto& item = filtered[i];
@@ -289,52 +227,90 @@ void PendingThumbnailLayer::refreshPage() {
       m_scrollLayer->scrollToTop();
 
       if (m_infoLabel) {
-            auto displayStart = total == 0 ? 0 : (start + 1);
-            auto displayEnd = total == 0 ? 0 : end;
+            int displayStart = 0;
+            int displayEnd = 0;
+            if (m_serverPaging) {
+                  displayStart = total == 0 ? 0 : ((m_currentPage - 1) * (m_apiPerPage > 0 ? m_apiPerPage : ITEMS_PER_PAGE) + 1);
+                  displayEnd = total == 0 ? 0 : ((m_currentPage - 1) * (m_apiPerPage > 0 ? m_apiPerPage : ITEMS_PER_PAGE) + end);
+            } else {
+                  displayStart = total == 0 ? 0 : (start + 1);
+                  displayEnd = total == 0 ? 0 : end;
+            }
             m_infoLabel->setString(fmt::format("{} to {} of {}", displayStart, displayEnd, total).c_str());
       }
 
       if (m_navMenu) {
-            m_navMenu->setVisible(total > ITEMS_PER_PAGE);
-            if (m_prevBtn) {
-                  m_prevBtn->setEnabled(m_currentPage > 1);
-                  m_prevBtn->setVisible(m_currentPage > 1);
-            }
-            if (m_nextBtn) {
-                  m_nextBtn->setEnabled(m_currentPage < totalPages);
-                  m_nextBtn->setVisible(m_currentPage < totalPages);
+            // show nav only when server reporting more than current page or when local pages exceed ITEMS_PER_PAGE
+            if (m_serverPaging) {
+                  m_navMenu->setVisible(total > (m_apiPerPage > 0 ? m_apiPerPage : ITEMS_PER_PAGE));
+                  if (m_prevBtn) {
+                        m_prevBtn->setEnabled(m_currentPage > 1);
+                        m_prevBtn->setVisible(m_currentPage > 1);
+                  }
+                  if (m_nextBtn) {
+                        m_nextBtn->setEnabled(m_currentPage < totalPages);
+                        m_nextBtn->setVisible(m_currentPage < totalPages);
+                  }
+            } else {
+                  m_navMenu->setVisible(total > ITEMS_PER_PAGE);
+                  if (m_prevBtn) {
+                        m_prevBtn->setEnabled(m_currentPage > 1);
+                        m_prevBtn->setVisible(m_currentPage > 1);
+                  }
+                  if (m_nextBtn) {
+                        m_nextBtn->setEnabled(m_currentPage < totalPages);
+                        m_nextBtn->setVisible(m_currentPage < totalPages);
+                  }
             }
       }
 }
 
 void PendingThumbnailLayer::onPrevPage(CCObject*) {
-      if (m_currentPage > 1) {
-            m_currentPage -= 1;
-            refreshPage();
+      if (m_serverPaging) {
+            if (m_currentPage > 1) {
+                  m_currentPage -= 1;
+                  // fetch server page
+                  fetchPage(m_currentPage);
+            }
+      } else {
+            if (m_currentPage > 1) {
+                  m_currentPage -= 1;
+                  refreshPage();
+            }
       }
 }
 
 void PendingThumbnailLayer::onNextPage(CCObject*) {
-      // filtered total
-      int filteredTotal = 0;
-      for (auto& it : m_pendingItems) {
-            switch (m_filterMode) {
-                  case FilterMode::All:
-                        ++filteredTotal;
-                        break;
-                  case FilterMode::NewOnly:
-                        if (!it.replacement) ++filteredTotal;
-                        break;
-                  case FilterMode::ReplacementOnly:
-                        if (it.replacement) ++filteredTotal;
-                        break;
+      if (m_serverPaging) {
+            int perPage = m_apiPerPage > 0 ? m_apiPerPage : ITEMS_PER_PAGE;
+            int totalPages = (m_apiTotal + perPage - 1) / perPage;
+            if (totalPages <= 0) totalPages = 1;
+            if (m_currentPage < totalPages) {
+                  m_currentPage += 1;
+                  fetchPage(m_currentPage);
             }
-      }
-      int totalPages = (filteredTotal + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
-      if (totalPages <= 0) totalPages = 1;
-      if (m_currentPage < totalPages) {
-            m_currentPage += 1;
-            refreshPage();
+      } else {
+            // filtered total
+            int filteredTotal = 0;
+            for (auto& it : m_pendingItems) {
+                  switch (m_filterMode) {
+                        case FilterMode::All:
+                              ++filteredTotal;
+                              break;
+                        case FilterMode::NewOnly:
+                              if (!it.replacement) ++filteredTotal;
+                              break;
+                        case FilterMode::ReplacementOnly:
+                              if (it.replacement) ++filteredTotal;
+                              break;
+                  }
+            }
+            int totalPages = (filteredTotal + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
+            if (totalPages <= 0) totalPages = 1;
+            if (m_currentPage < totalPages) {
+                  m_currentPage += 1;
+                  refreshPage();
+            }
       }
 }
 
@@ -345,7 +321,10 @@ void PendingThumbnailLayer::onFilterAll(CCObject*) {
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
       m_currentPage = 1;
-      refreshPage();
+      if (m_serverPaging)
+            fetchPage(m_currentPage);
+      else
+            refreshPage();
 }
 
 void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
@@ -355,15 +334,108 @@ void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
       if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
       m_currentPage = 1;
-      refreshPage();
+      if (m_serverPaging)
+            fetchPage(m_currentPage);
+      else
+            refreshPage();
 }
 
 void PendingThumbnailLayer::onFilterNew(CCObject*) {
-      // show new items (not replacements)
+      // show new-only items
       m_filterMode = FilterMode::NewOnly;
       if (m_newFilterBtnSpr) m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
       if (m_allFilterBtnSpr) m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
       if (m_replacementFilterBtnSpr) m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
       m_currentPage = 1;
-      refreshPage();
+      if (m_serverPaging) {
+            fetchPage(m_currentPage);
+      } else {
+            refreshPage();
+      }
+}
+
+void PendingThumbnailLayer::fetchPage(int page) {
+      auto req = web::WebRequest();
+      req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+      auto url = fmt::format("https://levelthumbs.prevter.me/pending?page={}&per_page=24", page);
+      switch (this->m_filterMode) {
+            case FilterMode::NewOnly:
+                  url += "&new_only=true";
+                  break;
+            case FilterMode::ReplacementOnly:
+                  url += "&replacement_only=true";
+                  break;
+            case FilterMode::All:
+            default:
+                  break;
+      }
+      auto token = Mod::get()->getSavedValue<std::string>("token");
+      if (token.empty()) {
+            log::warn("Pending API request missing token");
+      }
+      auto task = req.get(url);
+      m_listener.bind([this, url, token](web::WebTask::Event* e) {
+            if (auto res = e->getValue()) {
+                  // log::debug("Pending API callback for: {} ; token present: {}", url, !token.empty());
+                  if (res->code() < 200 || res->code() > 299) {
+                        auto spinner = this->getChildByTag(9999);
+                        if (spinner) spinner->setVisible(false);
+                        log::error("Pending API error: {} {}", res->code(), res->string().unwrapOr(""));
+                        Notification::create(fmt::format("Pending API error: {}", res->string().unwrapOr("")), NotificationIcon::Error)->show();
+                        return;
+                  }
+                  auto body = res->string().unwrapOrDefault();
+                  // log::debug("Pending API response: {} body len={}", res->code(), body.size());
+                  auto jsonResult = res->json();
+                  if (!jsonResult.isOk()) {
+                        // JSON parsing failed; log and show notification
+                        auto spinner = this->getChildByTag(9999);
+                        if (spinner) spinner->setVisible(false);
+                        auto maxLen = size_t(1024);
+                        auto truncated = body.size() > maxLen ? body.substr(0, maxLen) + "..." : body;
+                        log::error("Pending API JSON parse error: {}. Body: {}", jsonResult.unwrapErr(), truncated);
+                        Notification::create(fmt::format("Pending API error: JSON parse error: {}", jsonResult.unwrapErr()), NotificationIcon::Error)->show();
+                        return;
+                  }
+                  auto json = jsonResult.unwrap();
+                  // only server paging is supported
+                  if (json.isObject() && json["uploads"].isArray()) {
+                        this->m_serverPaging = true;
+                        this->m_apiPerPage = json["per_page"].asInt().unwrapOr(ITEMS_PER_PAGE);
+                        this->m_apiTotal = json["total"].asInt().unwrapOr(0);
+                        this->m_currentPage = json["page"].asInt().unwrapOr(1);
+                        auto arr = json["uploads"].asArray().copied().unwrapOrDefault();
+                        this->m_pendingItems.clear();
+                        for (auto& item : arr) {
+                              PendingThumbEntry e;
+                              e.id = item["id"].asInt().unwrapOrDefault();
+                              e.user_id = item["user_id"].asInt().unwrapOrDefault();
+                              e.username = item["username"].asString().unwrapOr("");
+                              e.level_id = item["level_id"].asInt().unwrapOrDefault();
+                              e.accepted = item["accepted"].asBool().unwrapOr(false);
+                              e.upload_time = item["upload_time"].asString().unwrapOr("");
+                              e.replacement = item["replacement"].asBool().unwrapOr(false);
+                              this->m_pendingItems.push_back(e);
+                        }
+                        log::info("Pending API parsed {} uploads (server paging)", this->m_pendingItems.size());
+                  } else {
+                        auto spinner = this->getChildByTag(9999);
+                        if (spinner) spinner->setVisible(false);
+                        auto body = res->string().unwrapOrDefault();
+                        auto truncated = body.size() > 1024 ? body.substr(0, 1024) + "..." : body;
+                        log::error("Pending API did not return expected uploads object with 'uploads' array. Response truncated: {}", truncated);
+                        Notification::create("Pending API error: Invalid response format", NotificationIcon::Error)->show();
+                        return;
+                  }
+
+                  // Update the UI
+                  this->m_currentPage = this->m_currentPage < 1 ? 1 : this->m_currentPage;
+                  this->refreshPage();
+                  // Remove spinner when fetch completes
+                  auto spinner = this->getChildByTag(9999);
+                  if (spinner) spinner->setVisible(false);
+                  if (this->m_filterMenu) this->m_filterMenu->setVisible(true);
+            }
+      });
+      m_listener.setFilter(task);
 }

@@ -30,10 +30,13 @@ class PendingThumbnailLayer : public CCLayer {
             NewOnly = 1,
             ReplacementOnly = 2,
       };
-      static constexpr int ITEMS_PER_PAGE = 20;
+      static constexpr int ITEMS_PER_PAGE = 24;
       int m_currentPage = 1;
       std::vector<PendingThumbEntry> m_pendingItems;
 
+      int m_apiPerPage = 0;
+      int m_apiTotal = 0;
+      bool m_serverPaging = true;
       ScrollLayer* m_scrollLayer = nullptr;
       cocos2d::CCLayer* m_contentLayer = nullptr;
       CCLabelBMFont* m_pageLabel = nullptr;
@@ -55,6 +58,7 @@ class PendingThumbnailLayer : public CCLayer {
       void refreshPage();
       void onPrevPage(CCObject*);
       void onNextPage(CCObject*);
+      void fetchPage(int page);
       void onFilterAll(CCObject*);
       void onFilterNew(CCObject*);
       void onFilterReplacement(CCObject*);

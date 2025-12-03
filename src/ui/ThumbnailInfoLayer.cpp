@@ -91,7 +91,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       thumbReplacement->setAnchorPoint({0.5f, 0.5f});
       m_thumbReplacement = thumbReplacement;
 
-      auto thumbOriginal = LazySprite::create({300.f, 170.f}, true);
+      auto thumbOriginal = LazySprite::create({300.f, 170.f}, false);
       thumbOriginal->setVisible(false);  // original starts hidden by default
       thumbOriginal->setAutoResize(true);
       thumbOriginal->setAnchorPoint({0.5f, 0.5f});
