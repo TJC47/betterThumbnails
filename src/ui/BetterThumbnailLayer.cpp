@@ -310,7 +310,7 @@ void BetterThumbnailLayer::keyBackClicked() {
 }
 
 void BetterThumbnailLayer::onBackButton(CCObject*) {
-      CCDirector::get()->pushScene(CCTransitionFade::create(.5f, CreatorLayer::scene()));
+      CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 }
 void BetterThumbnailLayer::onInfoButton(CCObject*) {
       std::string userRank = Mod::get()->getSavedValue<std::string>("role");

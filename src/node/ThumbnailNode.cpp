@@ -110,21 +110,19 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       idLabel->setScale(0.3f);
       this->addChild(idLabel);
 
-      auto buttonSprite = ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.8f);
+      auto buttonSprite = ButtonSprite::create("View", "bigFont.fnt", "GJ_button_01.png", 0.6f);
       buttonSprite->setScale(0.65f);
       auto viewBtn = CCMenuItemSpriteExtra::create(
           buttonSprite,
           nullptr,
           this,
           menu_selector(ThumbnailNode::onViewButton));
-      viewBtn->setAnchorPoint({0.f, 0.5f});
-      viewBtn->setPosition({rightX, idLabelY - 20.f});
+      viewBtn->setPosition({rightX + 20.f, idLabelY - 20.f});
 
-      auto playBtnSprite = ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png", 0.8f);
+      auto playBtnSprite = ButtonSprite::create("Play Level", "bigFont.fnt", "GJ_button_01.png", 0.6f);
       playBtnSprite->setScale(0.65f);
       auto playBtn = CCMenuItemSpriteExtra::create(playBtnSprite, nullptr, this, menu_selector(ThumbnailNode::onPlayLevelButton));
-      playBtn->setAnchorPoint({0.f, 0.5f});
-      playBtn->setPosition({rightX + 50.f, idLabelY - 20.f});
+      playBtn->setPosition({rightX + 90.f, idLabelY - 20.f});
 
       auto menu = CCMenu::create();
       menu->addChild(viewBtn);

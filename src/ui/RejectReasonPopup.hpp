@@ -20,5 +20,4 @@ class RejectReasonPopup : public Popup<int, std::function<void(std::string)>> {
       std::function<void(std::string)> m_callback;
 
       void onSend(CCObject*);
-      void onCancel(CCObject*);
 };

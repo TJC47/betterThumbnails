@@ -57,24 +57,16 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       backButton->setPosition({25.f, screenSize.height - 25.f});
       menu->addChild(backButton);
 
-      // Title
-      auto title = CCLabelBMFont::create("Thumbnail Details", "bigFont.fnt");
-      title->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
-      title->setScale(0.8f);
-      title->setAlignment(kCCTextAlignmentCenter);
-      this->addChild(title, 1);
-
       // Submitter
       auto submitter = CCLabelBMFont::create(fmt::format("Submitter: {} ({})", username, user_id).c_str(), "goldFont.fnt");
-      submitter->setPosition({screenSize.width / 2.f, screenSize.height - 50.f});
-      submitter->setScale(0.6f);
+      submitter->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
       submitter->setAlignment(kCCTextAlignmentCenter);
       this->addChild(submitter, 1);
 
       // Timestamp
       auto timestamp = CCLabelBMFont::create(fmt::format("Uploaded: {}", upload_time).c_str(), "chatFont.fnt");
-      timestamp->setPosition({screenSize.width / 2.f, screenSize.height - 65.f});
-      timestamp->setScale(0.4f);
+      timestamp->setPosition({screenSize.width / 2.f, screenSize.height - 50.f});
+      timestamp->setScale(0.75f);
       timestamp->setAlignment(kCCTextAlignmentCenter);
       this->addChild(timestamp, 1);
 
@@ -157,8 +149,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       }
 
       // Info box
-      float panelX = screenSize.width * 0.55f + 80.f;
-      float panelY = screenSize.height * 0.65f;
+      float panelX = screenSize.width * 0.55f + 75.f;
+      float panelY = screenSize.height * 0.7f;
       float line = 0.f;
       auto makeLine = [&](const std::string& text, float scale = 0.35f) {
             auto lbl = CCLabelBMFont::create(text.c_str(), "bigFont.fnt");
@@ -185,22 +177,24 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 
       // check if user role is a moderator/admin, show the button
       if (Mod::get()->getSavedValue<int>("role_num") >= 20) {
-            auto acceptBtnSprite = ButtonSprite::create("Accept", 40, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto acceptBtnSprite = ButtonSprite::create("Accept", 55, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
             auto acceptBtn = CCMenuItemSpriteExtra::create(acceptBtnSprite, this, menu_selector(ThumbnailInfoLayer::onAccept));
-            acceptBtn->setPosition({panelX + 30.f, panelY - line - 40.f});
+            acceptBtn->setPosition({panelX + 20.f, panelY - line - 35.f});
 
-            auto rejectBtnSprite = ButtonSprite::create("Reject", 40, true, "bigFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+            auto rejectBtnSprite = ButtonSprite::create("Reject", 55, true, "bigFont.fnt", "GJ_button_06.png", 0.f, 1.f);
             auto rejectBtn = CCMenuItemSpriteExtra::create(rejectBtnSprite, this, menu_selector(ThumbnailInfoLayer::onReject));
-            rejectBtn->setPosition({panelX + 110.f, panelY - line - 40.f});
+            rejectBtn->setPosition({panelX + 120.f, panelY - line - 35.f});
 
-            auto actionMenu = CCMenu::create();
-            actionMenu->addChild(acceptBtn);
-            actionMenu->addChild(rejectBtn);
-            auto playBtnSprite = ButtonSprite::create("Play Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto playBtnSprite = ButtonSprite::create("View Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             auto playBtn = CCMenuItemSpriteExtra::create(playBtnSprite, this, menu_selector(ThumbnailInfoLayer::onPlayLevelButton));
             playBtn->setPosition({panelX + 70.f, panelY - line - 80.f});
-            actionMenu->addChild(playBtn);
+
+            auto actionMenu = CCMenu::create();
             actionMenu->setPosition({0.f, 0.f});
+            actionMenu->addChild(playBtn);
+            actionMenu->addChild(acceptBtn);
+            actionMenu->addChild(rejectBtn);
+
             this->addChild(actionMenu);
       }
 
@@ -224,9 +218,9 @@ void ThumbnailInfoLayer::onAccept(CCObject*) {
         if (auto res = e->getValue()) {
             if (res->code() >= 200 && res->code() <= 299) {
                 CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
-                Notification::create("Success! Thumbnail accepted.", NotificationIcon::Success)->show();
+                Notification::create("Thumbnail accepted.", NotificationIcon::Success)->show();
             } else {
-                Notification::create("Error! Failed to accept thumbnail.", NotificationIcon::Error)->show();
+                Notification::create("Failed to accept thumbnail.", NotificationIcon::Error)->show();
             }
         } });
       m_listener.setFilter(task);
@@ -243,9 +237,9 @@ void ThumbnailInfoLayer::onReject(CCObject*) {
             if (auto res = e->getValue()) {
                 if (res->code() >= 200 && res->code() <= 299) {
                     CCDirector::get()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
-                    Notification::create("Success! Thumbnail rejected.", NotificationIcon::Success)->show();
+                    Notification::create("Thumbnail rejected.", NotificationIcon::Success)->show();
                 } else {
-                    Notification::create("Error! Failed to reject thumbnail.", NotificationIcon::Error)->show();
+                    Notification::create("Failed to reject thumbnail.", NotificationIcon::Error)->show();
                 }
             }
         });
