@@ -60,6 +60,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       // Submitter
       auto submitter = CCLabelBMFont::create(fmt::format("Submitter: {} ({})", username, user_id).c_str(), "goldFont.fnt");
       submitter->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
+      submitter->setScale(0.8f);
       submitter->setAlignment(kCCTextAlignmentCenter);
       this->addChild(submitter, 1);
 
@@ -110,8 +111,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
       m_thumbSpinner = spinner;
 
       // Label above thumbnail indicating which image is shown
-      auto thumbLabel = CCLabelBMFont::create(m_replacementFlag ? "Replacement" : "Original", "bigFont.fnt");
-      thumbLabel->setScale(0.5f);
+      auto thumbLabel = CCLabelBMFont::create(m_replacementFlag ? "New Thumbnail" : "Original Thumbnail", "bigFont.fnt");
+      thumbLabel->setScale(0.45f);
       thumbLabel->setAnchorPoint({0.5f, 0.5f});
       thumbLabel->setPosition({thumbBg->getPositionX(), thumbBg->getPositionY() + thumbBg->getContentSize().height / 2.f + 12.f});
       this->addChild(thumbLabel, 2);
@@ -185,7 +186,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             auto rejectBtn = CCMenuItemSpriteExtra::create(rejectBtnSprite, this, menu_selector(ThumbnailInfoLayer::onReject));
             rejectBtn->setPosition({panelX + 120.f, panelY - line - 35.f});
 
-            auto playBtnSprite = ButtonSprite::create("View Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto playBtnSprite = ButtonSprite::create("Play Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             auto playBtn = CCMenuItemSpriteExtra::create(playBtnSprite, this, menu_selector(ThumbnailInfoLayer::onPlayLevelButton));
             playBtn->setPosition({panelX + 70.f, panelY - line - 80.f});
 
@@ -258,7 +259,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
       if (m_showingOriginal) {
             if (m_thumbOriginal) m_thumbOriginal->setVisible(false);
             if (m_thumbReplacement) m_thumbReplacement->setVisible(true);
-            if (m_thumbLabel) m_thumbLabel->setString("Replacement");
+            if (m_thumbLabel) m_thumbLabel->setString("New Thumbnail");
             m_showingOriginal = false;
             // update the button label back to 'Show original'
             if (m_showOriginalBtn) {
@@ -272,7 +273,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
       if (m_originalLoaded) {
             if (m_thumbOriginal) m_thumbOriginal->setVisible(true);
             if (m_thumbReplacement) m_thumbReplacement->setVisible(false);
-            if (m_thumbLabel) m_thumbLabel->setString("Original");
+            if (m_thumbLabel) m_thumbLabel->setString("Original Thumbnail");
             m_showingOriginal = true;
             if (m_showOriginalBtn) {
                   auto newSprite = ButtonSprite::create("Show replacement", 160, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
@@ -296,7 +297,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                               if (m_thumbOriginal) {
                                     m_thumbOriginal->loadFromData(data);
                                     m_thumbOriginal->setVisible(true);
-                                    if (m_thumbLabel) m_thumbLabel->setString("Original");
+                                    if (m_thumbLabel) m_thumbLabel->setString("Original Thumbnail");
                               }
                               if (m_thumbReplacement) {
                                     m_thumbReplacement->setVisible(false);
