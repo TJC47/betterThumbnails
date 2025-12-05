@@ -34,17 +34,7 @@ class $modify(MyCreatorLayer, CreatorLayer) {
 
       void onBTNButton(CCObject*) {
             if (Mod::get()->hasSavedValue("token") & !Mod::get()->getSettingValue<bool>("dev-force-reauth")) {
-                  auto authLayer = AuthLayer::create();
-                  auto scene = CCDirector::sharedDirector()->getRunningScene();
-                  if (scene && authLayer) {
-                        scene->addChild(authLayer, 9999);
-                  } else {
-                        FLAlertLayer::create(
-                            "Error",
-                            "Could not open authentication layer.",
-                            "OK")
-                            ->show();
-                  }
+                  CCDirector::get()->pushScene(CCTransitionFade::create(.5f, BetterThumbnailLayer::scene()));
             } else {
                   geode::createQuickPopup(
                       "Notice",
