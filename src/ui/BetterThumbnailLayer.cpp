@@ -190,8 +190,12 @@ bool BetterThumbnailLayer::init() {
             auto json = res->json().unwrapOrDefault();
             log::info("{} {}",res->code(),json.dump());
             auto activeThumbnailCount = json["data"]["active_thumbnail_count"].asInt().unwrapOrDefault();
+            auto uploadThumbnailCount = json["data"]["upload_count"].asInt().unwrapOrDefault();
+            auto acceptUploadThumbnailCount = json["data"]["accepted_upload_count"].asInt().unwrapOrDefault();
             log::debug("{}", activeThumbnailCount);
             Mod::get()->setSavedValue<int>("active_thumbnail_count", activeThumbnailCount);
+            Mod::get()->setSavedValue<int>("upload_count", uploadThumbnailCount);
+            Mod::get()->setSavedValue<int>("accepted_upload_count", acceptUploadThumbnailCount);
             coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
         } });
 
@@ -317,6 +321,8 @@ void BetterThumbnailLayer::onInfoButton(CCObject*) {
       auto userId = Mod::get()->getSavedValue<int>("user_id");
       auto activeThumbnails = Mod::get()->getSavedValue<int>("active_thumbnail_count");
       auto userRankNum = Mod::get()->getSavedValue<int>("role_num");
-      auto infoString = fmt::format("Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive Thumbnails: {}", userRank, userRankNum, userId, activeThumbnails);
+      auto uploadThumbnailCount = Mod::get()->getSavedValue<int>("upload_count");
+      auto acceptUploadThumbnailCount = Mod::get()->getSavedValue<int>("accepted_upload_count");
+      auto infoString = fmt::format("Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive Thumbnails: {}\nUploaded Thumbnails: {}/{} accepted", userRank, userRankNum, userId, activeThumbnails, acceptUploadThumbnailCount, uploadThumbnailCount);
       FLAlertLayer::create(Mod::get()->getSavedValue<std::string>("username").c_str(), infoString, "Ok")->show();
 }
