@@ -44,8 +44,8 @@ bool FilterThumbnailPopup::init(int, geode::Function<void(std::string, bool, int
 }
 
 void FilterThumbnailPopup::onApply(CCObject*) {
-      std::string username = m_usernameInput ? m_usernameInput->getString() : std::string();
-      std::string levelStr = m_levelIdInput ? m_levelIdInput->getString() : std::string();
+      std::string username = m_usernameInput ? std::string(m_usernameInput->getString()) : std::string();
+      std::string levelStr = m_levelIdInput ? std::string(m_levelIdInput->getString()) : std::string();
       bool hasLevelId = false;
       int levelId = 0;
       if (!levelStr.empty()) {
