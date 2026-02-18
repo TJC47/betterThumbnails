@@ -141,32 +141,29 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       auto imageReq = web::WebRequest();
       imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
       auto imageTask = imageReq.get(std::string("https://levelthumbs.prevter.me/pending/") + std::to_string(id) + "/image");
-      m_listener.bind([this, lazySprite, thumbnailBg, spinner](web::WebTask::Event* e) {
-            if (auto res = e->getValue()) {
-                  if (res->code() >= 200 && res->code() <= 299) {
-                        auto data = res->data();
-                        if (!data.empty()) {
-                              lazySprite->loadFromData(data);
-                              // if (m_backdrop) {
-                              //       m_backdrop->loadFromData(data);
-                              //       m_backdrop->setVisible(true);
-                              //       m_backdrop->setOpacity(100);
-                              // }
-                              auto contentSize = lazySprite->getContentSize();
-                              if (contentSize.width > 0 && contentSize.height > 0) {
-                                    // force a fixed scale for list thumbnails so they are consistent
-                                    lazySprite->setPosition({thumbnailBg->getContentSize().width / 2.f + 85.f, thumbnailBg->getContentSize().height / 2.f});
-                                    lazySprite->setVisible(true);
-                                    if (spinner) spinner->setVisible(false);
-                              }
+      m_listener.spawn(std::move(imageTask), [this, lazySprite, thumbnailBg, spinner](web::WebResponse res) {
+            if (res.code() >= 200 && res.code() <= 299) {
+                  auto data = res.data();
+                  if (!data.empty()) {
+                        lazySprite->loadFromData(data);
+                        // if (m_backdrop) {
+                        //       m_backdrop->loadFromData(data);
+                        //       m_backdrop->setVisible(true);
+                        //       m_backdrop->setOpacity(100);
+                        // }
+                        auto contentSize = lazySprite->getContentSize();
+                        if (contentSize.width > 0 && contentSize.height > 0) {
+                              // force a fixed scale for list thumbnails so they are consistent
+                              lazySprite->setPosition({thumbnailBg->getContentSize().width / 2.f + 85.f, thumbnailBg->getContentSize().height / 2.f});
+                              lazySprite->setVisible(true);
+                              if (spinner) spinner->setVisible(false);
                         }
-                  } else {
-                        log::error("Image fetch error: {} {}", res->code(), res->string().unwrapOr(""));
-                        if (spinner) spinner->setVisible(false);
                   }
+            } else {
+                  log::error("Image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
+                  if (spinner) spinner->setVisible(false);
             }
       });
-      m_listener.setFilter(imageTask);
 
       /*
       auto info = fmt::format(

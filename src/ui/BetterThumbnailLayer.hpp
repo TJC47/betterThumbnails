@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
@@ -7,7 +8,7 @@ class BetterThumbnailLayer : public CCLayer
 {
 
 public:
-    EventListener<web::WebTask> m_listener;
+    async::TaskHolder<web::WebResponse> m_listener;
     static BetterThumbnailLayer *create();
     static CCScene *scene();
     bool init() override;

@@ -3,13 +3,14 @@
 #include <cocos2d.h>
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 #include <string>
 
 using namespace geode::prelude;
 
 class ThumbnailNode : public cocos2d::CCLayer {
      public:
-      EventListener<web::WebTask> m_listener;
+      async::TaskHolder<web::WebResponse> m_listener;
       LazySprite* m_backdrop = nullptr;
       // Stored data from API for opening the info layer
       int m_thumbId = 0;

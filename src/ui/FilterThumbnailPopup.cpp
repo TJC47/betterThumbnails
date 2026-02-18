@@ -6,17 +6,20 @@
 
 using namespace geode::prelude;
 
-FilterThumbnailPopup* FilterThumbnailPopup::create(std::function<void(std::string, bool, int)> onApply) {
+FilterThumbnailPopup* FilterThumbnailPopup::create(geode::Function<void(std::string, bool, int)> onApply) {
       auto ret = new FilterThumbnailPopup;
-      if (ret && ret->initAnchored(300.f, 160.f, 0, std::move(onApply), "GJ_square02.png")) {
+      if (ret && ret->init(0, std::move(onApply))) {
             ret->autorelease();
             return ret;
       }
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 }
 
-bool FilterThumbnailPopup::setup(int, std::function<void(std::string, bool, int)> onApply) {
+bool FilterThumbnailPopup::init(int, geode::Function<void(std::string, bool, int)> onApply) {
+      if (!Popup::init(300.f, 160.f))
+            return false;
+
       m_callback = std::move(onApply);
       setTitle("Filter Thumbnails");
 

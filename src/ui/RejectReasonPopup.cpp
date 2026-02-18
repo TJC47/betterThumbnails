@@ -2,17 +2,20 @@
 
 using namespace geode::prelude;
 
-RejectReasonPopup* RejectReasonPopup::create(int thumbId, std::function<void(std::string)> onSend) {
+RejectReasonPopup* RejectReasonPopup::create(int thumbId, geode::Function<void(std::string)> onSend) {
       auto ret = new RejectReasonPopup;
-      if (ret && ret->initAnchored(260.f, 120.f, thumbId, std::move(onSend), "GJ_square05.png")) {
+      if (ret && ret->init(thumbId, std::move(onSend))) {
             ret->autorelease();
             return ret;
       }
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 }
 
-bool RejectReasonPopup::setup(int thumbId, std::function<void(std::string)> onSend) {
+bool RejectReasonPopup::init(int thumbId, geode::Function<void(std::string)> onSend) {
+      if (!Popup::init(260.f, 120.f))
+            return false;
+
       m_id = thumbId;
       m_callback = std::move(onSend);
       setTitle("Reject Reason");

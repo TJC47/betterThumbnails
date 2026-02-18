@@ -1,8 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 #include <argon/argon.hpp>
-#include "BetterThumbnailLayer.hpp"
-#include "NotificationUI.hpp"
 
 using namespace geode::prelude;
 
@@ -12,7 +11,7 @@ public:
     CCSprite *loadingSpinner = nullptr;
     bool argonResponded = false;
     bool apiResponded = false;
-    EventListener<web::WebTask> m_listener;
+    async::TaskHolder<web::WebResponse> m_listener;
 
     static AuthLayer *create();
     virtual bool init();

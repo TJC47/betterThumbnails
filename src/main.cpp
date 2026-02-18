@@ -8,9 +8,7 @@
 
 using namespace geode::prelude;
 
-EventListener<web::WebTask> m_listener;
-
-class $modify(MyCreatorLayer, CreatorLayer) {
+class $modify(BTNCreatorLayer, CreatorLayer) {
       bool init() {
             if (!CreatorLayer::init())
                   return false;
@@ -18,15 +16,12 @@ class $modify(MyCreatorLayer, CreatorLayer) {
             auto myButton = CCMenuItemSpriteExtra::create(
                 CCSprite::create("betterThumbnailButton.png"_spr),
                 this,
-                menu_selector(MyCreatorLayer::onBTNButton));
+                menu_selector(BTNCreatorLayer::onBTNButton));
 
             auto menu = this->getChildByID("bottom-right-menu");
             menu->addChild(myButton);
-
             myButton->setID("better-thumbnails-button"_spr);
-
             menu->updateLayout();
-
             this->setTouchEnabled(false);
 
             return true;

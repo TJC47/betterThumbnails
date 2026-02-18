@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 #include "RejectReasonPopup.hpp"
 
@@ -14,7 +15,6 @@ class ThumbnailInfoLayer : public CCLayer {
       bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
 
       void keyBackClicked() override;
-      void onBackButton(CCObject*);
 
       // Actions
       void onAccept(CCObject*);
@@ -32,7 +32,7 @@ class ThumbnailInfoLayer : public CCLayer {
       std::string m_uploadTime;
       bool m_replacementFlag = false;
 
-      EventListener<web::WebTask> m_listener;
+      async::TaskHolder<web::WebResponse> m_listener;
       LazySprite* m_thumbReplacement = nullptr;
       LazySprite* m_thumbOriginal = nullptr;
       LoadingSpinner* m_thumbSpinner = nullptr;

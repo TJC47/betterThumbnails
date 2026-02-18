@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 #include <string>
 #include <vector>
 
@@ -17,11 +18,10 @@ struct PendingThumbEntry {
 
 class PendingThumbnailLayer : public CCLayer {
      public:
-      EventListener<web::WebTask> m_listener;
+      async::TaskHolder<web::WebResponse> m_listener;
       static PendingThumbnailLayer* create();
       static CCScene* scene();
       bool init() override;
-      void onBackButton(CCObject*);
       void keyBackClicked() override;
 
      private:

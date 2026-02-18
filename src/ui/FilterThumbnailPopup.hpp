@@ -3,21 +3,20 @@
 #include <Geode/Geode.hpp>
 #include <Geode/ui/Popup.hpp>
 #include <Geode/ui/TextInput.hpp>
-#include <functional>
 
 using namespace geode::prelude;
 
-class FilterThumbnailPopup : public Popup<int, std::function<void(std::string, bool, int)>> {
+class FilterThumbnailPopup : public Popup {
      public:
-      static FilterThumbnailPopup* create(std::function<void(std::string, bool, int)> onApply);
+      static FilterThumbnailPopup* create(geode::Function<void(std::string, bool, int)> onApply);
 
      protected:
-      bool setup(int, std::function<void(std::string, bool, int)> onApply) override;
+      bool init(int, geode::Function<void(std::string, bool, int)> onApply);
 
      private:
       TextInput* m_usernameInput = nullptr;
       TextInput* m_levelIdInput = nullptr;
-      std::function<void(std::string, bool, int)> m_callback;
+      geode::Function<void(std::string, bool, int)> m_callback;
 
       void onApply(CCObject*);
 };

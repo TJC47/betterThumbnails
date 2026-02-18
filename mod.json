@@ -25,14 +25,7 @@
 	],
 	"description": "makes level thumbnails better",
 	"dependencies": {
-		"cdc.level_thumbnails": {
-			"importance": "required",
-			"version": ">=v2.0.0-alpha.1"
-		},
-		"prevter.imageplus": {
-			"importance": "required",
-			"version": ">=1.0.0"
-		}
+		"prevter.imageplus": ">=1.0.0"
 	},
 	"links": {
 		"source": "https://github.com/TJC47/betterThumbnails"
