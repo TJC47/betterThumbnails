@@ -14,7 +14,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
             ret->autorelease();
             return ret;
       }
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 }
 

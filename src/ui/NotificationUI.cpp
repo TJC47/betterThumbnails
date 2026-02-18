@@ -58,6 +58,6 @@ NotificationUI *NotificationUI::create(const std::string &title, const std::stri
         ret->autorelease();
         return ret;
     }
-    CC_SAFE_DELETE(ret);
+    delete ret;
     return nullptr;
 }
