@@ -23,7 +23,7 @@
 		"enhancement",
 		"utility"
 	],
-	"description": "makes level thumbnails better",
+	"description": "Adds ingame features for Level Thumbnails which previously only were available on the website.",
 	"dependencies": {
 		"prevter.imageplus": ">=1.0.0"
 	},
