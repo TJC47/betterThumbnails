@@ -86,6 +86,19 @@ void AuthLayer::startAuthProcess() {
                     auto username = json["user"]["username"].asString().unwrapOrDefault();
                     Mod::get()->setSavedValue<std::string>("token", token);
                     Mod::get()->setSavedValue<std::string>("role", role);
+			/*
+			--- Role Numerical Reference ---
+			0 - User
+			10 - Verified
+			20 - Moderator
+			30 - Admin
+			40 - Owner
+
+			-1 - Unknown
+			---------------------------------
+
+			(Using offset of 10 incase any roles should get added inbetween later)
+			*/
                     long user_role_num;
                     if (role == "user") user_role_num = 0;
                     else if (role == "verified") user_role_num = 10;
