@@ -27,7 +27,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       this->ignoreAnchorPointForPosition(false);
       this->setAnchorPoint({0.5f, 1.0f});
 
-      auto thumbnailBg = CCScale9Sprite::create("square02_small.png");
+      auto thumbnailBg = NineSlice::create("square02_small.png");
       thumbnailBg->setOpacity(100);
       thumbnailBg->setContentSize({size.width, 100.f});
       thumbnailBg->setScale(0.95f);
@@ -39,7 +39,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
       lazySprite->setVisible(false);
       lazySprite->setAutoResize(true);
 
-      auto stencil = CCScale9Sprite::create("square02_small.png");
+      auto stencil = NineSlice::create("square02_small.png");
       stencil->setContentSize(thumbnailBg->getContentSize());
       stencil->setScale(1.0f);
       stencil->setAnchorPoint({0.5f, 0.5f});

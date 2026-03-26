@@ -21,10 +21,13 @@ private:
     void onPending(CCObject *);
     void onManage(CCObject *);
     void onInfoButton(CCObject *);
+    void fetchNotifications();
 
     CCSprite *myThumbSprite = nullptr;
     CCSprite *recentSprite = nullptr;
     CCSprite *pendingSprite = nullptr;
     CCSprite *manageSprite = nullptr;
+
+    int m_lastNotificationId = -1;
 
 };

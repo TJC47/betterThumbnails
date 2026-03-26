@@ -1,9 +1,11 @@
 #include "BetterThumbnailLayer.hpp"
 
 #include <Geode/Geode.hpp>
+#include <algorithm>
 
 #include "Geode/ui/General.hpp"
 #include "PendingThumbnailLayer.hpp"
+#include "NotificationUI.hpp"
 /*
 #include "NotificationUI.hpp"
 commented out for now to shut up vscode (i dont know if we're gonna need this
@@ -59,7 +61,7 @@ bool BetterThumbnailLayer::init() {
         loadingImageLabel->removeFromParent();
         bgImage->setAnchorPoint({0.5, 0.5});
 
-        auto bgDark = CCScale9Sprite::create("square02_001.png");
+        auto bgDark = NineSlice::create("square02_001.png");
         bgDark->setContentSize(
             {screenSize.width + 10.f, screenSize.height + 10.f});
         bgDark->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
@@ -285,6 +287,9 @@ bool BetterThumbnailLayer::init() {
 
   this->setKeypadEnabled(true);
 
+  // fetch notifications for this user and show new ones
+  this->fetchNotifications();
+
   // notification test (do this way if you want to use notifications)
   /*
   auto notif = NotificationUI::create("insert title", "hi there");
@@ -294,6 +299,64 @@ bool BetterThumbnailLayer::init() {
   }
   */
   return true;
+}
+
+void BetterThumbnailLayer::fetchNotifications() {
+  auto userId = Mod::get()->getSavedValue<int>("user_id");
+  if (userId <= 0) {
+    return;
+  }
+
+  auto req = web::WebRequest();
+  req.header("Authorization",
+             fmt::format("Bearer {}",
+                         Mod::get()->getSavedValue<std::string>("token")));
+
+  m_listener.spawn(
+      req.get(fmt::format("https://tjcsucht.net/api/bt/getnotif/{}", userId)),
+      [this](web::WebResponse res) {
+        if (res.code() < 200 || res.code() > 299) {
+          log::error("Notification API error {}: {}", res.code(),
+                     res.string().unwrapOrDefault());
+          return;
+        }
+        auto jsonResult = res.json();
+        if (!jsonResult.isOk()) {
+          log::error("Notification API JSON parse error: {}",
+                     jsonResult.unwrapErr());
+          return;
+        }
+
+        auto json = jsonResult.unwrap();
+        if (!json.isObject() || !json["notifications"].isArray()) {
+          log::error("Notification API invalid format: {}",
+                     res.string().unwrapOrDefault());
+          return;
+        }
+
+        auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
+        int highestId = m_lastNotificationId;
+        for (auto &item : arr) {
+          auto itemId = item["id"].asInt().unwrapOrDefault();
+          if (itemId <= 0 || itemId <= m_lastNotificationId) {
+            continue;
+          }
+
+          auto title = item["title"].asString().unwrapOr("Notification");
+          auto content = item["content"].asString().unwrapOr("New message");
+
+          auto notif = NotificationUI::create(title, content);
+          if (notif) {
+            this->addChild(notif, 100);
+          }
+
+          highestId = std::max(highestId, static_cast<int>(itemId));
+        }
+
+        if (highestId > m_lastNotificationId) {
+          m_lastNotificationId = highestId;
+        }
+      });
 }
 
 void BetterThumbnailLayer::onMyThumbnail(CCObject *) {

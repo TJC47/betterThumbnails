@@ -83,7 +83,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username,
   this->addChild(timestamp, 1);
 
   // thumb bg
-  auto thumbBg = CCScale9Sprite::create("GJ_square06.png");
+  auto thumbBg = NineSlice::create("GJ_square06.png");
   thumbBg->setPosition(
       {screenSize.width / 2.f - 90.f, screenSize.height / 2.f - 20.f});
   thumbBg->setContentSize({300.f, 170.f});
@@ -102,7 +102,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username,
   thumbOriginal->setAnchorPoint({0.5f, 0.5f});
   m_thumbOriginal = thumbOriginal;
 
-  auto stencil = CCScale9Sprite::create("GJ_square06.png");
+  auto stencil = NineSlice::create("GJ_square06.png");
   stencil->setContentSize(thumbBg->getContentSize());
   stencil->setPosition({0, 0});
 
@@ -199,7 +199,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string &username,
   makeLine(fmt::format("Thumbnail ID: {}", id));
 
   // Info Blackbox
-  auto blackbox = CCScale9Sprite::create("square02_small.png");
+  auto blackbox = NineSlice::create("square02_small.png");
   blackbox->setPosition({panelX + 70.f, panelY - 40.f});
   blackbox->setContentSize({160.f, line + 20.f});
   blackbox->setOpacity(100);

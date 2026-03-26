@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include "NotificationUI.hpp"
-#include "BetterThumbnailLayer.hpp"
+
+using namespace geode::prelude;
 
 bool NotificationUI::init(const std::string &title, const std::string &message)
 {
@@ -10,7 +11,7 @@ bool NotificationUI::init(const std::string &title, const std::string &message)
     float popupWidth = 300.f;
     float popupHeight = 80.f;
 
-    auto bg = CCScale9Sprite::create("GJ_square05.png");
+    auto bg = NineSlice::create("GJ_square05.png");
     bg->setContentSize({popupWidth, popupHeight});
     bg->setAnchorPoint({0.f, 0.f});
     this->addChild(bg, 0);
