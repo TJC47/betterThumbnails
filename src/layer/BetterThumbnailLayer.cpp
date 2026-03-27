@@ -327,6 +327,25 @@ void BetterThumbnailLayer::fetchNotifications() {
           auto title = item["title"].asString().unwrapOr("Notification");
           auto content = item["content"].asString().unwrapOr("New message");
           auto timestamp = item["timestamp"].asString().unwrapOr("unknown");
+          /*
+          --- Notification Types ---
+          info: normal information, no Icon
+          success: some operation was successful, Checkmark icon
+          warn: some warning occurred, Warn symbol icon
+          error: there was an error in an operation, cross symbol icon
+          critical: there was a critical error in an operation, critical warn symbol icon ?!
+          --- Notification Types ---
+          */
+          auto type = item["notification_type"].asString().unwrapOr("info");
+          /*
+          --- Notification Priorities ---
+          deferMenu: Notification is deferred until the user is in a menu
+          immediate: Notification will be instantly displayed, no matter what the user is doing
+          onLayer: Notification will be deferred until the betterThumbnailLayer is opened
+          --- Notification Priorities ---
+          */
+          auto priority = item["notification_priority"].asString().unwrapOr("deferMenu");
+
           newNotifications.push_back({title, content, timestamp});
 
             highestId = std::max(highestId, static_cast<int>(itemId));

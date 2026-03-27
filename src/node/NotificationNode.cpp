@@ -60,7 +60,7 @@ bool NotificationNode::init(const std::string& title, const std::string& message
 
     this->runAction(CCSequence::create(moveIn, delay, moveOut, removeSelf, nullptr));
     // @geode-ignore(unknown-resource)
-    FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
+    FMODAudioEngine::sharedEngine()->playEffect("crystal01.ogg");
 
     return true;
 }
