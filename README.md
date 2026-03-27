@@ -16,6 +16,6 @@ An addon mod for [**Level Thumbnails**](https://github.com/cdc-sys/level-thumbs-
 - In-game Thumbnail Moderation
 
 # Credits
-- [ArcticWoof](https://github.com/DumbCaveSpider) - UI Design and code cleanup
+- [ArcticWoof](https://github.com/DumbCaveSpider) - UI/Programming
 - [prevter](https://github.com/Prevter) - Level Thumbnails API Server
 - [Sk23](https://github.com/Skepper23) - Logo and Sprites assets
