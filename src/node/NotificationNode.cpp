@@ -1,9 +1,9 @@
 #include <Geode/Geode.hpp>
-#include "NotificationUI.hpp"
+#include "NotificationNode.hpp"
 
 using namespace geode::prelude;
 
-bool NotificationUI::init(const std::string& title, const std::string& message, Callback viewCallback) {
+bool NotificationNode::init(const std::string& title, const std::string& message, Callback viewCallback) {
     if (!CCLayer::init())
         return false;
 
@@ -32,7 +32,7 @@ bool NotificationUI::init(const std::string& title, const std::string& message, 
     if (m_viewCallback) {
         auto viewBtnSprite = ButtonSprite::create("View", "bigFont.fnt", "GJ_button_01.png", 0.6f);
         viewBtnSprite->setScale(0.6f);
-        auto viewBtn = CCMenuItemSpriteExtra::create(viewBtnSprite, this, menu_selector(NotificationUI::onViewButton));
+        auto viewBtn = CCMenuItemSpriteExtra::create(viewBtnSprite, this, menu_selector(NotificationNode::onViewButton));
         viewBtn->setPosition({popupWidth / 2.f, 20.f});
         auto menu = CCMenu::create();
         menu->addChild(viewBtn);
@@ -56,7 +56,7 @@ bool NotificationUI::init(const std::string& title, const std::string& message, 
     auto moveIn = CCEaseIn::create(CCMoveTo::create(1.f, {centerX, endY}), 2.0f);
     auto delay = CCDelayTime::create(8.0f);
     auto moveOut = CCEaseOut::create(CCMoveTo::create(1.f, {centerX, startY}), 2.0f);
-    auto removeSelf = CCCallFunc::create(this, callfunc_selector(NotificationUI::removeFromParent));
+    auto removeSelf = CCCallFunc::create(this, callfunc_selector(NotificationNode::removeFromParent));
 
     this->runAction(CCSequence::create(moveIn, delay, moveOut, removeSelf, nullptr));
     // @geode-ignore(unknown-resource)
@@ -65,8 +65,8 @@ bool NotificationUI::init(const std::string& title, const std::string& message, 
     return true;
 }
 
-NotificationUI* NotificationUI::create(const std::string& title, const std::string& message, Callback viewCallback) {
-    auto ret = new NotificationUI();
+NotificationNode* NotificationNode::create(const std::string& title, const std::string& message, Callback viewCallback) {
+    auto ret = new NotificationNode();
     if (ret && ret->init(title, message, viewCallback)) {
         ret->autorelease();
         return ret;
@@ -75,7 +75,7 @@ NotificationUI* NotificationUI::create(const std::string& title, const std::stri
     return nullptr;
 }
 
-void NotificationUI::onViewButton(CCObject*) {
+void NotificationNode::onViewButton(CCObject*) {
     if (m_viewCallback)
         m_viewCallback();
     removeFromParent();

@@ -3,12 +3,12 @@
 #include <functional>
 #include <string>
 
-class NotificationUI : public cocos2d::CCLayer
+class NotificationNode : public cocos2d::CCLayer
 {
 public:
     using Callback = std::function<void()>;
 
-    static NotificationUI *create(const std::string &title, const std::string &message, Callback viewCallback = nullptr);
+    static NotificationNode *create(const std::string &title, const std::string &message, Callback viewCallback = nullptr);
     bool init(const std::string &title, const std::string &message, Callback viewCallback = nullptr);
 
     void setViewCallback(Callback viewCallback) { m_viewCallback = viewCallback; }

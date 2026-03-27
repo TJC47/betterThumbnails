@@ -6,7 +6,7 @@
 #include "Geode/ui/General.hpp"
 #include "Geode/ui/OverlayManager.hpp"
 #include "PendingThumbnailLayer.hpp"
-#include "../node/NotificationUI.hpp"
+#include "../node/NotificationNode.hpp"
 #include "../popup/NotificationMenuPopup.hpp"
 
 BetterThumbnailLayer* BetterThumbnailLayer::create() {
@@ -280,14 +280,6 @@ bool BetterThumbnailLayer::init() {
     // fetch notifications for this user and show new ones
     this->fetchNotifications();
 
-    // notification test (do this way if you want to use notifications)
-    /*
-    auto notif = NotificationUI::create("insert title", "hi there");
-    if (notif)
-    {
-        this->addChild(notif, 100);
-    }
-    */
     return true;
 }
 
@@ -362,7 +354,7 @@ void BetterThumbnailLayer::fetchNotifications() {
                 popup->show();
             };
 
-            auto notifUI = NotificationUI::create(notifyTitle, notifyMessage, viewCallback);
+            auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, viewCallback);
             if (notifUI) {
                 OverlayManager::get()->addChild(notifUI, 100);
             }
