@@ -2,8 +2,10 @@
 
 #include <Geode/Geode.hpp>
 #include <algorithm>
+#include <string>
 
 #include "Geode/ui/General.hpp"
+#include "Geode/ui/Notification.hpp"
 #include "Geode/ui/OverlayManager.hpp"
 #include "PendingThumbnailLayer.hpp"
 #include "../node/NotificationNode.hpp"
@@ -346,9 +348,23 @@ void BetterThumbnailLayer::fetchNotifications() {
           */
           auto priority = item["notification_priority"].asString().unwrapOr("deferMenu");
 
+          auto toast = item["toast"].asBool().unwrapOr(false);
+          if (toast) {
+            NotificationIcon icon;
+            if (type == "error") icon = NotificationIcon::Error;
+            else if (type == "success") icon = NotificationIcon::Success;
+            else if (type == "info") icon = NotificationIcon::Info;
+            else if (type == "warning") icon = NotificationIcon::Warning;
+            else if (type == "critical") icon = NotificationIcon::Loading;
+            else icon = NotificationIcon::None;
+            FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
+            Notification::create(content, icon)->show();
+          }
+          else {
           newNotifications.push_back({title, content, timestamp});
-
+            
             highestId = std::max(highestId, static_cast<int>(itemId));
+          }
         }
 
         if (!newNotifications.empty()) {
