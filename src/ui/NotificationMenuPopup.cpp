@@ -22,6 +22,12 @@ bool NotificationMenuPopup::init() {
 
     m_listNode = cue::ListNode::create({m_mainLayer->getContentWidth() - 40.f, m_mainLayer->getContentHeight() - 100.f}, {0, 0, 0, 0}, cue::ListBorderStyle::Comments);
     m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f});
+    m_listNode->getScrollLayer()->m_contentLayer->setLayout(
+        ColumnLayout::create()
+            ->setGap(0.f)
+            ->setAxisReverse(true)
+            ->setAxisAlignment(AxisAlignment::End)
+            ->setAutoGrowAxis(0.f));
     m_mainLayer->addChild(m_listNode);
 
     auto clearBtnSprite = ButtonSprite::create("Clear All", "goldFont.fnt", "GJ_button_06.png");
@@ -70,9 +76,11 @@ void NotificationMenuPopup::populateList() {
         contentLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, 1.f, 0.3f);
         rowNode->addChild(contentLabel);
 
-        auto cell = cue::ListCell::create(rowNode, m_listNode);
-        m_listNode->addListCell(cell);
+        m_listNode->addCell(rowNode);
     }
+    
+    m_listNode->updateLayout();
+    m_listNode->scrollToTop();
 }
 
 void NotificationMenuPopup::onClearAll(CCObject*) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include <Geode/utils/async.hpp>
+#include <cue/ListNode.hpp>
 #include <string>
 #include <vector>
 
@@ -37,8 +38,7 @@ class PendingThumbnailLayer : public CCLayer {
       int m_apiPerPage = 0;
       int m_apiTotal = 0;
       bool m_serverPaging = true;
-      ScrollLayer* m_scrollLayer = nullptr;
-      cocos2d::CCLayer* m_contentLayer = nullptr;
+      cue::ListNode* m_listNode = nullptr;
       CCLabelBMFont* m_pageLabel = nullptr;
       CCLabelBMFont* m_infoLabel = nullptr;
       CCMenu* m_navMenu = nullptr;
