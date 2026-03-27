@@ -4,8 +4,10 @@
 #include <algorithm>
 
 #include "Geode/ui/General.hpp"
+#include "Geode/ui/OverlayManager.hpp"
 #include "PendingThumbnailLayer.hpp"
 #include "NotificationUI.hpp"
+#include "NotificationMenuPopup.hpp"
 /*
 #include "NotificationUI.hpp"
 commented out for now to shut up vscode (i dont know if we're gonna need this
@@ -185,20 +187,21 @@ bool BetterThumbnailLayer::init() {
 
   // get user info
   auto req = web::WebRequest();
+  req.header("Authorization",
+             fmt::format("Bearer {}",
+                         Mod::get()->getSavedValue<std::string>("token")));
 
-  m_listener.spawn(
-      req.get(fmt::format("https://levelthumbs.prevter.me/user/me")),
-      [this, coinLabel](web::WebResponse res) {
+  auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
+  async::spawn(std::move(task), [this, coinLabel](web::WebResponse res) {
         auto code = res.code();
         if (code < 200 || code > 299) {
           auto error = res.string().unwrapOr(std::string(res.errorMessage()));
-          CCDirector::get()->popSceneWithTransition(0.5f, kPopTransitionFade);
           Notification::create(fmt::format("{}", error),
                                NotificationIcon::Error)
               ->show();
           return;
         }
-        geode::log::info("{} {}", res.code(), res.string().unwrapOrDefault());
+        log::info("{} {}", res.code(), res.string().unwrapOrDefault());
         auto json = res.json().unwrapOrDefault();
         log::info("{} {}", res.code(), json.dump());
         auto activeThumbnailCount =
@@ -215,10 +218,6 @@ bool BetterThumbnailLayer::init() {
                                        acceptUploadThumbnailCount);
         coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
       });
-
-  req.header("Authorization",
-             fmt::format("Bearer {}",
-                         Mod::get()->getSavedValue<std::string>("token")));
 
   // Main buttons
   const float buttonSize = 75.f;
@@ -312,9 +311,8 @@ void BetterThumbnailLayer::fetchNotifications() {
              fmt::format("Bearer {}",
                          Mod::get()->getSavedValue<std::string>("token")));
 
-  m_listener.spawn(
-      req.get(fmt::format("https://tjcsucht.net/api/bt/getnotif/{}", userId)),
-      [this](web::WebResponse res) {
+  auto task = req.get(fmt::format("https://tjcsucht.net/api/bt/getnotif/{}", userId));
+  async::spawn(std::move(task), [this](web::WebResponse res) {
         if (res.code() < 200 || res.code() > 299) {
           log::error("Notification API error {}: {}", res.code(),
                      res.string().unwrapOrDefault());
@@ -336,6 +334,8 @@ void BetterThumbnailLayer::fetchNotifications() {
 
         auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
         int highestId = m_lastNotificationId;
+
+        std::vector<std::pair<std::string, std::string>> newNotifications;
         for (auto &item : arr) {
           auto itemId = item["id"].asInt().unwrapOrDefault();
           if (itemId <= 0 || itemId <= m_lastNotificationId) {
@@ -344,13 +344,37 @@ void BetterThumbnailLayer::fetchNotifications() {
 
           auto title = item["title"].asString().unwrapOr("Notification");
           auto content = item["content"].asString().unwrapOr("New message");
-
-          auto notif = NotificationUI::create(title, content);
-          if (notif) {
-            this->addChild(notif, 100);
-          }
+          newNotifications.emplace_back(title, content);
 
           highestId = std::max(highestId, static_cast<int>(itemId));
+        }
+
+        if (!newNotifications.empty()) {
+          std::string notifyTitle;
+          std::string notifyMessage;
+
+          if (newNotifications.size() == 1) {
+            notifyTitle = newNotifications[0].first;
+            notifyMessage = newNotifications[0].second;
+          } else {
+            notifyTitle = "Notifications";
+            notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());
+          }
+
+          auto viewCallback = [this, notifications = std::move(newNotifications)]() mutable {
+            auto popup = NotificationMenuPopup::create();
+            if (!popup) {
+              Notification::create("Error opening notification list", NotificationIcon::Error)->show();
+              return;
+            }
+            popup->setNotifications(notifications, Mod::get()->getSavedValue<int>("user_id"));
+            popup->show();
+          };
+
+          auto notifUI = NotificationUI::create(notifyTitle, notifyMessage, viewCallback);
+          if (notifUI) {
+            OverlayManager::get()->addChild(notifUI, 100);
+          }
         }
 
         if (highestId > m_lastNotificationId) {
