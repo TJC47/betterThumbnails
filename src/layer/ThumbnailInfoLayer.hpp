@@ -3,8 +3,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/async.hpp>
 
-#include "RejectReasonPopup.hpp"
-
 using namespace geode::prelude;
 
 class ThumbnailInfoLayer : public CCLayer {

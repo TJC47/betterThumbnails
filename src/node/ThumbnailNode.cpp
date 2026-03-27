@@ -4,7 +4,7 @@
 #include <Geode/loader/Mod.hpp>
 #include <Geode/ui/LazySprite.hpp>
 
-#include "../ui/ThumbnailInfoLayer.hpp"
+#include "../layer/ThumbnailInfoLayer.hpp"
 
 using namespace geode::prelude;
 

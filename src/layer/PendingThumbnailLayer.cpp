@@ -3,7 +3,7 @@
 #include <Geode/Geode.hpp>
 
 #include "../node/ThumbnailNode.hpp"
-#include "FilterThumbnailPopup.hpp"
+#include "../popup/FilterThumbnailPopup.hpp"
 #include "Geode/ui/General.hpp"
 
 bool PendingThumbnailLayer::init() {

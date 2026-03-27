@@ -2,9 +2,8 @@
 #include <Geode/modify/CreatorLayer.hpp>
 #include <argon/argon.hpp>
 
-#include "ui/AuthLayer.hpp"
-#include "ui/BetterThumbnailLayer.hpp"
-#include "ui/NotificationUI.hpp"
+#include "layer/BetterThumbnailLayer.hpp"
+#include "layer/AuthLayer.hpp"
 
 using namespace geode::prelude;
 

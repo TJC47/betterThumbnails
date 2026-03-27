@@ -38,7 +38,7 @@ bool NotificationMenuPopup::init() {
     return true;
 }
 
-void NotificationMenuPopup::setNotifications(const std::vector<std::pair<std::string, std::string>>& notifications, int userId) {
+void NotificationMenuPopup::setNotifications(const std::vector<NotificationEntry>& notifications, int userId) {
     m_notifications = notifications;
     m_userId = userId;
     populateList();
@@ -64,21 +64,27 @@ void NotificationMenuPopup::populateList() {
         auto rowNode = CCLayer::create();
         rowNode->setContentSize({m_listNode->getContentSize().width - 20.f, rowHeight});
 
-        auto titleLabel = CCLabelBMFont::create(entry.first.c_str(), "goldFont.fnt");
-        titleLabel->setAnchorPoint({0.f, .5f});
-        titleLabel->setPosition({10.f, rowHeight - 20.f});
-        titleLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, 1.f, 0.5f);
+        auto titleLabel = CCLabelBMFont::create(entry.title.c_str(), "goldFont.fnt");
+        titleLabel->setAnchorPoint({0.f, 1.f});
+        titleLabel->setPosition({10.f, rowHeight - 8.f});
+        titleLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, .8f, 0.5f);
         rowNode->addChild(titleLabel);
 
-        auto contentLabel = CCLabelBMFont::create(entry.second.c_str(), "chatFont.fnt");
+        auto contentLabel = CCLabelBMFont::create(entry.body.c_str(), "bigFont.fnt");
         contentLabel->setAnchorPoint({0.f, .5f});
-        contentLabel->setPosition({10.f, rowHeight - 50.f});
-        contentLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, 1.f, 0.3f);
+        contentLabel->setPosition({10.f, rowHeight / 2.f});
+        contentLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, .5f, 0.4f);
         rowNode->addChild(contentLabel);
+
+        auto timestampLabel = CCLabelBMFont::create(entry.timestamp.c_str(), "chatFont.fnt");
+        timestampLabel->setAnchorPoint({1.f, .0f});
+        timestampLabel->setPosition({rowNode->getContentSize().width, 5});
+        timestampLabel->setScale(0.6f);
+        rowNode->addChild(timestampLabel);
 
         m_listNode->addCell(rowNode);
     }
-    
+
     m_listNode->updateLayout();
     m_listNode->scrollToTop();
 }

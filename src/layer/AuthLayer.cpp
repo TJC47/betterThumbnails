@@ -1,5 +1,5 @@
 #include "AuthLayer.hpp"
-#include "BetterThumbnailLayer.hpp"
+#include "../layer/BetterThumbnailLayer.hpp"
 
 using namespace geode::prelude;
 

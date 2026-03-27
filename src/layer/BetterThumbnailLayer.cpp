@@ -6,8 +6,8 @@
 #include "Geode/ui/General.hpp"
 #include "Geode/ui/OverlayManager.hpp"
 #include "PendingThumbnailLayer.hpp"
-#include "NotificationUI.hpp"
-#include "NotificationMenuPopup.hpp"
+#include "../node/NotificationUI.hpp"
+#include "../popup/NotificationMenuPopup.hpp"
 
 BetterThumbnailLayer* BetterThumbnailLayer::create() {
     auto ret = new BetterThumbnailLayer;
@@ -325,16 +325,17 @@ void BetterThumbnailLayer::fetchNotifications() {
         auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
         int highestId = m_lastNotificationId;
 
-        std::vector<std::pair<std::string, std::string>> newNotifications;
-        for (auto& item : arr) {
-            auto itemId = item["id"].asInt().unwrapOrDefault();
-            if (itemId <= 0 || itemId <= m_lastNotificationId) {
-                continue;
-            }
+        std::vector<NotificationMenuPopup::NotificationEntry> newNotifications;
+        for (auto &item : arr) {
+          auto itemId = item["id"].asInt().unwrapOrDefault();
+          if (itemId <= 0 || itemId <= m_lastNotificationId) {
+            continue;
+          }
 
-            auto title = item["title"].asString().unwrapOr("Notification");
-            auto content = item["content"].asString().unwrapOr("New message");
-            newNotifications.emplace_back(title, content);
+          auto title = item["title"].asString().unwrapOr("Notification");
+          auto content = item["content"].asString().unwrapOr("New message");
+          auto timestamp = item["timestamp"].asString().unwrapOr("unknown");
+          newNotifications.push_back({title, content, timestamp});
 
             highestId = std::max(highestId, static_cast<int>(itemId));
         }
@@ -344,8 +345,8 @@ void BetterThumbnailLayer::fetchNotifications() {
             std::string notifyMessage;
 
             if (newNotifications.size() == 1) {
-                notifyTitle = newNotifications[0].first;
-                notifyMessage = newNotifications[0].second;
+                notifyTitle = newNotifications[0].title;
+                notifyMessage = newNotifications[0].body;
             } else {
                 notifyTitle = "Notifications";
                 notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());

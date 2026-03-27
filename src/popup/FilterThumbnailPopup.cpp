@@ -2,8 +2,6 @@
 
 #include <charconv>
 
-#include "PendingThumbnailLayer.hpp"
-
 using namespace geode::prelude;
 
 FilterThumbnailPopup* FilterThumbnailPopup::create(geode::Function<void(std::string, bool, int)> onApply) {
