@@ -3,15 +3,8 @@
 #include <Geode/Geode.hpp>
 
 #include "../node/ThumbnailNode.hpp"
-#include "BetterThumbnailLayer.hpp"
 #include "FilterThumbnailPopup.hpp"
 #include "Geode/ui/General.hpp"
-
-CCScene* PendingThumbnailLayer::scene() {
-    auto scene = CCScene::create();
-    scene->addChild(PendingThumbnailLayer::create());
-    return scene;
-}
 
 bool PendingThumbnailLayer::init() {
     if (!CCLayer::init())
@@ -56,9 +49,9 @@ bool PendingThumbnailLayer::init() {
     this->addChild(m_navMenu, 2);
 
     m_filterMenu = CCMenu::create();
-    m_filterMenu->setPosition({0.f, 0.f});
-    m_filterMenu->setVisible(false);
-    this->addChild(m_filterMenu, 2);
+    m_filterMenu->setContentSize(m_listNode->getContentSize());
+    m_filterMenu->setPosition({0, 0});
+    m_listNode->addChild(m_filterMenu, -1);
 
     m_infoLabel = CCLabelBMFont::create("1 to 1 of 0", "goldFont.fnt");
     m_infoLabel->setScale(0.4f);
@@ -84,55 +77,30 @@ bool PendingThumbnailLayer::init() {
     // Hide pagination until data received
     m_navMenu->setVisible(false);
 
-    auto listBottomY =
-        screenSize.height / 2.f - m_listNode->getContentSize().height / 2.f - 50.f;
-    auto toggleY = listBottomY + 20.f;
-    auto centerX = screenSize.width / 2.f;
+    auto toggleY = m_filterMenu->getContentHeight() + 30.f;
+    auto centerX = m_filterMenu->getContentSize().width / 2.f;
 
-    float labelScale = 0.7f;
-    auto measureLabel = [&](const char* text) -> float {
-        auto tmp = CCLabelBMFont::create(text, "bigFont.fnt");
-        auto size = tmp->getContentSize();
-        return size.width * labelScale;
-    };
-    auto widthAll = measureLabel("All");
-    auto widthNew = measureLabel("New");
-    auto widthRep = measureLabel("Replacement");
+    const float offset = 120.f;
 
-    int commonDesiredPixels = static_cast<int>(
-        std::ceil(std::max({widthAll, widthNew, widthRep}) + 5.0f));
-
-    const int widthParam = 120.f;
-    const float heightParam = 30.f;
-    auto allSpr = ButtonSprite::create("All", widthParam, true, "goldFont.fnt", "GJ_button_01.png", heightParam, 1.f);
-    m_allFilterBtn = CCMenuItemSpriteExtra::create(
-        allSpr, this, menu_selector(PendingThumbnailLayer::onFilterAll));
-    m_allFilterBtnSpr = allSpr;
-    float gap = 1.f;
-    float offset = static_cast<float>(commonDesiredPixels + gap);
+    auto allBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "All", this, menu_selector(PendingThumbnailLayer::onFilterAll));
+    m_allFilterBtn = allBtn;
     m_allFilterBtn->setPosition({centerX - offset, toggleY});
     m_filterMenu->addChild(m_allFilterBtn);
-    if (m_allFilterBtnSpr)
-        m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
 
-    auto newSpr = ButtonSprite::create("New", widthParam, true, "goldFont.fnt", "GJ_button_01.png", heightParam, 1.f);
-    m_newFilterBtn = CCMenuItemSpriteExtra::create(
-        newSpr, this, menu_selector(PendingThumbnailLayer::onFilterNew));
-    m_newFilterBtnSpr = newSpr;
+    auto newBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "New", this, menu_selector(PendingThumbnailLayer::onFilterNew));
+    m_newFilterBtn = newBtn;
     m_newFilterBtn->setPosition({centerX, toggleY});
     m_filterMenu->addChild(m_newFilterBtn);
-    if (m_newFilterBtnSpr)
-        m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
 
-    auto repSpr =
-        ButtonSprite::create("Replacement", widthParam, true, "goldFont.fnt", "GJ_button_01.png", heightParam, 1.f);
-    m_replacementFilterBtn = CCMenuItemSpriteExtra::create(
-        repSpr, this, menu_selector(PendingThumbnailLayer::onFilterReplacement));
-    m_replacementFilterBtnSpr = repSpr;
+    auto repBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Replacement", this, menu_selector(PendingThumbnailLayer::onFilterReplacement));
+    m_replacementFilterBtn = repBtn;
     m_replacementFilterBtn->setPosition({centerX + offset, toggleY});
     m_filterMenu->addChild(m_replacementFilterBtn);
-    if (m_replacementFilterBtnSpr)
-        m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+
+    // select default filter
+    m_allFilterBtn->toggle(true);
+    m_newFilterBtn->toggle(false);
+    m_replacementFilterBtn->toggle(false);
 
     // @geode-ignore(unknown-resource)
     auto searchIcon = CCSprite::createWithSpriteFrameName("geode.loader/search.png");
@@ -143,7 +111,7 @@ bool PendingThumbnailLayer::init() {
     m_searchFilterBtnSpr = searchSpr;
     m_searchFilterBtn->setPosition(
         {screenSize.width - 30.f, screenSize.height - 30.f});
-    m_filterMenu->addChild(m_searchFilterBtn);
+    m_navMenu->addChild(m_searchFilterBtn);
 
     addBackButton(this, BackButtonStyle::Green);
 
@@ -182,12 +150,12 @@ void PendingThumbnailLayer::onNextPage(CCObject*) {
 void PendingThumbnailLayer::onFilterAll(CCObject*) {
     m_filterMode = FilterMode::All;
     m_currentPage = 1;
-    if (m_allFilterBtnSpr)
-        m_allFilterBtnSpr->updateBGImage("GJ_button_02.png");
-    if (m_newFilterBtnSpr)
-        m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
-    if (m_replacementFilterBtnSpr)
-        m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+    if (m_allFilterBtn)
+        m_allFilterBtn->toggle(true);
+    if (m_newFilterBtn)
+        m_newFilterBtn->toggle(false);
+    if (m_replacementFilterBtn)
+        m_replacementFilterBtn->toggle(false);
     m_queryUsername.clear();
     m_queryHasLevelId = false;
     m_queryLevelId = 0;
@@ -196,12 +164,12 @@ void PendingThumbnailLayer::onFilterAll(CCObject*) {
 void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
     m_filterMode = FilterMode::ReplacementOnly;
     m_currentPage = 1;
-    if (m_allFilterBtnSpr)
-        m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
-    if (m_newFilterBtnSpr)
-        m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
-    if (m_replacementFilterBtnSpr)
-        m_replacementFilterBtnSpr->updateBGImage("GJ_button_02.png");
+    if (m_allFilterBtn)
+        m_allFilterBtn->toggle(false);
+    if (m_newFilterBtn)
+        m_newFilterBtn->toggle(false);
+    if (m_replacementFilterBtn)
+        m_replacementFilterBtn->toggle(true);
     m_queryUsername.clear();
     m_queryHasLevelId = false;
     m_queryLevelId = 0;
@@ -210,12 +178,12 @@ void PendingThumbnailLayer::onFilterReplacement(CCObject*) {
 void PendingThumbnailLayer::onFilterNew(CCObject*) {
     m_filterMode = FilterMode::NewOnly;
     m_currentPage = 1;
-    if (m_allFilterBtnSpr)
-        m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
-    if (m_newFilterBtnSpr)
-        m_newFilterBtnSpr->updateBGImage("GJ_button_02.png");
-    if (m_replacementFilterBtnSpr)
-        m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
+    if (m_allFilterBtn)
+        m_allFilterBtn->toggle(false);
+    if (m_newFilterBtn)
+        m_newFilterBtn->toggle(true);
+    if (m_replacementFilterBtn)
+        m_replacementFilterBtn->toggle(false);
     m_queryUsername.clear();
     m_queryHasLevelId = false;
     m_queryLevelId = 0;
@@ -230,12 +198,6 @@ void PendingThumbnailLayer::onOpenFilterPopup(CCObject*) {
             this->m_queryLevelId = levelId;
             this->m_currentPage = 1;
             this->fetchPage(this->m_currentPage);
-            if (this->m_allFilterBtnSpr)
-                this->m_allFilterBtnSpr->updateBGImage("GJ_button_01.png");
-            if (this->m_newFilterBtnSpr)
-                this->m_newFilterBtnSpr->updateBGImage("GJ_button_01.png");
-            if (this->m_replacementFilterBtnSpr)
-                this->m_replacementFilterBtnSpr->updateBGImage("GJ_button_01.png");
         });
     if (popup)
         popup->show();
@@ -351,8 +313,6 @@ void PendingThumbnailLayer::fetchPage(int page) {
         auto spinner = this->getChildByTag(9999);
         if (spinner)
             spinner->setVisible(false);
-        if (this->m_filterMenu)
-            this->m_filterMenu->setVisible(true);
     });
     if (auto spinner = this->getChildByTag(9999))
         spinner->setVisible(true);

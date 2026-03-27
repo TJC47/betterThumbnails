@@ -8,66 +8,62 @@
 using namespace geode::prelude;
 
 struct PendingThumbEntry {
-      int id = 0;
-      int user_id = 0;
-      std::string username;
-      int level_id = 0;
-      bool accepted = false;
-      std::string upload_time;
-      bool replacement = false;
+    int id = 0;
+    int user_id = 0;
+    std::string username;
+    int level_id = 0;
+    bool accepted = false;
+    std::string upload_time;
+    bool replacement = false;
 };
 
 class PendingThumbnailLayer : public CCLayer {
-     public:
-      async::TaskHolder<web::WebResponse> m_listener;
-      static PendingThumbnailLayer* create();
-      static CCScene* scene();
-      bool init() override;
-      void keyBackClicked() override;
+public:
+    async::TaskHolder<web::WebResponse> m_listener;
+    static PendingThumbnailLayer* create();
+    bool init() override;
+    void keyBackClicked() override;
 
-     private:
-      enum class FilterMode {
-            All = 0,
-            NewOnly = 1,
-            ReplacementOnly = 2,
-      };
-      static constexpr int ITEMS_PER_PAGE = 12;
-      int m_currentPage = 1;
-      std::vector<PendingThumbEntry> m_pendingItems;
+private:
+    enum class FilterMode {
+        All = 0,
+        NewOnly = 1,
+        ReplacementOnly = 2,
+    };
+    static constexpr int ITEMS_PER_PAGE = 12;
+    int m_currentPage = 1;
+    std::vector<PendingThumbEntry> m_pendingItems;
 
-      int m_apiPerPage = 0;
-      int m_apiTotal = 0;
-      bool m_serverPaging = true;
-      cue::ListNode* m_listNode = nullptr;
-      CCLabelBMFont* m_pageLabel = nullptr;
-      CCLabelBMFont* m_infoLabel = nullptr;
-      CCMenu* m_navMenu = nullptr;
-      CCMenu* m_filterMenu = nullptr;
-      CCMenuItemSpriteExtra* m_prevBtn = nullptr;
-      CCMenuItemSpriteExtra* m_nextBtn = nullptr;
+    int m_apiPerPage = 0;
+    int m_apiTotal = 0;
+    bool m_serverPaging = true;
+    cue::ListNode* m_listNode = nullptr;
+    CCLabelBMFont* m_pageLabel = nullptr;
+    CCLabelBMFont* m_infoLabel = nullptr;
+    CCMenu* m_navMenu = nullptr;
+    CCMenu* m_filterMenu = nullptr;
+    CCMenuItemSpriteExtra* m_prevBtn = nullptr;
+    CCMenuItemSpriteExtra* m_nextBtn = nullptr;
 
-      CCMenuItemSpriteExtra* m_allFilterBtn = nullptr;
-      CCMenuItemSpriteExtra* m_newFilterBtn = nullptr;
-      CCMenuItemSpriteExtra* m_replacementFilterBtn = nullptr;
-      CCMenuItemSpriteExtra* m_searchFilterBtn = nullptr;
+    geode::TabButton* m_allFilterBtn = nullptr;
+    geode::TabButton* m_newFilterBtn = nullptr;
+    geode::TabButton* m_replacementFilterBtn = nullptr;
+    CCMenuItemSpriteExtra* m_searchFilterBtn = nullptr;
 
-      ButtonSprite* m_allFilterBtnSpr = nullptr;
-      ButtonSprite* m_newFilterBtnSpr = nullptr;
-      ButtonSprite* m_replacementFilterBtnSpr = nullptr;
-      AccountButtonSprite* m_searchFilterBtnSpr = nullptr;
-      FilterMode m_filterMode = FilterMode::All;
+    AccountButtonSprite* m_searchFilterBtnSpr = nullptr;
+    FilterMode m_filterMode = FilterMode::All;
 
-      std::string m_queryUsername;
-      bool m_queryHasLevelId = false;
-      int m_queryLevelId = 0;
+    std::string m_queryUsername;
+    bool m_queryHasLevelId = false;
+    int m_queryLevelId = 0;
 
-      void onOpenFilterPopup(CCObject*);
+    void onOpenFilterPopup(CCObject*);
 
-      void updateUI();
-      void onPrevPage(CCObject*);
-      void onNextPage(CCObject*);
-      void fetchPage(int page);
-      void onFilterAll(CCObject*);
-      void onFilterNew(CCObject*);
-      void onFilterReplacement(CCObject*);
+    void updateUI();
+    void onPrevPage(CCObject*);
+    void onNextPage(CCObject*);
+    void fetchPage(int page);
+    void onFilterAll(CCObject*);
+    void onFilterNew(CCObject*);
+    void onFilterReplacement(CCObject*);
 };
