@@ -83,9 +83,9 @@ bool ManageUserLayer::init() {
     this->m_loadingCircle->addToLayer(this->m_listNode, 2);
 
     this->m_infoLabel = CCLabelBMFont::create("0 users", "goldFont.fnt");
-    this->m_infoLabel->setScale(0.35f);
-    this->m_infoLabel->setAnchorPoint({0.5f, .0f});
-    this->m_infoLabel->setPosition({screenSize.width / 2.f, 2.f});
+    this->m_infoLabel->setScale(0.48f);
+    this->m_infoLabel->setAnchorPoint({1.f, 1.f});
+    this->m_infoLabel->setPosition({screenSize.width - 7.f, screenSize.height - 14.f});
     this->addChild(this->m_infoLabel, 2);
 
     this->m_pageLabel = CCLabelBMFont::create("1 to 0 of 0", "goldFont.fnt");
@@ -372,8 +372,8 @@ void ManageUserLayer::populateList() {
                 geode::MDPopup::create(
                     fmt::format("Banned by {}", entry.bannedBy),
                     entry.banReason,
-                    "OK"
-                )->show();
+                    "OK")
+                    ->show();
             });
             infoBtn->setScale(0.6f);
             infoBtn->setAnchorPoint({0.f, .5f});

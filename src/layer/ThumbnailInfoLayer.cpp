@@ -207,17 +207,14 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         }
 
         std::string infoText = fmt::format(
-            "## <cy>Submission Info</c>\n"
             "<cg>Version:</c> {}\n\n"
-            "<cg>Level Name:</c> {}\n\n"
-            "<cg>Account ID:</c> {}\n\n"
-            "<cg>Account Name:</c> {}\n\n"
-            "<cg>Progression:</c> {}\n\n"
-            "<cg>Attempt Time:</c> {}",
+            "<cg>Submitted By:</c> {}\n\n"
+            "<cg>Submitter Account ID:</c> {}\n\n"
+            "<cg>Progression:</c> {}%\n\n"
+            "<cg>Attempt Time:</c> {}s",
             fields["v"],
-            fields["ln"],
-            fields["ci"],
             fields["cn"],
+            fields["ci"],
             prStr,
             tmStr);
         auto infoTextArea = MDTextArea::create(infoText, {180.f, 120.f});

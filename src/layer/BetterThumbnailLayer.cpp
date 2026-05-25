@@ -84,7 +84,10 @@ bool BetterThumbnailLayer::init() {
         this->addChild(bgImage, -3);
     }
     m_bottomLeftMenu = CCMenu::create();
-    this->addChildAtPosition(m_bottomLeftMenu, Anchor::BottomLeft, {10.f, 10.f}, false);
+    m_bottomLeftMenu->setLayout(ColumnLayout::create()->setAxisAlignment(AxisAlignment::Start));
+    m_bottomLeftMenu->setContentSize({35.f, 100.f});
+    m_bottomLeftMenu->setZOrder(1);
+    this->addChildAtPosition(m_bottomLeftMenu, Anchor::BottomLeft, {25.f, 60.f}, false);
 
     m_menuButtons = CCMenu::create();
     m_menuButtons->setContentSize({450.f, 310.f});
@@ -261,19 +264,8 @@ bool BetterThumbnailLayer::init() {
     m_menuButtons->updateLayout();
 
     // funny side art
-    auto sideArtLeft = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
-    auto sideArtRight = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
-    if (sideArtLeft) {
-        sideArtLeft->setAnchorPoint({0.f, 0.f});
-        sideArtLeft->setPosition({0.f, 0.f});
-        this->addChild(sideArtLeft, 1);
-    }
-    if (sideArtRight) {
-        sideArtRight->setAnchorPoint({1.f, 0.f});
-        sideArtRight->setPosition({screenSize.width, 0.f});
-        sideArtRight->setFlipX(true);
-        this->addChild(sideArtRight, 1);
-    }
+    addSideArt(this, SideArt::BottomLeft, SideArtStyle::Layer, false);
+    addSideArt(this, SideArt::BottomRight, SideArtStyle::Layer, false);
 
     this->setKeypadEnabled(true);
 
