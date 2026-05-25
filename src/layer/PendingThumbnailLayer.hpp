@@ -44,6 +44,7 @@ private:
     CCLabelBMFont* m_infoLabel = nullptr;
     CCMenu* m_navMenu = nullptr;
     CCMenu* m_filterMenu = nullptr;
+    CCMenu* m_searchMenu = nullptr;
     CCMenuItemSpriteExtra* m_prevBtn = nullptr;
     CCMenuItemSpriteExtra* m_nextBtn = nullptr;
 
@@ -52,7 +53,6 @@ private:
     geode::TabButton* m_replacementFilterBtn = nullptr;
     CCMenuItemSpriteExtra* m_searchFilterBtn = nullptr;
 
-    AccountButtonSprite* m_searchFilterBtnSpr = nullptr;
     FilterMode m_filterMode = FilterMode::All;
 
     std::string m_queryUsername;

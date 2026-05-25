@@ -3,11 +3,25 @@
 #include <Geode/binding/ProfilePage.hpp>
 
 #include <cue/ListNode.hpp>
+#include <cue/LoadingCircle.hpp>
 
 #include "Geode/ui/General.hpp"
+#include <Geode/ui/Button.hpp>
+#include <Geode/ui/MDPopup.hpp>
 #include "../include/BetterThumbnailConstant.hpp"
 
 using namespace geode::prelude;
+
+namespace {
+    constexpr std::array<std::string_view, 6> ROLE_OPTIONS = {
+        "Any",
+        "user",
+        "verified",
+        "moderator",
+        "admin",
+        "owner",
+    };
+}
 
 namespace {
     CCSprite* badgeForRole(const std::string& role) {
@@ -45,7 +59,8 @@ bool ManageUserLayer::init() {
     if (bg)
         this->addChild(bg, -1);
 
-    addSideArt(this, SideArt::All, false);
+    addSideArt(this, SideArt::BottomLeft, false);
+    addSideArt(this, SideArt::BottomRight, false);
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
 
@@ -64,21 +79,109 @@ bool ManageUserLayer::init() {
     this->m_listNode->setCellHeight(40.f);
     this->addChild(this->m_listNode, 1);
 
+    this->m_loadingCircle = cue::LoadingCircle::create(true);
+    this->m_loadingCircle->addToLayer(this->m_listNode, 2);
+
     this->m_infoLabel = CCLabelBMFont::create("0 users", "goldFont.fnt");
     this->m_infoLabel->setScale(0.35f);
     this->m_infoLabel->setAnchorPoint({0.5f, .0f});
     this->m_infoLabel->setPosition({screenSize.width / 2.f, 2.f});
     this->addChild(this->m_infoLabel, 2);
 
-    this->m_pageLabel = CCLabelBMFont::create("Page 1 / 1", "goldFont.fnt");
-    this->m_pageLabel->setScale(0.5f);
+    this->m_pageLabel = CCLabelBMFont::create("1 to 0 of 0", "goldFont.fnt");
+    this->m_pageLabel->setScale(0.48f);
     this->m_pageLabel->setAnchorPoint({1.f, 1.f});
-    this->m_pageLabel->setPosition({screenSize.width - 5.f, screenSize.height - 5.f});
+    this->m_pageLabel->setPosition({screenSize.width - 7.f, screenSize.height - 3.f});
     this->addChild(this->m_pageLabel, 2);
 
     this->m_navMenu = CCMenu::create();
     this->m_navMenu->setPosition({0.f, 0.f});
     this->addChild(this->m_navMenu, 2);
+
+    this->m_filterMenu = CCMenu::create();
+    this->m_filterMenu->setPosition({0.f, 0.f});
+    this->addChild(this->m_filterMenu, 2);
+    this->m_showBannedOnly = false;
+
+    auto bannedOff = EditorButtonSprite::createWithSprite(
+        "BT_banIcon.png"_spr,
+        1.f,
+        EditorBaseColor::Gray,
+        EditorBaseSize::Normal);
+    auto bannedOn = EditorButtonSprite::createWithSprite(
+        "BT_banIcon.png"_spr,
+        1.f,
+        EditorBaseColor::Salmon,
+        EditorBaseSize::Normal);
+    this->m_bannedToggle = CCMenuItemToggler::create(
+        bannedOff,
+        bannedOn,
+        this,
+        menu_selector(ManageUserLayer::onToggleBanned));
+    this->m_bannedToggle->setPosition({22.f, 22.f});
+    this->m_filterMenu->addChild(this->m_bannedToggle);
+    this->m_bannedToggle->toggle(this->m_showBannedOnly);
+
+    this->m_roleDropdown = cue::DropdownNode::create({0, 0, 0, 90}, 200.f, 20.f, 120.f);
+    this->m_roleDropdown->setPosition({screenSize.width / 2.f, screenSize.height / 2.f + 132.f});
+    this->m_roleDropdown->setAnchorPoint({0.5f, 1.f});
+    this->m_roleDropdown->setCallback([this](size_t index, CCNode*) {
+        if (index >= ROLE_OPTIONS.size())
+            return;
+
+        this->m_selectedRole = std::string(ROLE_OPTIONS[index]);
+        this->m_currentPage = 1;
+        fetchPage(this->m_currentPage);
+    });
+
+    auto makeRoleCell = [](std::string_view role) {
+        auto cell = CCLayer::create();
+        cell->setContentSize({200.f, 20.f});
+
+        auto label = CCLabelBMFont::create(role.data(), "bigFont.fnt");
+        auto badge = badgeForRole(std::string(role));
+
+        if (badge) {
+            badge->setScale(0.45f);
+            label->limitLabelWidth(75.f, 0.5f, 0.35f);
+
+            float badgeWidth = badge->getContentSize().width * badge->getScale();
+            float labelWidth = label->getContentSize().width * label->getScale();
+            float gap = 4.f;
+            float totalWidth = badgeWidth + gap + labelWidth;
+
+            float startX = (cell->getContentSize().width - totalWidth) / 2.f;
+
+            badge->setAnchorPoint({0.f, 0.5f});
+            badge->setPosition({
+                startX,
+                cell->getContentSize().height / 2.f,
+            });
+            cell->addChild(badge);
+
+            label->setAnchorPoint({0.f, 0.5f});
+            label->setPosition({
+                startX + badgeWidth + gap,
+                cell->getContentSize().height / 2.f,
+            });
+            cell->addChild(label);
+        } else {
+            label->limitLabelWidth(100.f, 0.5f, 0.35f);
+            label->setAnchorPoint({0.5f, 0.5f});
+            label->setPosition({
+                cell->getContentSize().width / 2.f,
+                cell->getContentSize().height / 2.f,
+            });
+            cell->addChild(label);
+        }
+
+        return cell;
+    };
+
+    for (auto role : ROLE_OPTIONS) {
+        this->m_roleDropdown->addCell(makeRoleCell(role));
+    }
+    this->addChild(this->m_roleDropdown, 2);
 
     auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
     this->m_prevBtn = CCMenuItemSpriteExtra::create(
@@ -95,8 +198,6 @@ bool ManageUserLayer::init() {
 
     addBackButton(this, BackButtonStyle::Green);
     this->setKeypadEnabled(true);
-
-    fetchPage(m_currentPage);
     return true;
 }
 
@@ -115,18 +216,40 @@ void ManageUserLayer::onNextPage(CCObject*) {
         fetchPage(m_currentPage + 1);
 }
 
+void ManageUserLayer::onToggleBanned(CCObject* sender) {
+    auto toggle = typeinfo_cast<CCMenuItemToggler*>(sender);
+    if (!toggle)
+        return;
+
+    this->m_showBannedOnly = !this->m_showBannedOnly;
+    fetchPage(this->m_currentPage);
+}
+
 void ManageUserLayer::fetchPage(int page) {
     auto req = web::WebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
 
-    auto url = betterThumbnail::makeUrl(
-        fmt::format("/admin/users?page={}&per_page=10&sort_by=id&sort_dir=asc", page));
+    req.param("page", page);
+    req.param("per_page", ITEMS_PER_PAGE);
+    req.param("sort_by", "id");
+    req.param("sort_dir", "asc");
+    if (this->m_showBannedOnly)
+        req.param("banned", "true");
+    if (this->m_selectedRole != "Any")
+        req.param("role", this->m_selectedRole);
+
+    auto url = betterThumbnail::makeUrl("/admin/users");
+
+    if (this->m_loadingCircle)
+        this->m_loadingCircle->fadeIn();
 
     auto task = req.get(url);
     this->m_listener.spawn(std::move(task), [this, page](web::WebResponse res) {
         if (res.code() < 200 || res.code() > 299) {
+            if (this->m_loadingCircle)
+                this->m_loadingCircle->fadeOut();
             Notification::create(
                 fmt::format("Failed to load users: {}", res.string().unwrapOrDefault()),
                 NotificationIcon::Error)
@@ -136,12 +259,16 @@ void ManageUserLayer::fetchPage(int page) {
 
         auto jsonResult = res.json();
         if (!jsonResult.isOk()) {
+            if (this->m_loadingCircle)
+                this->m_loadingCircle->fadeOut();
             Notification::create("Failed to parse users response", NotificationIcon::Error)->show();
             return;
         }
 
         auto json = jsonResult.unwrap();
         if (!json.isObject() || !json["users"].isArray()) {
+            if (this->m_loadingCircle)
+                this->m_loadingCircle->fadeOut();
             Notification::create("Invalid users response", NotificationIcon::Error)->show();
             return;
         }
@@ -162,16 +289,26 @@ void ManageUserLayer::fetchPage(int page) {
             entry.pending = item["pending"].asInt().unwrapOrDefault();
             entry.rejected = item["rejected"].asInt().unwrapOrDefault();
             entry.totalUploads = item["total_uploads"].asInt().unwrapOrDefault();
+            entry.banned = item["banned"].asBool().unwrapOrDefault();
+            entry.banReason = item["ban_reason"].asString().unwrapOrDefault();
+            entry.bannedBy = item["banned_by_username"].asString().unwrapOrDefault();
             this->m_users.push_back(std::move(entry));
         }
 
         populateList();
+        if (this->m_loadingCircle)
+            this->m_loadingCircle->fadeOut();
     });
 }
 
 void ManageUserLayer::populateList() {
     if (!this->m_listNode)
         return;
+
+    if (this->m_emptyLabel) {
+        this->m_emptyLabel->removeFromParent();
+        this->m_emptyLabel = nullptr;
+    }
 
     this->m_listNode->clear();
     this->m_listNode->setCellHeight(40.f);
@@ -180,14 +317,23 @@ void ManageUserLayer::populateList() {
     if (this->m_infoLabel)
         this->m_infoLabel->setString(infoText.c_str());
     if (this->m_pageLabel)
-        this->m_pageLabel->setString(fmt::format("Page {} / {}", this->m_currentPage, this->m_totalPages).c_str());
+        this->m_pageLabel->setString(fmt::format("{} to {} of {}",
+            (this->m_currentPage - 1) * ITEMS_PER_PAGE + 1,
+            std::min(this->m_currentPage * ITEMS_PER_PAGE, this->m_totalUsers),
+            this->m_totalUsers)
+                .c_str());
+
+    if (this->m_prevBtn)
+        this->m_prevBtn->setVisible(this->m_currentPage > 1);
+    if (this->m_nextBtn)
+        this->m_nextBtn->setVisible(this->m_currentPage < this->m_totalPages);
 
     if (this->m_users.empty()) {
-        auto emptyLabel = CCLabelBMFont::create("No users found", "goldFont.fnt");
-        emptyLabel->setScale(0.55f);
-        emptyLabel->setPosition({this->m_listNode->getContentSize().width / 2.f,
+        this->m_emptyLabel = CCLabelBMFont::create("No users found", "goldFont.fnt");
+        this->m_emptyLabel->setScale(0.55f);
+        this->m_emptyLabel->setPosition({this->m_listNode->getContentSize().width / 2.f,
             this->m_listNode->getContentSize().height / 2.f});
-        this->m_listNode->addChild(emptyLabel);
+        this->m_listNode->addChild(this->m_emptyLabel);
         this->m_listNode->updateLayout();
         return;
     }
@@ -196,33 +342,45 @@ void ManageUserLayer::populateList() {
         auto row = CCLayer::create();
         row->setContentSize({this->m_listNode->getContentSize().width - 20.f, 40.f});
 
-        auto usernameText = CCLabelBMFont::create(entry.username.c_str(), "goldFont.fnt");
-        usernameText->setAnchorPoint({0.f, 1.f});
-        usernameText->setScale(0.55f);
-
-        auto usernameLabel = CCMenuItemSpriteExtra::create(
-            usernameText, this, menu_selector(ManageUserLayer::onOpenProfile));
-        usernameLabel->setTag(entry.accountId);
-        usernameLabel->setAnchorPoint({0.f, 1.f});
-        usernameLabel->setPosition({12.f, row->getContentSize().height - 5.f});
+        auto usernameLabel = geode::Button::createWithLabel(entry.username.c_str(), "goldFont.fnt", [entry](geode::Button* btn) {
+            if (entry.accountId == -1)
+                return;
+            ProfilePage::create(entry.accountId, false)->show();
+        });
+        usernameLabel->setAnchorPoint({0.f, .5f});
+        usernameLabel->setScale(0.55f);
+        usernameLabel->setPosition({12.f, row->getContentSize().height - 12.f});
+        row->addChild(usernameLabel);
 
         if (entry.accountId == -1) {
-            usernameText->setColor({0, 255, 0});
+            usernameLabel->setColor({0, 255, 0});
             usernameLabel->setEnabled(false);
         }
 
-        auto usernameMenu = CCMenu::create();
-        usernameMenu->setPosition({0.f, 0.f});
-        usernameMenu->addChild(usernameLabel);
-        row->addChild(usernameMenu, 5);
-
         auto badge = this->spriteForRole(entry.role);
+        float nextX = usernameLabel->getPositionX() + usernameLabel->getContentSize().width * usernameLabel->getScale() + 8.f;
         if (badge) {
             badge->setScale(0.45f);
-            badge->setAnchorPoint({0.f, 1.f});
-            badge->setPosition({usernameLabel->getPositionX() + usernameLabel->getContentSize().width * usernameLabel->getScale() + 8.f,
-                row->getContentSize().height - 5.f});
+            badge->setAnchorPoint({0.f, .5f});
+            badge->setPosition({nextX, row->getContentSize().height - 12.f});
             row->addChild(badge);
+            nextX += badge->getContentSize().width * badge->getScale() + 8.f;
+        }
+
+        if (entry.banned) {
+            auto infoBtn = geode::Button::createWithSpriteFrameName("GJ_infoIcon_001.png", [entry](geode::Button* btn) {
+                geode::MDPopup::create(
+                    fmt::format("Banned by {}", entry.bannedBy),
+                    entry.banReason,
+                    "OK"
+                )->show();
+            });
+            infoBtn->setScale(0.6f);
+            infoBtn->setAnchorPoint({0.f, .5f});
+            infoBtn->setPosition({nextX, row->getContentSize().height - 12.f});
+            row->addChild(infoBtn);
+
+            usernameLabel->setColor({255, 0, 0});
         }
 
         auto statsLabel = CCLabelBMFont::create(
@@ -244,18 +402,4 @@ void ManageUserLayer::populateList() {
 
     this->m_listNode->updateLayout();
     this->m_listNode->scrollToTop();
-}
-
-void ManageUserLayer::onOpenProfile(CCObject* sender) {
-    auto node = typeinfo_cast<CCNode*>(sender);
-    if (!node)
-        return;
-
-    auto accountId = node->getTag();
-    if (accountId < 0)
-        return;
-
-    auto profile = ProfilePage::create(accountId, false);
-    if (profile)
-        profile->show();
 }

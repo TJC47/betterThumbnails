@@ -19,7 +19,8 @@ bool PendingThumbnailLayer::init() {
     else
         return false;
 
-    addSideArt(this, SideArt::All, false);
+    addSideArt(this, SideArt::BottomLeft, false);
+    addSideArt(this, SideArt::BottomRight, false);
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
 
     CCMenu* menu = CCMenu::create();
@@ -42,7 +43,6 @@ bool PendingThumbnailLayer::init() {
     m_listNode->setCellHeight(100.f);
 
     m_loadingCircle = cue::LoadingCircle::create(true);
-    m_loadingCircle->setScale(1.25f);
     m_loadingCircle->addToLayer(m_listNode, 2);
 
     m_navMenu = CCMenu::create();
@@ -54,10 +54,14 @@ bool PendingThumbnailLayer::init() {
     m_filterMenu->setPosition({0, 0});
     m_listNode->addChild(m_filterMenu, -1);
 
+    this->m_searchMenu = CCMenu::create();
+    this->m_searchMenu->setPosition({0.f, 0.f});
+    this->addChild(this->m_searchMenu, 2);
+
     m_infoLabel = CCLabelBMFont::create("1 to 1 of 0", "goldFont.fnt");
     m_infoLabel->setScale(0.4f);
-    m_infoLabel->setAnchorPoint({0.5f, 1.0f});
-    m_infoLabel->setPosition({screenSize.width / 2.f, screenSize.height - 2.f});
+    m_infoLabel->setAnchorPoint({1.f, 1.0f});
+    m_infoLabel->setPosition({screenSize.width - 7.f, screenSize.height - 3.f});
     this->addChild(m_infoLabel, 3);
 
     CCSprite* prevSpr =
@@ -105,14 +109,12 @@ bool PendingThumbnailLayer::init() {
 
     // @geode-ignore(unknown-resource)
     auto searchIcon = CCSprite::createWithSpriteFrameName("geode.loader/search.png");
-    auto searchSpr = AccountButtonSprite::create(
-        searchIcon, AccountBaseColor::Gray, AccountBaseSize::Normal);
+    auto searchSpr = EditorButtonSprite::create(
+        searchIcon, EditorBaseColor::Gray, EditorBaseSize::Normal);
     m_searchFilterBtn = CCMenuItemSpriteExtra::create(
         searchSpr, this, menu_selector(PendingThumbnailLayer::onOpenFilterPopup));
-    m_searchFilterBtnSpr = searchSpr;
-    m_searchFilterBtn->setPosition(
-        {screenSize.width - 30.f, screenSize.height - 30.f});
-    m_navMenu->addChild(m_searchFilterBtn);
+    m_searchFilterBtn->setPosition({30.f, 30.f});
+    this->m_searchMenu->addChild(this->m_searchFilterBtn);
 
     addBackButton(this, BackButtonStyle::Green);
 
