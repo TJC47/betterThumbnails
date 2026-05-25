@@ -1,6 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include <Geode/utils/async.hpp>
+#include <cue/LoadingCircle.hpp>
 #include <cue/ListNode.hpp>
 #include <string>
 #include <vector>
@@ -38,6 +39,7 @@ private:
     int m_apiTotal = 0;
     bool m_serverPaging = true;
     cue::ListNode* m_listNode = nullptr;
+    cue::LoadingCircle* m_loadingCircle = nullptr;
     CCLabelBMFont* m_pageLabel = nullptr;
     CCLabelBMFont* m_infoLabel = nullptr;
     CCMenu* m_navMenu = nullptr;

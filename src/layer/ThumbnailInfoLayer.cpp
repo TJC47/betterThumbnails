@@ -1,4 +1,8 @@
 #include <Geode/Geode.hpp>
+
+#include <cue/LoadingCircle.hpp>
+
+#include "../include/BetterThumbnailConstant.hpp"
 #include "ThumbnailInfoLayer.hpp"
 #include "../popup/RejectReasonPopup.hpp"
 
@@ -98,12 +102,9 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     clip->addChild(thumbReplacement);
     clip->addChild(thumbOriginal);
 
-    auto spinner = LoadingSpinner::create(30.f);
-    spinner->setPosition({thumbBg->getContentSize().width / 2.f,
-        thumbBg->getContentSize().height / 2.f});
-    clip->addChild(spinner);
-    clip->setContentSize(thumbBg->getContentSize());
-    spinner->setVisible(true);
+    auto spinner = cue::LoadingCircle::create(true);
+    spinner->setScale(0.45f);
+    spinner->addToLayer(clip);
     m_thumbSpinner = spinner;
 
     // Label above thumbnail indicating which image is shown
@@ -126,7 +127,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
     auto imageTask = req.get(
-        fmt::format("https://levelthumbs.prevter.me/pending/{}/image", id));
+        betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id)));
     m_listener.spawn(std::move(imageTask),
         [this, thumbReplacement, thumbOriginal, thumbBg, id, spinner](web::WebResponse res) {
             if (res.code() >= 200 && res.code() <= 299) {
@@ -134,12 +135,12 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
                 if (!data.empty()) {
                     thumbReplacement->loadFromData(data);
                     if (spinner)
-                        spinner->setVisible(false);
+                        spinner->fadeOut();
                 }
             } else {
                 log::error("Image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
                 if (spinner)
-                    spinner->setVisible(false);
+                    spinner->fadeOut();
             }
         });
 
@@ -186,7 +187,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     this->addChild(blackbox, -1);
 
     // check if user role is a moderator/admin, show the button
-    if (Mod::get()->getSavedValue<int>("role_num") >= 20) {
+    if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
         auto acceptBtnSprite = ButtonSprite::create(
             "Accept", 55, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
         auto acceptBtn = CCMenuItemSpriteExtra::create(
@@ -230,7 +231,7 @@ void ThumbnailInfoLayer::onAccept(CCObject*) {
             Mod::get()->getSavedValue<std::string>("token")));
     req.bodyJSON(matjson::makeObject({{"accepted", true}}));
     auto task =
-        req.post(fmt::format("https://levelthumbs.prevter.me/pending/{}", m_id));
+        req.post(betterThumbnail::makeUrl(fmt::format("/pending/{}", m_id)));
 
     m_listener.spawn(std::move(task), [this](web::WebResponse res) {
         if (res.code() >= 200 && res.code() <= 299) {
@@ -255,7 +256,7 @@ void ThumbnailInfoLayer::onReject(CCObject*) {
         req.bodyJSON(
             matjson::makeObject({{"accepted", false}, {"reason", reason}}));
         auto task = req.post(
-            fmt::format("https://levelthumbs.prevter.me/pending/{}", m_id));
+            betterThumbnail::makeUrl(fmt::format("/pending/{}", m_id)));
 
         m_listener.spawn(std::move(task), [this](web::WebResponse res) {
             if (res.code() >= 200 && res.code() <= 299) {
@@ -326,7 +327,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
     auto task = req.get(
-        fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", m_levelId));
+        betterThumbnail::makeUrl(fmt::format("/thumbnail/{}", m_levelId)));
 
     m_listener.spawn(std::move(task), [this](web::WebResponse res) {
         if (res.code() >= 200 && res.code() <= 299) {

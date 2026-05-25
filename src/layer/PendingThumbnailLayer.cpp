@@ -2,6 +2,9 @@
 
 #include <Geode/Geode.hpp>
 
+#include <cue/LoadingCircle.hpp>
+
+#include "../include/BetterThumbnailConstant.hpp"
 #include "../node/ThumbnailNode.hpp"
 #include "../popup/FilterThumbnailPopup.hpp"
 #include "Geode/ui/General.hpp"
@@ -38,11 +41,9 @@ bool PendingThumbnailLayer::init() {
 
     m_listNode->setCellHeight(100.f);
 
-    LoadingSpinner* spinner = LoadingSpinner::create(100.f);
-    spinner->setPosition(this->getContentSize().width / 2.f,
-        this->getContentSize().height / 2.f);
-    spinner->setTag(9999);
-    this->addChild(spinner, 2);
+    m_loadingCircle = cue::LoadingCircle::create(true);
+    m_loadingCircle->setScale(1.25f);
+    m_loadingCircle->addToLayer(m_listNode, 2);
 
     m_navMenu = CCMenu::create();
     m_navMenu->setPosition({0.f, 0.f});
@@ -208,8 +209,8 @@ void PendingThumbnailLayer::fetchPage(int page) {
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
-    auto url = fmt::format(
-        "https://levelthumbs.prevter.me/pending?page={}&per_page=12", page);
+    auto url = betterThumbnail::makeUrl(
+        fmt::format("/pending?page={}&per_page=12", page));
     switch (this->m_filterMode) {
         case FilterMode::NewOnly:
             url += "&new_only=true";
@@ -233,37 +234,27 @@ void PendingThumbnailLayer::fetchPage(int page) {
     if (m_queryHasLevelId) {
         url += fmt::format("&level_id={}", m_queryLevelId);
     }
-    auto token = Mod::get()->getSavedValue<std::string>("token");
-    if (token.empty()) {
-        log::warn("Pending API request missing token");
-    }
-    if (auto spinner = this->getChildByTag(9999))
-        spinner->setVisible(true);
+    if (m_loadingCircle)
+        m_loadingCircle->fadeIn();
     auto task = req.get(url);
-    m_listener.spawn(std::move(task), [this, url, token](web::WebResponse res) {
+    m_listener.spawn(std::move(task), [this](web::WebResponse res) {
         if (res.code() < 200 || res.code() > 299) {
-            auto spinner = this->getChildByTag(9999);
-            if (spinner)
-                spinner->setVisible(false);
-            log::error("Pending API error: {} {}", res.code(), res.string().unwrapOr(""));
+            auto responseBody = res.string().unwrapOrDefault();
+            if (m_loadingCircle)
+                m_loadingCircle->fadeOut();
+            log::error("Pending API error: {} {}", res.code(), responseBody);
             Notification::create(
-                fmt::format("Pending API error: {}", res.string().unwrapOr("")),
+                fmt::format("Pending API error: {}", responseBody),
                 NotificationIcon::Error)
                 ->show();
             return;
         }
-        auto body = res.string().unwrapOrDefault();
         auto jsonResult = res.json();
         if (!jsonResult.isOk()) {
-            auto spinner = this->getChildByTag(9999);
-            if (spinner)
-                spinner->setVisible(false);
+            auto responseBody = res.string().unwrapOrDefault();
+            if (m_loadingCircle)
+                m_loadingCircle->fadeOut();
             auto maxLen = size_t(1024);
-            auto truncated =
-                body.size() > maxLen ? body.substr(0, maxLen) + "..." : body;
-            log::error("Pending API JSON parse error: {}. Body: {}",
-                jsonResult.unwrapErr(),
-                truncated);
             Notification::create(
                 fmt::format("Pending API error: JSON parse error: {}",
                     jsonResult.unwrapErr()),
@@ -277,31 +268,29 @@ void PendingThumbnailLayer::fetchPage(int page) {
             this->m_apiPerPage = json["per_page"].asInt().unwrapOr(ITEMS_PER_PAGE);
             this->m_apiTotal = json["total"].asInt().unwrapOr(0);
             this->m_currentPage = json["page"].asInt().unwrapOr(1);
-            auto arr = json["uploads"].asArray().copied().unwrapOrDefault();
+            auto uploads = json["uploads"].asArray().unwrap();
             this->m_pendingItems.clear();
-            for (auto& item : arr) {
+            this->m_pendingItems.reserve(uploads.size());
+            for (auto const& item : uploads) {
                 PendingThumbEntry e;
                 e.id = item["id"].asInt().unwrapOrDefault();
                 e.user_id = item["user_id"].asInt().unwrapOrDefault();
-                e.username = item["username"].asString().unwrapOr("");
+                auto username = item["username"].asString().unwrapOrDefault();
+                e.username = std::move(username);
                 e.level_id = item["level_id"].asInt().unwrapOrDefault();
                 e.accepted = item["accepted"].asBool().unwrapOr(false);
-                e.upload_time = item["upload_time"].asString().unwrapOr("");
+                auto uploadTime = item["upload_time"].asString().unwrapOrDefault();
+                e.upload_time = std::move(uploadTime);
                 e.replacement = item["replacement"].asBool().unwrapOr(false);
-                this->m_pendingItems.push_back(e);
+                this->m_pendingItems.push_back(std::move(e));
             }
             log::info("Pending API parsed {} uploads (server paging)",
                 this->m_pendingItems.size());
         } else {
-            auto spinner = this->getChildByTag(9999);
-            if (spinner)
-                spinner->setVisible(false);
-            auto body = res.string().unwrapOrDefault();
-            auto truncated = body.size() > 1024 ? body.substr(0, 1024) + "..." : body;
-            log::error(
-                "Pending API did not return expected uploads object with "
-                "'uploads' array. Response truncated: {}",
-                truncated);
+            auto responseBody = res.string().unwrapOrDefault();
+            if (m_loadingCircle)
+                m_loadingCircle->fadeOut();
+
             Notification::create("Pending API error: Invalid response format",
                 NotificationIcon::Error)
                 ->show();
@@ -310,12 +299,11 @@ void PendingThumbnailLayer::fetchPage(int page) {
 
         this->m_currentPage = this->m_currentPage < 1 ? 1 : this->m_currentPage;
         this->updateUI();
-        auto spinner = this->getChildByTag(9999);
-        if (spinner)
-            spinner->setVisible(false);
+        if (m_loadingCircle)
+            m_loadingCircle->fadeOut();
     });
-    if (auto spinner = this->getChildByTag(9999))
-        spinner->setVisible(true);
+    if (m_loadingCircle)
+        m_loadingCircle->fadeIn();
     if (m_listNode)
         m_listNode->clear();
     if (m_navMenu)

@@ -4,6 +4,7 @@
 #include <Geode/loader/Mod.hpp>
 #include <Geode/ui/LazySprite.hpp>
 
+#include "../include/BetterThumbnailConstant.hpp"
 #include "../layer/ThumbnailInfoLayer.hpp"
 
 using namespace geode::prelude;
@@ -116,7 +117,8 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     // Fetch image from API and apply to LazySprite
     auto imageReq = web::WebRequest();
     imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
-    auto imageTask = imageReq.get(std::string("https://levelthumbs.prevter.me/pending/") + std::to_string(id) + "/image");
+    auto imageTask = imageReq.get(
+        betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id)));
     m_listener.spawn(std::move(imageTask), [this, lazySprite, size](web::WebResponse res) {
         if (res.code() >= 200 && res.code() <= 299) {
             auto data = res.data();

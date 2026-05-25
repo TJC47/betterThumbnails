@@ -1,6 +1,10 @@
 #include "AuthLayer.hpp"
 #include "../layer/BetterThumbnailLayer.hpp"
 
+#include <cue/LoadingCircle.hpp>
+
+#include "../include/BetterThumbnailConstant.hpp"
+
 using namespace geode::prelude;
 
 AuthLayer* AuthLayer::create() {
@@ -21,11 +25,11 @@ bool AuthLayer::init() {
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     this->setPosition({0, 0});
 
-    // Create loading spinner at center
-    auto loadingSpinner = LoadingSpinner::create(100.f);
-    loadingSpinner->setAnchorPoint({0.5f, 0.5f});
-    loadingSpinner->setPosition({winSize.width / 2.f, winSize.height / 2.f});
-    this->addChild(loadingSpinner, 2);
+    // Create loading circle at center
+    auto loadingCircle = cue::LoadingCircle::create(true);
+    loadingCircle->setScale(1.25f);
+    loadingCircle->setPosition({winSize.width / 2.f, winSize.height / 2.f});
+    this->addChild(loadingCircle, 2);
 
     // Move loading text above spinner
     loadingLabel = CCLabelBMFont::create("Authenticating with Argon...", "bigFont.fnt");
@@ -67,7 +71,7 @@ void AuthLayer::startAuthProcess() {
             // Change loading text before API login request
             if (loadingLabel) loadingLabel->setString("Logging in to Level Thumbnails API...");
 
-            auto task = req.post("https://levelthumbs.prevter.me/auth/login");
+            auto task = req.post(betterThumbnail::makeUrl("/auth/login"));
 
             apiResponded = false;
             this->scheduleOnce(schedule_selector(AuthLayer::onApiTimeout), 30.0f);
@@ -101,17 +105,17 @@ void AuthLayer::startAuthProcess() {
                     */
                     long user_role_num;
                     if (role == "user")
-                        user_role_num = 0;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::User);
                     else if (role == "verified")
-                        user_role_num = 10;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::Verified);
                     else if (role == "moderator")
-                        user_role_num = 20;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::Moderator);
                     else if (role == "admin")
-                        user_role_num = 30;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::Admin);
                     else if (role == "owner")
-                        user_role_num = 40;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::Owner);
                     else
-                        user_role_num = -1;
+                        user_role_num = static_cast<int>(betterThumbnail::RoleNum::Unknown);
                     Mod::get()->setSavedValue<long>("role_num", user_role_num);
                     Mod::get()->setSavedValue<std::string>("username", username);
                     Mod::get()->setSavedValue<long>("user_id", id);

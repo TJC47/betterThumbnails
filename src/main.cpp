@@ -13,7 +13,7 @@ class $modify(BTNCreatorLayer, CreatorLayer) {
             return false;
 
         auto myButton = CCMenuItemSpriteExtra::create(
-            CCSprite::create("betterThumbnailButton.png"_spr),
+            CCSprite::create("BT_betterThumbnailButton.png"_spr),
             this,
             menu_selector(BTNCreatorLayer::onBTNButton));
 

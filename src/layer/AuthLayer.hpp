@@ -2,18 +2,19 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/async.hpp>
 #include <argon/argon.hpp>
+#include <cue/LoadingCircle.hpp>
 
 using namespace geode::prelude;
 
 class AuthLayer : public CCBlockLayer {
 public:
-    CCLabelBMFont *loadingLabel = nullptr;
-    CCSprite *loadingSpinner = nullptr;
+    CCLabelBMFont* loadingLabel = nullptr;
+    cue::LoadingCircle* loadingCircle = nullptr;
     bool argonResponded = false;
     bool apiResponded = false;
     async::TaskHolder<web::WebResponse> m_listener;
 
-    static AuthLayer *create();
+    static AuthLayer* create();
     virtual bool init();
     void removeLoading();
     void startAuthProcess();

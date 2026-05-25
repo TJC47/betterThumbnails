@@ -7,6 +7,8 @@
 #include "Geode/ui/General.hpp"
 #include "Geode/ui/Notification.hpp"
 #include "Geode/ui/OverlayManager.hpp"
+#include "../include/BetterThumbnailConstant.hpp"
+#include "ManageUserLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
 #include "../node/NotificationNode.hpp"
 #include "../popup/NotificationMenuPopup.hpp"
@@ -75,14 +77,26 @@ bool BetterThumbnailLayer::init() {
         });
 
         // please laugh, lazysprite no supports webp
-        bgImage->loadFromUrl("https://levelthumbs.prevter.me/thumbnail/random",
+        bgImage->loadFromUrl(
+            betterThumbnail::makeUrl("/thumbnail/random"),
             LazySprite::Format::kFmtUnKnown,
             true);
         this->addChild(bgImage, -3);
     }
-    auto menu = CCMenu::create();
-    this->addChild(menu, 2);
-    menu->setPosition({0.f, 0.f});
+    m_bottomLeftMenu = CCMenu::create();
+    this->addChildAtPosition(m_bottomLeftMenu, Anchor::BottomLeft, {10.f, 10.f}, false);
+
+    m_menuButtons = CCMenu::create();
+    m_menuButtons->setContentSize({450.f, 310.f});
+    m_menuButtons->ignoreAnchorPointForPosition(false);
+    m_menuButtons->setAnchorPoint({0.5f, 0.5f});
+    m_menuButtons->setPosition({screenSize.width / 2.f, screenSize.height / 2.f});
+    auto menuButtonsLayout = RowLayout::create();
+    menuButtonsLayout->setGap(6.f);
+    menuButtonsLayout->setAxisReverse(false);
+    menuButtonsLayout->setGrowCrossAxis(false);
+    m_menuButtons->setLayout(menuButtonsLayout);
+    this->addChild(m_menuButtons, 2);
 
     // Top-right user info menu
     auto userInfoMenu = CCMenu::create();
@@ -121,13 +135,13 @@ bool BetterThumbnailLayer::init() {
     CCSprite* badgeSprite = nullptr;
 
     if (userRank == "owner") {
-        badgeSprite = CCSprite::create("ownerBadge.png"_spr);
+        badgeSprite = CCSprite::create("BT_ownerBadge.png"_spr);
     } else if (userRank == "admin") {
-        badgeSprite = CCSprite::create("adminBadge.png"_spr);
+        badgeSprite = CCSprite::create("BT_adminBadge.png"_spr);
     } else if (userRank == "moderator") {
-        badgeSprite = CCSprite::create("thumbmodBadge.png"_spr);
+        badgeSprite = CCSprite::create("BT_thumbmodBadge.png"_spr);
     } else if (userRank == "verified") {
-        badgeSprite = CCSprite::create("verifiedBadge.png"_spr);
+        badgeSprite = CCSprite::create("BT_verifiedBadge.png"_spr);
     } else {
         badgeSprite = nullptr;
     }
@@ -148,13 +162,12 @@ bool BetterThumbnailLayer::init() {
     userInfoMenu->addChild(userRankLabel);
 
     // thumbnail coin counter
-    auto coinLabel =
-        CCLabelBMFont::create("-", "bigFont.fnt");  // - as a placeholder
+    coinLabel = CCCounterLabel::create(0, "bigFont.fnt", static_cast<FormatterType>(0));
     coinLabel->setAnchorPoint({1.f, 1.f});
     coinLabel->setScale(0.5f);
     coinLabel->setAlignment(kCCTextAlignmentRight);
 
-    auto coinSprite = CCSprite::create("ThumbnailCoin.png"_spr);
+    auto coinSprite = CCSprite::create("BT_ThumbnailCoin.png"_spr);
     coinSprite->setAnchorPoint({1.f, 1.f});
     coinSprite->setScale(0.65f);
 
@@ -175,8 +188,8 @@ bool BetterThumbnailLayer::init() {
     // info button
     auto infoButton = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(BetterThumbnailLayer::onInfoButton));
-    infoButton->setPosition({25.f, 25.f});
-    menu->addChild(infoButton);
+    m_bottomLeftMenu->addChild(infoButton);
+    m_bottomLeftMenu->updateLayout();
 
     // get user info
     auto req = web::WebRequest();
@@ -184,8 +197,8 @@ bool BetterThumbnailLayer::init() {
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
 
-    auto task = req.get(fmt::format("https://levelthumbs.prevter.me/user/me"));
-    async::spawn(std::move(task), [this, coinLabel](web::WebResponse res) {
+    auto task = req.get(betterThumbnail::makeUrl("/user/me"));
+    async::spawn(std::move(task), [this](web::WebResponse res) {
         auto code = res.code();
         if (code < 200 || code > 299) {
             auto error = res.string().unwrapOr(std::string(res.errorMessage()));
@@ -204,63 +217,48 @@ bool BetterThumbnailLayer::init() {
         auto acceptUploadThumbnailCount =
             json["data"]["accepted_upload_count"].asInt().unwrapOrDefault();
         log::debug("{}", activeThumbnailCount);
-        Mod::get()->setSavedValue<int>("active_thumbnail_count",
-            activeThumbnailCount);
-        Mod::get()->setSavedValue<int>("upload_count", uploadThumbnailCount);
-        Mod::get()->setSavedValue<int>("accepted_upload_count",
-            acceptUploadThumbnailCount);
-        coinLabel->setCString(fmt::format("{}", activeThumbnailCount).c_str());
+        this->m_activeThumbnailCount = activeThumbnailCount;
+        this->m_uploadThumbnailCount = uploadThumbnailCount;
+        this->m_acceptedUploadThumbnailCount = acceptUploadThumbnailCount;
+        if (this->coinLabel) {
+            this->coinLabel->setTargetCount(activeThumbnailCount);
+        }
     });
 
     // Main buttons
-    const float buttonSize = 75.f;
-    const float spacing = 30.f;
-    const float centerX = screenSize.width / 2.f;
-    const float centerY = screenSize.height / 2.f;
 
-    auto myThumbSprite = CCSprite::create("myThumbnailsButton.png"_spr);
-    myThumbSprite->setScale(1.2f);
+    auto myThumbSprite = CCSprite::create("BT_myThumbnailsButton.png"_spr);
     auto myThumbBtn = CCMenuItemSpriteExtra::create(
         myThumbSprite, this, menu_selector(BetterThumbnailLayer::onMyThumbnail));
 
-    recentSprite = CCSprite::create("recentlyAddedButton.png"_spr);
-    recentSprite->setScale(1.2f);
-    auto recentBtn = CCMenuItemSpriteExtra::create(
-        recentSprite, this, menu_selector(BetterThumbnailLayer::onRecent));
+    auto dashboardSprite = CCSprite::create("BT_dashboard.png"_spr);
+    auto dashboardBtn = CCMenuItemSpriteExtra::create(
+        dashboardSprite, this, menu_selector(BetterThumbnailLayer::onDashboard));
 
-    if (Mod::get()->getSavedValue<int>("role_num") >= 20) {
-        pendingSprite = CCSprite::create("pendingButton.png"_spr);
+    if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
+        pendingSprite = CCSprite::create("BT_pendingButton.png"_spr);
     } else {
-        pendingSprite = CCSpriteGrayscale::create("pendingButton.png"_spr);
+        pendingSprite = CCSpriteGrayscale::create("BT_pendingButton.png"_spr);
     }
 
-    pendingSprite->setScale(1.2f);
     auto pendingBtn = CCMenuItemSpriteExtra::create(
         pendingSprite, this, menu_selector(BetterThumbnailLayer::onPending));
 
-    if (Mod::get()->getSavedValue<int>("role_num") >= 30) {
-        manageSprite = CCSprite::create("manageUsersButton.png"_spr);
+    if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
+        manageSprite = CCSprite::create("BT_manageUsersButton.png"_spr);
     } else {
-        manageSprite = CCSpriteGrayscale::create("manageUsersButton.png"_spr);
-    }
-    if (manageSprite != nullptr) {
-        manageSprite->setScale(1.2f);
-        auto manageBtn = CCMenuItemSpriteExtra::create(
-            manageSprite, this, menu_selector(BetterThumbnailLayer::onManage));
-        manageBtn->setPosition({centerX + buttonSize / 2 + spacing / 2,
-            centerY - buttonSize / 2 - spacing / 2});
-        menu->addChild(manageBtn);
+        manageSprite = CCSpriteGrayscale::create("BT_manageUsersButton.png"_spr);
     }
 
-    myThumbBtn->setPosition({centerX - buttonSize / 2 - spacing / 2,
-        centerY + buttonSize / 2 + spacing / 2});
-    recentBtn->setPosition({centerX + buttonSize / 2 + spacing / 2,
-        centerY + buttonSize / 2 + spacing / 2});
-    pendingBtn->setPosition({centerX - buttonSize / 2 - spacing / 2,
-        centerY - buttonSize / 2 - spacing / 2});
-    menu->addChild(myThumbBtn);
-    menu->addChild(recentBtn);
-    menu->addChild(pendingBtn);
+    auto manageBtn = CCMenuItemSpriteExtra::create(
+        manageSprite, this, menu_selector(BetterThumbnailLayer::onManage));
+
+    m_menuButtons->addChild(dashboardBtn);
+    m_menuButtons->addChild(myThumbBtn);
+    m_menuButtons->addChild(pendingBtn);
+    m_menuButtons->addChild(manageBtn);
+
+    m_menuButtons->updateLayout();
 
     // funny side art
     auto sideArtLeft = CCSprite::createWithSpriteFrameName("GJ_sideArt_001.png");
@@ -396,15 +394,14 @@ void BetterThumbnailLayer::onMyThumbnail(CCObject*) {
     FLAlertLayer::create("My Thumbnails", "This feature is not implemented yet.", "Ok")
         ->show();
 }
-void BetterThumbnailLayer::onRecent(CCObject*) {
-    // to do: recent thumbnails
-    FLAlertLayer::create("Recent Thumbnails",
+void BetterThumbnailLayer::onDashboard(CCObject*) {
+    FLAlertLayer::create("Dashboard",
         "This feature is not implemented yet.",
         "Ok")
         ->show();
 }
 void BetterThumbnailLayer::onPending(CCObject*) {
-    if (Mod::get()->getSavedValue<int>("role_num") >= 20) {
+    if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
         auto layer = PendingThumbnailLayer::create();
         auto scene = CCScene::create();
         auto transition = CCTransitionFade::create(.5f, scene);
@@ -418,10 +415,10 @@ void BetterThumbnailLayer::onPending(CCObject*) {
     }
 }
 void BetterThumbnailLayer::onManage(CCObject*) {
-    // to do: manage user
-    if (Mod::get()->getSavedValue<int>("role_num") >= 30) {
-        FLAlertLayer::create("Manage User", "This feature is not implemented yet.", "Ok")
-            ->show();
+    if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
+        auto scene = CCScene::create();
+        scene->addChild(ManageUserLayer::create());
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, scene));
     } else {
         FLAlertLayer::create(
             "Manage User", "You do not have permission to access this menu.", "Ok")
@@ -436,12 +433,10 @@ void BetterThumbnailLayer::keyBackClicked() {
 void BetterThumbnailLayer::onInfoButton(CCObject*) {
     std::string userRank = Mod::get()->getSavedValue<std::string>("role");
     auto userId = Mod::get()->getSavedValue<int>("user_id");
-    auto activeThumbnails =
-        Mod::get()->getSavedValue<int>("active_thumbnail_count");
-    auto userRankNum = Mod::get()->getSavedValue<int>("role_num");
-    auto uploadThumbnailCount = Mod::get()->getSavedValue<int>("upload_count");
-    auto acceptUploadThumbnailCount =
-        Mod::get()->getSavedValue<int>("accepted_upload_count");
+    auto activeThumbnails = m_activeThumbnailCount;
+    auto userRankNum = betterThumbnail::getRoleNum();
+    auto uploadThumbnailCount = m_uploadThumbnailCount;
+    auto acceptUploadThumbnailCount = m_acceptedUploadThumbnailCount;
     auto infoString =
         fmt::format(
             "Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive "
