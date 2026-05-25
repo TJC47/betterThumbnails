@@ -3,9 +3,11 @@
 #include <Geode/Geode.hpp>
 #include <Geode/loader/Mod.hpp>
 #include <Geode/ui/LazySprite.hpp>
+#include <Geode/ui/Button.hpp>
 
 #include "../include/BetterThumbnailConstant.hpp"
 #include "../layer/ThumbnailInfoLayer.hpp"
+#include "Geode/utils/general.hpp"
 
 using namespace geode::prelude;
 
@@ -88,25 +90,20 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     idLabel->setScale(0.3f);
     this->addChild(idLabel);
 
-    auto buttonSprite = ButtonSprite::create("View", "bigFont.fnt", "GJ_button_01.png", 0.6f);
-    buttonSprite->setScale(0.65f);
-    auto viewBtn = CCMenuItemSpriteExtra::create(
-        buttonSprite,
-        nullptr,
-        this,
-        menu_selector(ThumbnailNode::onViewButton));
-    viewBtn->setPosition({rightX + 20.f, idLabelY - 20.f});
+    auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.6f), [this](geode::Button*) {
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)));
+    });
+    viewBtn->setScale(0.65f);
+    viewBtn->setPosition({rightX + 17.f, idLabelY - 20.f});
+    this->addChild(viewBtn);
 
-    auto playBtnSprite = ButtonSprite::create("Play Level", "bigFont.fnt", "GJ_button_01.png", 0.6f);
-    playBtnSprite->setScale(0.65f);
-    auto playBtn = CCMenuItemSpriteExtra::create(playBtnSprite, nullptr, this, menu_selector(ThumbnailNode::onPlayLevelButton));
-    playBtn->setPosition({rightX + 90.f, idLabelY - 20.f});
-
-    auto menu = CCMenu::create();
-    menu->addChild(viewBtn);
-    menu->addChild(playBtn);
-    menu->setPosition({0.f, 0.f});
-    this->addChild(menu);
+    auto playBtn = geode::Button::createWithNode(ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png", 0.6f), [this](geode::Button*) {
+        auto search = GJSearchObject::create(SearchType::Type19, numToString(m_levelId));
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+    });
+    playBtn->setScale(0.65f);
+    playBtn->setPosition({rightX + 75.f, idLabelY - 20.f});
+    this->addChild(playBtn);
 
     auto uploadTimeLabel = CCLabelBMFont::create(upload_time.c_str(), "chatFont.fnt");
     uploadTimeLabel->setAnchorPoint({1.f, 0.f});

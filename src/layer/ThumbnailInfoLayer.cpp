@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 
 #include <cue/LoadingCircle.hpp>
+#include <Geode/ui/Button.hpp>
 
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ThumbnailInfoLayer.hpp"
@@ -45,11 +46,6 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         this->addChild(bg, -1);
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-
-    auto menu = CCMenu::create();
-    this->addChild(menu, 2);
-    menu->setPosition({0.f, 0.f});
-
     addBackButton(this, BackButtonStyle::Green);
 
     // Submitter
@@ -72,12 +68,12 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     // thumb bg
     auto thumbBg = NineSlice::create("GJ_square06.png");
     thumbBg->setPosition(
-        {screenSize.width / 2.f - 90.f, screenSize.height / 2.f - 20.f});
+        {screenSize.width / 2.f - 90.f, screenSize.height / 2.f});
     thumbBg->setContentSize({300.f, 170.f});
     this->addChild(thumbBg);
 
     // Thumbnail (replacement + original)
-    auto thumbReplacement = LazySprite::create({300.f, 170.f}, true);
+    auto thumbReplacement = LazySprite::create({300.f, 170.f}, false);
     thumbReplacement->setVisible(true);  // show replacement first by default
     thumbReplacement->setAutoResize(true);
     thumbReplacement->setAnchorPoint({0.5f, 0.5f});
@@ -95,7 +91,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 
     auto clip = CCClippingNode::create(stencil);
     clip->setAnchorPoint(thumbBg->getAnchorPoint());
-    clip->setPosition(thumbBg->getContentSize());
+    clip->setPosition(thumbBg->getContentSize() / 2);
     thumbBg->addChild(clip);
 
     // add both sprites to the clipped area
@@ -144,19 +140,20 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             }
         });
 
+    m_bottomMenu = CCMenu::create();
+    m_bottomMenu->setPosition({screenSize.width / 2.f, 25.f});
+    m_bottomMenu->setContentSize({screenSize.width - 100.f, 40.f});
+    m_bottomMenu->setLayout(RowLayout::create()->setGap(10.f));
+    this->addChild(m_bottomMenu, 2);
+
     // If this thumbnail is a replacement, add a Show original button under the
     // thumb
     if (m_replacementFlag) {
         auto showSpr =
-            ButtonSprite::create("Show original", 140, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
         m_showOriginalBtn = CCMenuItemSpriteExtra::create(
             showSpr, this, menu_selector(ThumbnailInfoLayer::onShowOriginal));
-        // position beneath the thumb background
-        float btnX = thumbBg->getPositionX();
-        float btnY =
-            thumbBg->getPositionY() - thumbBg->getContentSize().height / 2.f - 26.f;
-        m_showOriginalBtn->setPosition({btnX, btnY});
-        menu->addChild(m_showOriginalBtn);
+        m_bottomMenu->addChild(m_showOriginalBtn);
     }
 
     // Info box
@@ -188,29 +185,36 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 
     // check if user role is a moderator/admin, show the button
     if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
-        auto acceptBtnSprite = ButtonSprite::create(
-            "Accept", 55, true, "bigFont.fnt", "GJ_button_01.png", 0.f, 1.f);
-        auto acceptBtn = CCMenuItemSpriteExtra::create(
-            acceptBtnSprite, this, menu_selector(ThumbnailInfoLayer::onAccept));
-        acceptBtn->setPosition({panelX + 20.f, panelY - line - 35.f});
+        auto acceptBtn = geode::Button::createWithNode(
+            ButtonSprite::create(
+                "Accept", 55, true, "goldFont.fnt", "GJ_button_01.png", 0.f, 1.f),
+            [this](geode::Button* btn) {
+                ThumbnailInfoLayer::onAccept(btn);
+            });
 
-        auto rejectBtnSprite = ButtonSprite::create(
-            "Reject", 55, true, "bigFont.fnt", "GJ_button_06.png", 0.f, 1.f);
-        auto rejectBtn = CCMenuItemSpriteExtra::create(
-            rejectBtnSprite, this, menu_selector(ThumbnailInfoLayer::onReject));
-        rejectBtn->setPosition({panelX + 120.f, panelY - line - 35.f});
+        auto rejectBtn = geode::Button::createWithNode(
+            ButtonSprite::create(
+                "Reject", 55, true, "goldFont.fnt", "GJ_button_06.png", 0.f, 1.f),
+            [this](geode::Button* btn) {
+                ThumbnailInfoLayer::onReject(btn);
+            });
 
         auto playBtnSprite = ButtonSprite::create(
-            "Play Level", 130, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-        auto playBtn = CCMenuItemSpriteExtra::create(
-            playBtnSprite, this, menu_selector(ThumbnailInfoLayer::onPlayLevelButton));
-        playBtn->setPosition({panelX + 70.f, panelY - line - 80.f});
+            "Play Level", 130, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+        auto playBtn = geode::Button::createWithNode(
+            playBtnSprite, [this](geode::Button* btn) {
+                ThumbnailInfoLayer::onPlayLevelButton(btn);
+            });
+        m_bottomMenu->addChild(playBtn);
+        m_bottomMenu->updateLayout();
 
         auto actionMenu = CCMenu::create();
-        actionMenu->setPosition({0.f, 0.f});
-        actionMenu->addChild(playBtn);
+        actionMenu->setPosition({panelX + 70.f, panelY - line - 35.f});
+        actionMenu->setContentSize({160.f, 40.f});
+        actionMenu->setLayout(RowLayout::create()->setGap(10.f));
         actionMenu->addChild(acceptBtn);
         actionMenu->addChild(rejectBtn);
+        actionMenu->updateLayout();
 
         this->addChild(actionMenu);
     }
@@ -295,8 +299,9 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         // update the button label back to 'Show original'
         if (m_showOriginalBtn) {
             auto newSprite =
-                ButtonSprite::create("Show original", 140, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             m_showOriginalBtn->setNormalImage(newSprite);
+            m_bottomMenu->updateLayout();
         }
         return;
     }
@@ -312,8 +317,9 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         m_showingOriginal = true;
         if (m_showOriginalBtn) {
             auto newSprite =
-                ButtonSprite::create("Show replacement", 160, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                ButtonSprite::create("Show replacement", 160, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             m_showOriginalBtn->setNormalImage(newSprite);
+            m_bottomMenu->updateLayout();
         }
         return;
     }

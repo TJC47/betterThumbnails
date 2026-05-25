@@ -32,6 +32,7 @@ private:
     bool m_replacementFlag = false;
 
     async::TaskHolder<web::WebResponse> m_listener;
+    CCMenu* m_bottomMenu = nullptr;
     LazySprite* m_thumbReplacement = nullptr;
     LazySprite* m_thumbOriginal = nullptr;
     cue::LoadingCircle* m_thumbSpinner = nullptr;
