@@ -16,6 +16,7 @@ struct PendingThumbEntry {
     bool accepted = false;
     std::string upload_time;
     bool replacement = false;
+    std::string submission_note;
 };
 
 class PendingThumbnailLayer : public CCLayer {

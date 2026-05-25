@@ -8,10 +8,10 @@ using namespace geode::prelude;
 
 class ThumbnailInfoLayer : public CCLayer {
 public:
-    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
-    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
+    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note);
+    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note);
 
-    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
+    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note);
 
     void keyBackClicked() override;
 
@@ -20,6 +20,7 @@ public:
     void onReject(CCObject*);
     void onPlayLevelButton(CCObject*);
     void onShowOriginal(CCObject*);
+    void fetchLevel();
 
 private:
     // Stored for API calls
@@ -30,6 +31,7 @@ private:
     bool m_acceptedFlag = false;
     std::string m_uploadTime;
     bool m_replacementFlag = false;
+    std::string m_submissionNote;
 
     async::TaskHolder<web::WebResponse> m_listener;
     CCMenu* m_bottomMenu = nullptr;
@@ -40,4 +42,7 @@ private:
     bool m_showingOriginal = false;
     bool m_originalLoaded = false;
     CCLabelBMFont* m_thumbLabel = nullptr;
+    LevelCell* m_levelCell;
+    int m_levelFetchRetries = 0;
+    GJGameLevel* m_level = nullptr;
 };

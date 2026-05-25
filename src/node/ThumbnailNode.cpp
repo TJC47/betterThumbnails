@@ -11,9 +11,9 @@
 
 using namespace geode::prelude;
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement) {
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement)) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note)) {
         ret->autorelease();
         return ret;
     }
@@ -21,7 +21,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
     if (!CCLayer::init())
         return false;
 
@@ -81,6 +81,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_accepted = accepted;
     m_uploadTime = upload_time;
     m_replacement = replacement;
+    m_submissionNote = submission_note;
 
     auto idText = std::string("ThumbID: ") + std::to_string(id);
     auto idLabel = CCLabelBMFont::create(idText.c_str(), "bigFont.fnt");
@@ -91,7 +92,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     this->addChild(idLabel);
 
     auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.6f), [this](geode::Button*) {
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)));
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote)));
     });
     viewBtn->setScale(0.65f);
     viewBtn->setPosition({rightX + 17.f, idLabelY - 20.f});
@@ -134,7 +135,7 @@ void ThumbnailNode::onViewButton(CCObject*) {
     CCDirector::get()->pushScene(
         CCTransitionFade::create(
             .5f,
-            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement)));
+            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote)));
 }
 
 void ThumbnailNode::onPlayLevelButton(CCObject*) {

@@ -284,6 +284,8 @@ void PendingThumbnailLayer::fetchPage(int page) {
                 auto uploadTime = item["upload_time"].asString().unwrapOrDefault();
                 e.upload_time = std::move(uploadTime);
                 e.replacement = item["replacement"].asBool().unwrapOr(false);
+                auto submissionNote = item["submission_note"].asString().unwrapOrDefault();
+                e.submission_note = std::move(submissionNote);
                 this->m_pendingItems.push_back(std::move(e));
             }
             log::info("Pending API parsed {} uploads (server paging)",
@@ -353,7 +355,7 @@ void PendingThumbnailLayer::updateUI() {
     for (int i = start; i < end; ++i) {
         auto& item = filtered[i];
         auto thumbNode = ThumbnailNode::create(
-            m_listNode->getContentSize(), item.id, item.user_id, item.username, item.level_id, item.accepted, item.upload_time, item.replacement);
+            m_listNode->getContentSize(), item.id, item.user_id, item.username, item.level_id, item.accepted, item.upload_time, item.replacement, item.submission_note);
         thumbNode->setAnchorPoint({0.5f, 1.0f});
         m_listNode->addCell(thumbNode);
     }

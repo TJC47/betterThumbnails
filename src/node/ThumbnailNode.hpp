@@ -20,8 +20,9 @@ class ThumbnailNode : public cocos2d::CCLayer {
       bool m_accepted = false;
       std::string m_uploadTime;
       bool m_replacement = false;
-      static ThumbnailNode* create(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
-      bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement);
+      std::string m_submissionNote;
+      static ThumbnailNode* create(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note);
+      bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note);
       void onViewButton(CCObject*);
       void onPlayLevelButton(CCObject*);
 };

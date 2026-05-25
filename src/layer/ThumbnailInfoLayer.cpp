@@ -6,19 +6,21 @@
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ThumbnailInfoLayer.hpp"
 #include "../popup/RejectReasonPopup.hpp"
+#include <map>
+#include <sstream>
 
 using namespace geode::prelude;
 
-CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement) {
+CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
     auto scene = CCScene::create();
     scene->addChild(ThumbnailInfoLayer::create(
-        id, user_id, username, level_id, accepted, upload_time, replacement));
+        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note));
     return scene;
 }
 
-ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement) {
+ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
     auto ret = new ThumbnailInfoLayer;
-    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement)) {
+    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, submission_note)) {
         ret->autorelease();
         return ret;
     }
@@ -26,7 +28,7 @@ ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::s
     return nullptr;
 }
 
-bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement) {
+bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
     if (!CCLayer::init())
         return false;
 
@@ -40,6 +42,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     m_acceptedFlag = accepted;
     m_uploadTime = upload_time;
     m_replacementFlag = replacement;
+    m_submissionNote = submission_note;
 
     auto bg = createLayerBG();
     if (bg != nullptr)
@@ -48,27 +51,34 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
     addBackButton(this, BackButtonStyle::Green);
 
-    // Submitter
-    auto submitter = CCLabelBMFont::create(
-        fmt::format("Submitter: {} ({})", username, user_id).c_str(),
-        "goldFont.fnt");
-    submitter->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
-    submitter->setScale(0.8f);
-    submitter->setAlignment(kCCTextAlignmentCenter);
-    this->addChild(submitter, 1);
+    // // Submitter
+    // auto submitter = CCLabelBMFont::create(
+    //     fmt::format("Submitter: {} ({})", username, user_id).c_str(),
+    //     "goldFont.fnt");
+    // submitter->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
+    // submitter->setScale(0.8f);
+    // submitter->setAlignment(kCCTextAlignmentCenter);
+    // this->addChild(submitter, 1);
 
-    // Timestamp
-    auto timestamp = CCLabelBMFont::create(
-        fmt::format("Uploaded: {}", upload_time).c_str(), "chatFont.fnt");
-    timestamp->setPosition({screenSize.width / 2.f, screenSize.height - 50.f});
-    timestamp->setScale(0.75f);
-    timestamp->setAlignment(kCCTextAlignmentCenter);
-    this->addChild(timestamp, 1);
+    // // Timestamp
+    // auto timestamp = CCLabelBMFont::create(
+    //     fmt::format("Uploaded: {}", upload_time).c_str(), "chatFont.fnt");
+    // timestamp->setPosition({screenSize.width / 2.f, screenSize.height - 50.f});
+    // timestamp->setScale(0.75f);
+    // timestamp->setAlignment(kCCTextAlignmentCenter);
+    // this->addChild(timestamp, 1);
+
+    m_levelCell = LevelCell::create(356, 50);
+    m_levelCell->setPosition({screenSize.width / 2.f - 170.f, screenSize.height - 55.f});
+    m_levelCell->setContentSize({356, 50});
+    m_levelCell->m_compactView = true;
+    this->fetchLevel();
+    this->addChild(m_levelCell);
 
     // thumb bg
     auto thumbBg = NineSlice::create("GJ_square06.png");
     thumbBg->setPosition(
-        {screenSize.width / 2.f - 90.f, screenSize.height / 2.f});
+        {screenSize.width / 2.f - 80.f, screenSize.height / 2.f + 10.f});
     thumbBg->setContentSize({300.f, 170.f});
     this->addChild(thumbBg);
 
@@ -105,13 +115,12 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 
     // Label above thumbnail indicating which image is shown
     auto thumbLabel = CCLabelBMFont::create(
-        m_replacementFlag ? "New Thumbnail" : "Original Thumbnail",
-        "bigFont.fnt");
-    thumbLabel->setScale(0.45f);
+        m_replacementFlag ? "New Thumbnail" : "Original Thumbnail", "bigFont.fnt");
+    thumbLabel->setScale(0.3f);
     thumbLabel->setAnchorPoint({0.5f, 0.5f});
     thumbLabel->setPosition({thumbBg->getPositionX(),
         thumbBg->getPositionY() +
-            thumbBg->getContentSize().height / 2.f + 12.f});
+            thumbBg->getContentSize().height / 2.f + 5.f});
     this->addChild(thumbLabel, 2);
     m_thumbLabel = thumbLabel;
 
@@ -141,13 +150,12 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         });
 
     m_bottomMenu = CCMenu::create();
-    m_bottomMenu->setPosition({screenSize.width / 2.f, 25.f});
-    m_bottomMenu->setContentSize({screenSize.width - 100.f, 40.f});
+    m_bottomMenu->setPosition({screenSize.width / 2.f - 80.f, 25.f});
+    m_bottomMenu->setContentSize({screenSize.width - 300.f, 40.f});
     m_bottomMenu->setLayout(RowLayout::create()->setGap(10.f));
     this->addChild(m_bottomMenu, 2);
 
-    // If this thumbnail is a replacement, add a Show original button under the
-    // thumb
+    // If this thumbnail is a replacement, add a Show original button under the thumb
     if (m_replacementFlag) {
         auto showSpr =
             ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
@@ -156,51 +164,92 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         m_bottomMenu->addChild(m_showOriginalBtn);
     }
 
-    // Info box
-    float panelX = screenSize.width * 0.55f + 75.f;
-    float panelY = screenSize.height * 0.7f;
-    float line = 0.f;
-    auto makeLine = [&](const std::string& text, float scale = 0.35f) {
-        auto lbl = CCLabelBMFont::create(text.c_str(), "bigFont.fnt");
-        lbl->setAnchorPoint({0.f, 1.f});
-        lbl->setPosition({panelX, panelY - line});
-        lbl->setScale(scale);
-        this->addChild(lbl);
-        line += 22.f;
-        return lbl;
-    };
+    std::string infoText = fmt::format(
+        "### <cg>Level ID:</c> {}\n"
+        "### <cc>Accepted:</c> {}\n"
+        "### <cl>Replacement:</c> {}\n"
+        "### <co>Thumbnail ID:</c> {}",
+        level_id,
+        accepted ? "Yes" : "No",
+        replacement ? "Yes" : "No",
+        id);
 
-    // makeLine(fmt::format("Submitter: {} ({})", username, user_id));
-    makeLine(fmt::format("Level ID: {}", level_id));
-    makeLine(fmt::format("Accepted: {}", accepted ? "Yes" : "No"));
-    makeLine(fmt::format("Replacement: {}", replacement ? "Yes" : "No"));
-    makeLine(fmt::format("Thumbnail ID: {}", id));
+    auto infoTextArea = MDTextArea::create(infoText, {180.f, 100.f});
+    infoTextArea->setScale(0.8f);
+    this->addChildAtPosition(infoTextArea, Anchor::Right, {-115.f, 60.f}, false);
 
-    // Info Blackbox
-    auto blackbox = NineSlice::create("square02_small.png");
-    blackbox->setPosition({panelX + 70.f, panelY - 40.f});
-    blackbox->setContentSize({160.f, line + 20.f});
-    blackbox->setOpacity(100);
-    this->addChild(blackbox, -1);
+    if (!m_submissionNote.empty()) {
+        std::map<std::string, std::string> fields;
+        std::stringstream ss(m_submissionNote);
+        std::string token;
+        while (std::getline(ss, token, ';')) {
+            size_t pos = token.find('=');
+            if (pos != std::string::npos) {
+                fields[token.substr(0, pos)] = token.substr(pos + 1);
+            }
+        }
+
+        std::string prStr = fields["pr"];
+        if (!prStr.empty()) {
+            char* end;
+            float prVal = std::strtof(prStr.c_str(), &end);
+            if (end != prStr.c_str()) {
+                prStr = fmt::format("{:.2f}", prVal);
+            }
+        }
+        std::string tmStr = fields["tm"];
+        if (!tmStr.empty()) {
+            char* end;
+            float tmVal = std::strtof(tmStr.c_str(), &end);
+            if (end != tmStr.c_str()) {
+                tmStr = fmt::format("{:.2f}", tmVal);
+            }
+        }
+
+        std::string infoText = fmt::format(
+            "## <cy>Submission Info</c>\n"
+            "<cg>Version:</c> {}\n\n"
+            "<cg>Level Name:</c> {}\n\n"
+            "<cg>Account ID:</c> {}\n\n"
+            "<cg>Account Name:</c> {}\n\n"
+            "<cg>Progression:</c> {}\n\n"
+            "<cg>Attempt Time:</c> {}",
+            fields["v"],
+            fields["ln"],
+            fields["ci"],
+            fields["cn"],
+            prStr,
+            tmStr);
+        auto infoTextArea = MDTextArea::create(infoText, {180.f, 120.f});
+        infoTextArea->setScale(0.8f);
+        this->addChildAtPosition(infoTextArea, Anchor::Right, {-115.f, -30.f}, false);
+
+        std::string noteText = fmt::format(
+            "### <cb>Note</c>\n\n{}",
+            fields["m"]);
+        auto noteTextArea = MDTextArea::create(noteText, {180.f, 80.f});
+        noteTextArea->setScale(0.8f);
+        this->addChildAtPosition(noteTextArea, Anchor::Right, {-115.f, -120.f}, false);
+    }
 
     // check if user role is a moderator/admin, show the button
     if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
         auto acceptBtn = geode::Button::createWithNode(
             ButtonSprite::create(
-                "Accept", 55, true, "goldFont.fnt", "GJ_button_01.png", 0.f, 1.f),
+                "Accept", "goldFont.fnt", "GJ_button_01.png"),
             [this](geode::Button* btn) {
                 ThumbnailInfoLayer::onAccept(btn);
             });
 
         auto rejectBtn = geode::Button::createWithNode(
             ButtonSprite::create(
-                "Reject", 55, true, "goldFont.fnt", "GJ_button_06.png", 0.f, 1.f),
+                "Reject", "goldFont.fnt", "GJ_button_06.png"),
             [this](geode::Button* btn) {
                 ThumbnailInfoLayer::onReject(btn);
             });
 
         auto playBtnSprite = ButtonSprite::create(
-            "Play Level", 130, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            "Play Level", "goldFont.fnt", "GJ_button_01.png");
         auto playBtn = geode::Button::createWithNode(
             playBtnSprite, [this](geode::Button* btn) {
                 ThumbnailInfoLayer::onPlayLevelButton(btn);
@@ -209,9 +258,9 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         m_bottomMenu->updateLayout();
 
         auto actionMenu = CCMenu::create();
-        actionMenu->setPosition({panelX + 70.f, panelY - line - 35.f});
-        actionMenu->setContentSize({160.f, 40.f});
-        actionMenu->setLayout(RowLayout::create()->setGap(10.f));
+        actionMenu->setPosition({screenSize.width / 2.f - 80.f, 60.f});
+        actionMenu->setContentSize({screenSize.width - 300.f, 40.f});
+        actionMenu->setLayout(RowLayout::create()->setGap(5.f));
         actionMenu->addChild(acceptBtn);
         actionMenu->addChild(rejectBtn);
         actionMenu->updateLayout();
@@ -280,10 +329,16 @@ void ThumbnailInfoLayer::onReject(CCObject*) {
 }
 
 void ThumbnailInfoLayer::onPlayLevelButton(CCObject*) {
-    auto search =
-        GJSearchObject::create(SearchType::Type19, std::to_string(m_levelId));
-    CCDirector::get()->pushScene(
-        CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+    if (m_level) {
+        auto scene = LevelInfoLayer::scene(m_level, false);
+        CCDirector::get()->pushScene(
+            CCTransitionFade::create(.5f, scene));
+    } else {
+        auto search =
+            GJSearchObject::create(SearchType::Type19, numToString<int>(m_levelId));
+        CCDirector::get()->pushScene(
+            CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+    }
 }
 
 void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
@@ -299,7 +354,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         // update the button label back to 'Show original'
         if (m_showOriginalBtn) {
             auto newSprite =
-                ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                ButtonSprite::create("Show original", "goldFont.fnt", "GJ_button_01.png");
             m_showOriginalBtn->setNormalImage(newSprite);
             m_bottomMenu->updateLayout();
         }
@@ -317,7 +372,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         m_showingOriginal = true;
         if (m_showOriginalBtn) {
             auto newSprite =
-                ButtonSprite::create("Show replacement", 160, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                ButtonSprite::create("Show replacement", "goldFont.fnt", "GJ_button_01.png");
             m_showOriginalBtn->setNormalImage(newSprite);
             m_bottomMenu->updateLayout();
         }
@@ -354,8 +409,9 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                     m_thumbSpinner->setVisible(false);
                 if (m_showOriginalBtn) {
                     auto newSprite =
-                        ButtonSprite::create("Show replacement", 160, true, "bigFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                        ButtonSprite::create("Show replacement", "goldFont.fnt", "GJ_button_01.png");
                     m_showOriginalBtn->setNormalImage(newSprite);
+                    m_bottomMenu->updateLayout();
                 }
             }
         } else {
@@ -367,4 +423,49 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                 ->show();
         }
     });
+}
+
+void ThumbnailInfoLayer::fetchLevel() {
+    auto glm = GameLevelManager::sharedState();
+    auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
+    auto key = searchObj->getKey();
+    CCArray* levels = nullptr;
+
+    if (key && key[0]) {
+        levels = glm->getStoredOnlineLevels(key);
+    }
+
+    if (!levels || levels->count() == 0) {
+        if (m_levelFetchRetries > 10) return;
+
+        if (key && key[0]) {
+            glm->getOnlineLevels(searchObj);
+        }
+
+        m_levelFetchRetries++;
+        auto delay = CCDelayTime::create(1.0f);
+        auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailInfoLayer::fetchLevel));
+        auto sequence = CCSequence::create(delay, callback, nullptr);
+        this->runAction(sequence);
+        return;
+    }
+
+    GJGameLevel* level = nullptr;
+    for (int i = 0; i < levels->count(); ++i) {
+        auto l = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
+        if (!l) {
+            continue;
+        }
+
+        level = l;
+        break;
+    }
+
+    if (level && m_levelCell) {
+        m_level = level;
+        m_levelCell->loadFromLevel(level);
+        if (m_levelCell->m_mainMenu) {
+            m_levelCell->m_mainMenu->setPosition({400, 425});
+        }
+    }
 }
