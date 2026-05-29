@@ -11,9 +11,9 @@
 
 using namespace geode::prelude;
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note)) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id)) {
         ret->autorelease();
         return ret;
     }
@@ -21,12 +21,12 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
     if (!CCLayer::init())
         return false;
 
     const float contentHeight = 100.f;  // node height
-    const float rightX = 15.f;
+    const float rightX = 10.f;
     const float baseY = contentHeight / 2.f;
     const float usernameY = baseY + 35.f;
     const float levelIdY = usernameY - 15.f;
@@ -47,31 +47,10 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     clip->setAlphaThreshold(0.1f);
     this->addChild(clip);
 
-    auto lazySprite = LazySprite::create({180.f, 101.25f}, true);
+    auto lazySprite = LazySprite::create({360.f, 300.f}, true);
     lazySprite->setAutoResize(true);
-    lazySprite->setPosition({size.width / 2.f + 87.f, baseY});  // offset to the right a bit
+    lazySprite->setPosition({size.width / 2.f, baseY});  // offset to the right a bit
     clip->addChild(lazySprite);
-
-    auto userInfo = username + std::string(" (") + std::to_string(user_id) + ")";
-    auto usernameLabel = CCLabelBMFont::create(userInfo.c_str(), "goldFont.fnt");
-    usernameLabel->setAnchorPoint({0.f, 0.5f});
-    usernameLabel->setPosition({rightX, usernameY});
-    usernameLabel->setScale(0.5f);
-    this->addChild(usernameLabel);
-
-    auto levelIdText = std::string("Level ID: ") + std::to_string(level_id);
-    auto levelIdLabel = CCLabelBMFont::create(levelIdText.c_str(), "bigFont.fnt");
-    levelIdLabel->setAnchorPoint({0.f, 0.5f});
-    levelIdLabel->setPosition({rightX, levelIdY});
-    levelIdLabel->setScale(0.3f);
-    this->addChild(levelIdLabel);
-
-    auto replacementText = std::string("Replacement: ") + (replacement ? "Yes" : "No");
-    auto replacementLabel = CCLabelBMFont::create(replacementText.c_str(), "bigFont.fnt");
-    replacementLabel->setAnchorPoint({0.f, 0.5f});
-    replacementLabel->setPosition({rightX, replacementY});
-    replacementLabel->setScale(0.3f);
-    this->addChild(replacementLabel);
 
     // Store data for info view
     m_thumbId = id;
@@ -82,35 +61,56 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_uploadTime = upload_time;
     m_replacement = replacement;
     m_submissionNote = submission_note;
+    m_accountId = account_id;
 
-    auto idText = std::string("ThumbID: ") + std::to_string(id);
-    auto idLabel = CCLabelBMFont::create(idText.c_str(), "bigFont.fnt");
-    idLabel->setAnchorPoint({0.f, 0.5f});
-    float idLabelY = replacementY - 15.f;
-    idLabel->setPosition({rightX, idLabelY});
-    idLabel->setScale(0.3f);
-    this->addChild(idLabel);
+    this->fetchLevel();
 
-    auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.6f), [this](geode::Button*) {
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote)));
+    auto levelNameText = this->m_level ? std::string(this->m_level->m_levelName.c_str()) : std::string("Unknown Level");
+    this->m_levelInfoLabel = CCLabelBMFont::create(fmt::format("{} ({})", levelNameText, this->m_levelId).c_str(), "goldFont.fnt");
+    this->m_levelInfoLabel->setAnchorPoint({0.f, 0.5f});
+    this->m_levelInfoLabel->setPosition({rightX, usernameY});
+    this->m_levelInfoLabel->setScale(0.5f);
+    this->addChild(this->m_levelInfoLabel, 2);
+
+    auto submitterText = fmt::format("Submitted by {} ({})", username, user_id);
+    auto submitterLabel = CCLabelBMFont::create(submitterText.c_str(), "bigFont.fnt");
+    submitterLabel->setAnchorPoint({0.f, 0.5f});
+    submitterLabel->setPosition({rightX, levelIdY});
+    submitterLabel->setScale(0.3f);
+    this->addChild(submitterLabel, 2);
+
+    auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote, m_accountId)));
     });
-    viewBtn->setScale(0.65f);
-    viewBtn->setPosition({rightX + 17.f, idLabelY - 20.f});
-    this->addChild(viewBtn);
 
-    auto playBtn = geode::Button::createWithNode(ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png", 0.6f), [this](geode::Button*) {
-        auto search = GJSearchObject::create(SearchType::Type19, numToString(m_levelId));
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+    auto playBtn = geode::Button::createWithNode(ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
+        if (m_level) {
+            auto scene = LevelInfoLayer::scene(m_level, false);
+            CCDirector::get()->pushScene(
+                CCTransitionFade::create(.5f, scene));
+        }
     });
-    playBtn->setScale(0.65f);
-    playBtn->setPosition({rightX + 75.f, idLabelY - 20.f});
-    this->addChild(playBtn);
+
+    auto actionMenu = CCMenu::create();
+    actionMenu->setPosition({rightX, 15.f});
+    actionMenu->setAnchorPoint({0.f, 0.5f});
+    actionMenu->setContentSize({160.f, 40.f});
+    actionMenu->setLayout(RowLayout::create()->setGap(10.f));
+    actionMenu->addChild(viewBtn);
+    actionMenu->addChild(playBtn);
+    actionMenu->updateLayout();
+    this->addChild(actionMenu, 2);
 
     auto uploadTimeLabel = CCLabelBMFont::create(upload_time.c_str(), "chatFont.fnt");
     uploadTimeLabel->setAnchorPoint({1.f, 0.f});
-    uploadTimeLabel->setPosition({size.width - 15.f, 10.f});
+    uploadTimeLabel->setPosition({size.width - 5.f, 5.f});
     uploadTimeLabel->setScale(0.35f);
-    this->addChild(uploadTimeLabel);
+    this->addChild(uploadTimeLabel, 2);
+
+    // gradient
+    auto gradient = CCLayerGradient::create({0, 0, 0, 255}, {0, 0, 0, 100}, {0.5, 1});
+    gradient->setContentSize(this->getContentSize());
+    this->addChild(gradient, 1);
 
     // Fetch image from API and apply to LazySprite
     auto imageReq = web::WebRequest();
@@ -131,14 +131,38 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     return true;
 }
 
-void ThumbnailNode::onViewButton(CCObject*) {
-    CCDirector::get()->pushScene(
-        CCTransitionFade::create(
-            .5f,
-            ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote)));
-}
+void ThumbnailNode::fetchLevel() {
+    auto glm = GameLevelManager::sharedState();
+    auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
+    auto key = searchObj->getKey();
+    CCArray* levels = nullptr;
 
-void ThumbnailNode::onPlayLevelButton(CCObject*) {
-    auto search = GJSearchObject::create(SearchType::Type19, std::to_string(m_levelId));
-    CCDirector::get()->pushScene(CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+    if (key && key[0]) {
+        levels = glm->getStoredOnlineLevels(key);
+    }
+
+    if (!levels || levels->count() == 0) {
+        if (this->m_levelFetchRetries < 10 && key && key[0]) {
+            glm->getOnlineLevels(searchObj);
+            this->m_levelFetchRetries++;
+            auto delay = CCDelayTime::create(1.0f);
+            auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailNode::fetchLevel));
+            auto sequence = CCSequence::create(delay, callback, nullptr);
+            this->runAction(sequence);
+        }
+        return;
+    }
+
+    for (int i = 0; i < levels->count(); ++i) {
+        auto level = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
+        if (!level) {
+            continue;
+        }
+        m_level = level;
+        break;
+    }
+
+    if (this->m_level && this->m_levelInfoLabel) {
+        this->m_levelInfoLabel->setString(fmt::format("{} ({})", this->m_level->m_levelName.c_str(), this->m_levelId).c_str());
+    }
 }

@@ -12,16 +12,16 @@
 
 using namespace geode::prelude;
 
-CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
+CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
     auto scene = CCScene::create();
     scene->addChild(ThumbnailInfoLayer::create(
-        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note));
+        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id));
     return scene;
 }
 
-ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
+ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
     auto ret = new ThumbnailInfoLayer;
-    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, submission_note)) {
+    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id)) {
         ret->autorelease();
         return ret;
     }
@@ -29,7 +29,7 @@ ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::s
     return nullptr;
 }
 
-bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note) {
+bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
     if (!CCLayer::init())
         return false;
 
@@ -38,6 +38,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     // store fields for later actions
     m_id = id;
     m_userId = user_id;
+    m_accountId = account_id;
     m_username = username;
     m_levelId = level_id;
     m_acceptedFlag = accepted;
@@ -70,6 +71,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     thumbBg->setContentSize({300.f, 170.f});
     thumbBg->setScale(1.1f);
     this->addChild(thumbBg);
+    m_thumbBg = thumbBg;
 
     auto thumbBorder = NineSlice::create("GJ_square07.png");
     thumbBorder->setContentSize(thumbBg->getContentSize());
@@ -124,19 +126,6 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     auto spinner = cue::LoadingCircle::create(true);
     spinner->addToLayer(thumbBg, 2);
     m_thumbSpinner = spinner;
-
-    // Label above thumbnail indicating which image is shown
-    auto thumbLabel = CCLabelBMFont::create(
-        m_replacementFlag ? "New Thumbnail" : "Original Thumbnail", "bigFont.fnt");
-    thumbLabel->setScale(0.3f);
-    thumbLabel->setAnchorPoint({0.f, 0.5f});
-    thumbLabel->setPosition({5.f, thumbBg->getContentSize().height - 10.f});
-    thumbLabel->setOpacity(100);
-    thumbBg->addChild(thumbLabel, 2);
-    m_thumbLabel = thumbLabel;
-
-    if (!m_replacementFlag)
-        thumbLabel->setVisible(false);  // hide label if no replacement
 
     auto req = web::WebRequest();
     req.header("Authorization",
@@ -206,7 +195,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         }
         // progressions and attempts label
         auto levelLabel = CCLabelBMFont::create(
-            fmt::format("{}% ({}s)", prStr, tmStr).c_str(), "bigFont.fnt");
+            fmt::format("Screenshot Details: {}% ({}s)", prStr, tmStr).c_str(), "bigFont.fnt");
         levelLabel->setPosition({screenSize.width / 2.f, screenSize.height - 40.f});
         levelLabel->setScale(0.4f);
         levelLabel->setAlignment(kCCTextAlignmentCenter);
@@ -220,22 +209,25 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         // this->addChildAtPosition(noteTextArea, Anchor::Right, {-115.f, -120.f}, false);
 
         std::string infoText = fmt::format(
-            "### <cc>Level Name:</c> {}\n"
             "### <cg>Level ID:</c> {}\n"
+            "### <ca>Level Name:</c> {}\n"
+            "### <cs>Uploaded by:</c> {} ({})\n"
             "### <cc>Accepted:</c> {}\n"
             "### <cl>Replacement:</c> {}\n"
             "### <co>Thumbnail ID:</c> {}\n"
             "### <cb>Note:</c> {}\n\n",
-            level_name,
             level_id,
+            level_name,
+            username,
+            user_id,
             accepted ? "Yes" : "No",
             replacement ? "Yes" : "No",
             id,
             fields["m"]);
 
-        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(10.f, 10.f));
+        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize{0.f, 7.f});
         m_infoTextArea->setVisible(false);
-        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {10.f, 5.f}, {0, 0}, false);
+        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {9.f, 5.f}, {0, 0}, false);
     }
 
     // check if user role is a moderator/admin, show the button
@@ -500,6 +492,69 @@ void ThumbnailInfoLayer::fetchLevel() {
 
     if (level) {
         m_level = level;
+        auto screenSize = CCDirector::sharedDirector()->getWinSize();
+        if (m_level->m_accountID == m_accountId) {
+            m_creatorNode = CCNode::create();
+            m_creatorNode->setScale(0.8f);
+            m_creatorNode->setPosition({screenSize.width - 10.f, screenSize.height - 10.f});
+            this->addChild(m_creatorNode, 10);
+
+            auto nodeBg = NineSlice::create("square02_001.png");
+            nodeBg->setContentSize({133.f, 25.f});
+            nodeBg->setOpacity(150);
+            nodeBg->setAnchorPoint({1, 1});
+            nodeBg->setPosition({5.f, 5.f});
+            m_creatorNode->addChild(nodeBg);
+
+            auto hammerIcon = CCSprite::createWithSpriteFrameName("GJ_hammerIcon_001.png");
+            if (hammerIcon) {
+                hammerIcon->setScale(0.7f);
+                hammerIcon->setAnchorPoint({1.f, 1.f});
+                hammerIcon->setPosition({0.f, 0.f});
+                m_creatorNode->addChild(hammerIcon);
+
+                auto creatorLabel = CCLabelBMFont::create("Level Creator", "bigFont.fnt");
+                creatorLabel->setColor({180, 255, 180});
+                creatorLabel->setScale(0.4f);
+                creatorLabel->setAnchorPoint({1.f, 1.f});
+                creatorLabel->setPosition({-hammerIcon->getScaledContentSize().width - 4.f,
+                    0.f});
+                m_creatorNode->addChild(creatorLabel);
+            }
+        }
+
+        if (m_replacementFlag) {
+            m_replacementNode = CCNode::create();
+            m_replacementNode->setScale(0.8f);
+            float replacementY = screenSize.height - 40.f;
+            if (!m_creatorNode) {
+                replacementY = screenSize.height - 10.f;
+            }
+            m_replacementNode->setPosition({screenSize.width - 10.f, replacementY});
+            this->addChild(m_replacementNode, 10);
+
+            auto replacementBg = NineSlice::create("square02_001.png");
+            replacementBg->setContentSize({120.f, 25.f});
+            replacementBg->setOpacity(150);
+            replacementBg->setAnchorPoint({1, 1});
+            replacementBg->setPosition({5.f, 5.f});
+            m_replacementNode->addChild(replacementBg);
+
+            auto replacementLabel = CCLabelBMFont::create("Replacement", "bigFont.fnt");
+            replacementLabel->setScale(0.4f);
+            replacementLabel->setColor({255, 180, 100});
+            replacementLabel->setAnchorPoint({1.f, 1.f});
+            replacementLabel->setPosition({-20.f, -0.5f});
+            m_replacementNode->addChild(replacementLabel);
+
+            auto sortIcon = CCSprite::createWithSpriteFrameName("GJ_sortIcon_001.png");
+            if (sortIcon) {
+                sortIcon->setScale(0.6f);
+                sortIcon->setAnchorPoint({1.f, 1.f});
+                sortIcon->setPosition({0.f, 0.f});
+                m_replacementNode->addChild(sortIcon);
+            }
+        }
     }
 }
 
@@ -510,8 +565,6 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
             m_thumbOriginal->setVisible(false);
         if (m_thumbReplacement)
             m_thumbReplacement->setVisible(true);
-        if (m_thumbLabel)
-            m_thumbLabel->setString("New Thumbnail");
         m_showingOriginal = false;
         // update the button label back to 'Show original'
         if (m_showOriginalBtn) {
@@ -529,8 +582,6 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
             m_thumbOriginal->setVisible(true);
         if (m_thumbReplacement)
             m_thumbReplacement->setVisible(false);
-        if (m_thumbLabel)
-            m_thumbLabel->setString("Original Thumbnail");
         m_showingOriginal = true;
         if (m_showOriginalBtn) {
             auto newSprite =
@@ -559,8 +610,6 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                 if (m_thumbOriginal) {
                     m_thumbOriginal->loadFromData(data);
                     m_thumbOriginal->setVisible(true);
-                    if (m_thumbLabel)
-                        m_thumbLabel->setString("Original Thumbnail");
                 }
                 if (m_thumbReplacement) {
                     m_thumbReplacement->setVisible(false);
