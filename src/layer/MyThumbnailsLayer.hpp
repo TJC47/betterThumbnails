@@ -49,6 +49,7 @@ private:
     CCMenu* m_tabMenu = nullptr;
     CCMenuItemSpriteExtra* m_prevBtn = nullptr;
     CCMenuItemSpriteExtra* m_nextBtn = nullptr;
+    CCMenuItemSpriteExtra* m_reloadBtn = nullptr;
     TabButton* m_activeTab = nullptr;
     TabButton* m_pendingTab = nullptr;
     TabButton* m_rejectedTab = nullptr;
@@ -57,6 +58,7 @@ private:
     void updateUI();
     void onPrevPage(CCObject*);
     void onNextPage(CCObject*);
+    void onReload(CCObject*);
     void onSelectActive(CCObject*);
     void onSelectPending(CCObject*);
     void onSelectRejected(CCObject*);

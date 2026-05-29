@@ -11,9 +11,9 @@
 
 using namespace geode::prelude;
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::string thumbnailUrl) {
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, bool showViewButton, std::string thumbnailUrl) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, std::move(thumbnailUrl))) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, accepted_time, showViewButton, std::move(thumbnailUrl))) {
         ret->autorelease();
         return ret;
     }
@@ -21,7 +21,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::string thumbnailUrl) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, bool showViewButton, std::string thumbnailUrl) {
     if (!CCLayer::init())
         return false;
 
@@ -62,6 +62,8 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_replacement = replacement;
     m_submissionNote = submission_note;
     m_accountId = account_id;
+    m_acceptedTime = accepted_time;
+    m_showViewButton = showViewButton;
     m_thumbnailUrl = std::move(thumbnailUrl);
 
     this->fetchLevel();
@@ -80,6 +82,15 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     submitterLabel->setScale(0.3f);
     this->addChild(submitterLabel, 2);
 
+    if (!this->m_acceptedTime.empty()) {
+        auto acceptedText = fmt::format("Accepted: {}", this->m_acceptedTime);
+        auto acceptedLabel = CCLabelBMFont::create(acceptedText.c_str(), "chatFont.fnt");
+        acceptedLabel->setAnchorPoint({0.f, 0.5f});
+        acceptedLabel->setPosition({rightX, levelIdY - 15.f});
+        acceptedLabel->setScale(0.3f);
+        this->addChild(acceptedLabel, 2);
+    }
+
     auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
         CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote, m_accountId)));
     });
@@ -93,11 +104,13 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     });
 
     auto actionMenu = CCMenu::create();
-    actionMenu->setPosition({rightX, 15.f});
+    actionMenu->setPosition({rightX, 20.f});
     actionMenu->setAnchorPoint({0.f, 0.5f});
     actionMenu->setContentSize({160.f, 40.f});
     actionMenu->setLayout(RowLayout::create()->setGap(10.f));
-    actionMenu->addChild(viewBtn);
+    if (this->m_showViewButton) {
+        actionMenu->addChild(viewBtn);
+    }
     actionMenu->addChild(playBtn);
     actionMenu->updateLayout();
     this->addChild(actionMenu, 2);

@@ -93,6 +93,11 @@ bool MyThumbnailsLayer::init() {
     m_nextBtn->setPosition({screenSize.width - 20.f, screenSize.height / 2.f});
     m_navMenu->addChild(m_nextBtn);
 
+    auto reloadSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+    m_reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr, this, menu_selector(MyThumbnailsLayer::onReload));
+    m_reloadBtn->setPosition({screenSize.width - 30.f, 30.f});
+    m_navMenu->addChild(m_reloadBtn);
+
     m_infoLabel = CCLabelBMFont::create("1 to 0 of 0", "goldFont.fnt");
     m_infoLabel->setScale(0.4f);
     m_infoLabel->setAnchorPoint({1.f, 1.f});
@@ -148,6 +153,10 @@ void MyThumbnailsLayer::onNextPage(CCObject*) {
     fetchPage(m_currentPage + 1);
 }
 
+void MyThumbnailsLayer::onReload(CCObject*) {
+    fetchPage(m_currentPage);
+}
+
 std::string MyThumbnailsLayer::endpointForMode(MyThumbnailsLayer::UploadMode mode) {
     switch (mode) {
         case MyThumbnailsLayer::UploadMode::Active: return "active";
@@ -201,7 +210,7 @@ void MyThumbnailsLayer::fetchPage(int page) {
             MyThumbnailEntry entry;
             entry.id = item["id"].asInt().unwrapOrDefault();
             entry.level_id = item["level_id"].asInt().unwrapOrDefault();
-            entry.accepted_time = item["accepted_time"].asString().unwrapOr("-");
+            entry.accepted_time = item["accepted_time"].asString().unwrapOr("");
             entry.upload_time = item["upload_time"].asString().unwrapOr("-");
             entry.submission_note = item["submission_note"].asString().unwrapOrDefault();
             m_uploads.push_back(std::move(entry));
@@ -230,6 +239,8 @@ void MyThumbnailsLayer::updateUI() {
             false,
             entry.submission_note,
             currentUserId,
+            entry.accepted_time,
+            m_mode == UploadMode::Pending,
             fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", entry.level_id));
         thumbNode->setAnchorPoint({0.5f, 1.0f});
         m_listNode->addCell(thumbNode);
