@@ -58,6 +58,11 @@ bool PendingThumbnailLayer::init() {
     this->m_searchMenu->setPosition({0.f, 0.f});
     this->addChild(this->m_searchMenu, 2);
 
+    auto reloadSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+    m_reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr, this, menu_selector(PendingThumbnailLayer::onReload));
+    m_reloadBtn->setPosition({screenSize.width - 50.f, 30.f});
+    this->m_searchMenu->addChild(m_reloadBtn);
+
     m_infoLabel = CCLabelBMFont::create("1 to 1 of 0", "goldFont.fnt");
     m_infoLabel->setScale(0.4f);
     m_infoLabel->setAnchorPoint({1.f, 1.0f});
@@ -312,6 +317,10 @@ void PendingThumbnailLayer::fetchPage(int page) {
         m_listNode->clear();
     if (m_navMenu)
         m_navMenu->setVisible(false);
+}
+
+void PendingThumbnailLayer::onReload(CCObject*) {
+    fetchPage(m_currentPage);
 }
 
 void PendingThumbnailLayer::updateUI() {

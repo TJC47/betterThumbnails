@@ -6,6 +6,7 @@
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ThumbnailInfoLayer.hpp"
 #include "../popup/RejectReasonPopup.hpp"
+#include <cmath>
 #include <map>
 #include <sstream>
 
@@ -51,36 +52,49 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
     addBackButton(this, BackButtonStyle::Green);
 
-    // // Submitter
-    // auto submitter = CCLabelBMFont::create(
-    //     fmt::format("Submitter: {} ({})", username, user_id).c_str(),
-    //     "goldFont.fnt");
-    // submitter->setPosition({screenSize.width / 2.f, screenSize.height - 25.f});
-    // submitter->setScale(0.8f);
-    // submitter->setAlignment(kCCTextAlignmentCenter);
-    // this->addChild(submitter, 1);
+    // Submitter
+    auto submitter = CCLabelBMFont::create(
+        fmt::format("Submitted by {} ({})", username, user_id).c_str(),
+        "goldFont.fnt");
+    submitter->setPosition({screenSize.width / 2.f, screenSize.height - 20.f});
+    submitter->setScale(0.8f);
+    submitter->setAlignment(kCCTextAlignmentCenter);
+    this->addChild(submitter, 1);
 
-    // // Timestamp
-    // auto timestamp = CCLabelBMFont::create(
-    //     fmt::format("Uploaded: {}", upload_time).c_str(), "chatFont.fnt");
-    // timestamp->setPosition({screenSize.width / 2.f, screenSize.height - 50.f});
-    // timestamp->setScale(0.75f);
-    // timestamp->setAlignment(kCCTextAlignmentCenter);
-    // this->addChild(timestamp, 1);
-
-    m_levelCell = LevelCell::create(356, 50);
-    m_levelCell->setPosition({screenSize.width / 2.f - 170.f, screenSize.height - 55.f});
-    m_levelCell->setContentSize({356, 50});
-    m_levelCell->m_compactView = true;
     this->fetchLevel();
-    this->addChild(m_levelCell);
 
     // thumb bg
-    auto thumbBg = NineSlice::create("GJ_square06.png");
+    auto thumbBg = NineSlice::create("GJ_square05.png");
     thumbBg->setPosition(
-        {screenSize.width / 2.f - 80.f, screenSize.height / 2.f + 10.f});
+        {screenSize.width / 2.f, screenSize.height / 2.f + 15.f});
     thumbBg->setContentSize({300.f, 170.f});
+    thumbBg->setScale(1.1f);
     this->addChild(thumbBg);
+
+    auto thumbBorder = NineSlice::create("GJ_square07.png");
+    thumbBorder->setContentSize(thumbBg->getContentSize());
+    thumbBorder->setPosition(thumbBg->getContentSize() / 2);
+    thumbBg->addChild(thumbBorder, 5);
+
+    auto infoMenu = CCMenu::create();
+    infoMenu->setPosition({0, 0});
+    infoMenu->setContentSize(thumbBg->getContentSize());
+    thumbBg->addChild(infoMenu, 10);
+
+    auto infoOffSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+    auto infoOnSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+    if (infoOnSpr)
+        infoOnSpr->setColor({120, 120, 120});
+
+    m_infoToggle = CCMenuItemToggler::create(
+        infoOffSpr,
+        infoOnSpr,
+        this,
+        menu_selector(ThumbnailInfoLayer::onInfoToggle));
+    m_infoToggle->setPosition({thumbBg->getContentSize().width,
+        thumbBg->getContentSize().height});
+    m_infoToggle->toggle(false);
+    infoMenu->addChild(m_infoToggle);
 
     // Thumbnail (replacement + original)
     auto thumbReplacement = LazySprite::create({300.f, 170.f}, false);
@@ -99,29 +113,26 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     stencil->setContentSize(thumbBg->getContentSize());
     stencil->setPosition({0, 0});
 
-    auto clip = CCClippingNode::create(stencil);
-    clip->setAnchorPoint(thumbBg->getAnchorPoint());
-    clip->setPosition(thumbBg->getContentSize() / 2);
-    thumbBg->addChild(clip);
-
-    // add both sprites to the clipped area
-    clip->addChild(thumbReplacement);
-    clip->addChild(thumbOriginal);
+    auto stencilClip = CCClippingNode::create(stencil);
+    stencilClip->setAnchorPoint(thumbBg->getAnchorPoint());
+    stencilClip->setPosition(thumbBg->getContentSize() / 2);
+    thumbBg->addChild(stencilClip);
+    stencilClip->setAlphaThreshold(0.1f);
+    stencilClip->addChild(thumbReplacement);
+    stencilClip->addChild(thumbOriginal);
 
     auto spinner = cue::LoadingCircle::create(true);
-    spinner->setScale(0.45f);
-    spinner->addToLayer(clip);
+    spinner->addToLayer(thumbBg, 2);
     m_thumbSpinner = spinner;
 
     // Label above thumbnail indicating which image is shown
     auto thumbLabel = CCLabelBMFont::create(
         m_replacementFlag ? "New Thumbnail" : "Original Thumbnail", "bigFont.fnt");
     thumbLabel->setScale(0.3f);
-    thumbLabel->setAnchorPoint({0.5f, 0.5f});
-    thumbLabel->setPosition({thumbBg->getPositionX(),
-        thumbBg->getPositionY() +
-            thumbBg->getContentSize().height / 2.f + 5.f});
-    this->addChild(thumbLabel, 2);
+    thumbLabel->setAnchorPoint({0.f, 0.5f});
+    thumbLabel->setPosition({5.f, thumbBg->getContentSize().height - 10.f});
+    thumbLabel->setOpacity(100);
+    thumbBg->addChild(thumbLabel, 2);
     m_thumbLabel = thumbLabel;
 
     if (!m_replacementFlag)
@@ -150,8 +161,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         });
 
     m_bottomMenu = CCMenu::create();
-    m_bottomMenu->setPosition({screenSize.width / 2.f - 80.f, 25.f});
-    m_bottomMenu->setContentSize({screenSize.width - 300.f, 40.f});
+    m_bottomMenu->setPosition({screenSize.width / 2.f, 25.f});
+    m_bottomMenu->setContentSize({screenSize.width - 40.f, 40.f});
     m_bottomMenu->setLayout(RowLayout::create()->setGap(10.f));
     this->addChild(m_bottomMenu, 2);
 
@@ -164,20 +175,6 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         m_bottomMenu->addChild(m_showOriginalBtn);
     }
 
-    std::string infoText = fmt::format(
-        "### <cg>Level ID:</c> {}\n"
-        "### <cc>Accepted:</c> {}\n"
-        "### <cl>Replacement:</c> {}\n"
-        "### <co>Thumbnail ID:</c> {}",
-        level_id,
-        accepted ? "Yes" : "No",
-        replacement ? "Yes" : "No",
-        id);
-
-    auto infoTextArea = MDTextArea::create(infoText, {180.f, 100.f});
-    infoTextArea->setScale(0.8f);
-    this->addChildAtPosition(infoTextArea, Anchor::Right, {-115.f, 60.f}, false);
-
     if (!m_submissionNote.empty()) {
         std::map<std::string, std::string> fields;
         std::stringstream ss(m_submissionNote);
@@ -188,6 +185,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
                 fields[token.substr(0, pos)] = token.substr(pos + 1);
             }
         }
+
+        std::string level_name = fields["ln"];
 
         std::string prStr = fields["pr"];
         if (!prStr.empty()) {
@@ -205,28 +204,38 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
                 tmStr = fmt::format("{:.2f}", tmVal);
             }
         }
+        // progressions and attempts label
+        auto levelLabel = CCLabelBMFont::create(
+            fmt::format("{}% ({}s)", prStr, tmStr).c_str(), "bigFont.fnt");
+        levelLabel->setPosition({screenSize.width / 2.f, screenSize.height - 40.f});
+        levelLabel->setScale(0.4f);
+        levelLabel->setAlignment(kCCTextAlignmentCenter);
+        this->addChild(levelLabel, 1);
+
+        // std::string noteText = fmt::format(
+        //     "### <cb>Note</c>\n\n{}",
+        //     fields["m"]);
+        // auto noteTextArea = MDTextArea::create(noteText, {180.f, 80.f});
+        // noteTextArea->setScale(0.8f);
+        // this->addChildAtPosition(noteTextArea, Anchor::Right, {-115.f, -120.f}, false);
 
         std::string infoText = fmt::format(
-            "<cg>Version:</c> {}\n\n"
-            "<cg>Submitted By:</c> {}\n\n"
-            "<cg>Submitter Account ID:</c> {}\n\n"
-            "<cg>Progression:</c> {}%\n\n"
-            "<cg>Attempt Time:</c> {}s",
-            fields["v"],
-            fields["cn"],
-            fields["ci"],
-            prStr,
-            tmStr);
-        auto infoTextArea = MDTextArea::create(infoText, {180.f, 120.f});
-        infoTextArea->setScale(0.8f);
-        this->addChildAtPosition(infoTextArea, Anchor::Right, {-115.f, -30.f}, false);
-
-        std::string noteText = fmt::format(
-            "### <cb>Note</c>\n\n{}",
+            "### <cc>Level Name:</c> {}\n"
+            "### <cg>Level ID:</c> {}\n"
+            "### <cc>Accepted:</c> {}\n"
+            "### <cl>Replacement:</c> {}\n"
+            "### <co>Thumbnail ID:</c> {}\n"
+            "### <cb>Note:</c> {}\n\n",
+            level_name,
+            level_id,
+            accepted ? "Yes" : "No",
+            replacement ? "Yes" : "No",
+            id,
             fields["m"]);
-        auto noteTextArea = MDTextArea::create(noteText, {180.f, 80.f});
-        noteTextArea->setScale(0.8f);
-        this->addChildAtPosition(noteTextArea, Anchor::Right, {-115.f, -120.f}, false);
+
+        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(10.f, 10.f));
+        m_infoTextArea->setVisible(false);
+        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {10.f, 5.f}, {0, 0}, false);
     }
 
     // check if user role is a moderator/admin, show the button
@@ -255,8 +264,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         m_bottomMenu->updateLayout();
 
         auto actionMenu = CCMenu::create();
-        actionMenu->setPosition({screenSize.width / 2.f - 80.f, 60.f});
-        actionMenu->setContentSize({screenSize.width - 300.f, 40.f});
+        actionMenu->setPosition({screenSize.width / 2.f, 60.f});
+        actionMenu->setContentSize({screenSize.width - 40.f, 40.f});
         actionMenu->setLayout(RowLayout::create()->setGap(5.f));
         actionMenu->addChild(acceptBtn);
         actionMenu->addChild(rejectBtn);
@@ -266,6 +275,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     }
 
     this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
     return true;
 }
 
@@ -330,96 +340,126 @@ void ThumbnailInfoLayer::onPlayLevelButton(CCObject*) {
         auto scene = LevelInfoLayer::scene(m_level, false);
         CCDirector::get()->pushScene(
             CCTransitionFade::create(.5f, scene));
-    } else {
-        auto search =
-            GJSearchObject::create(SearchType::Type19, numToString<int>(m_levelId));
-        CCDirector::get()->pushScene(
-            CCTransitionFade::create(.5f, LevelBrowserLayer::scene(search)));
+        return;
     }
 }
 
-void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
-    // Toggle back to the replacement
-    if (m_showingOriginal) {
-        if (m_thumbOriginal)
-            m_thumbOriginal->setVisible(false);
-        if (m_thumbReplacement)
-            m_thumbReplacement->setVisible(true);
-        if (m_thumbLabel)
-            m_thumbLabel->setString("New Thumbnail");
-        m_showingOriginal = false;
-        // update the button label back to 'Show original'
-        if (m_showOriginalBtn) {
-            auto newSprite =
-                ButtonSprite::create("Show original", "goldFont.fnt", "GJ_button_01.png");
-            m_showOriginalBtn->setNormalImage(newSprite);
-            m_bottomMenu->updateLayout();
-        }
+void ThumbnailInfoLayer::onInfoToggle(CCObject* sender) {
+    m_infoVisible = !m_infoVisible;
+    if (m_infoTextArea) {
+        m_infoTextArea->setVisible(m_infoVisible);
+    }
+}
+
+float clip(float n, float lower, float upper) {
+    return std::max(lower, std::min(n, upper));
+}
+
+bool ThumbnailInfoLayer::ccTouchBegan(CCTouch* pTouch, CCEvent* event) {
+    LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
+    if (!thumbnail) {
+        return false;
+    }
+
+    auto touchLocation = pTouch->getLocation();
+    if (!thumbnail->boundingBox().containsPoint(touchLocation)) {
+        return false;
+    }
+
+    if (m_touches.size() == 1) {
+        auto firstTouch = *m_touches.begin();
+        auto firstLoc = firstTouch->getLocation();
+        auto secondLoc = pTouch->getLocation();
+
+        this->m_touchMidPoint = (firstLoc + secondLoc) / 2.f;
+        this->m_initialScale = thumbnail->getScale();
+        this->m_initialDistance = firstLoc.getDistance(secondLoc);
+        auto oldAnchor = thumbnail->getAnchorPoint();
+        auto worldPos = thumbnail->convertToWorldSpace({0, 0});
+        auto newAnchorX = (m_touchMidPoint.x - worldPos.x) / thumbnail->getScaledContentWidth();
+        auto newAnchorY = (m_touchMidPoint.y - worldPos.y) / thumbnail->getScaledContentHeight();
+        thumbnail->setAnchorPoint({clip(newAnchorX, 0, 1), clip(newAnchorY, 0, 1)});
+        thumbnail->setPosition({thumbnail->getPositionX() + thumbnail->getScaledContentWidth() * -(oldAnchor.x - clip(newAnchorX, 0, 1)),
+            thumbnail->getPositionY() + thumbnail->getScaledContentHeight() * -(oldAnchor.y - clip(newAnchorY, 0, 1))});
+    }
+
+    m_touches.insert(pTouch);
+    return true;
+}
+
+void ThumbnailInfoLayer::ccTouchMoved(CCTouch* pTouch, CCEvent* event) {
+    LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
+    if (!thumbnail) {
         return;
     }
 
-    // If original already loaded, just show it and hide replacement
-    if (m_originalLoaded) {
-        if (m_thumbOriginal)
-            m_thumbOriginal->setVisible(true);
-        if (m_thumbReplacement)
-            m_thumbReplacement->setVisible(false);
-        if (m_thumbLabel)
-            m_thumbLabel->setString("Original Thumbnail");
-        m_showingOriginal = true;
-        if (m_showOriginalBtn) {
-            auto newSprite =
-                ButtonSprite::create("Show replacement", "goldFont.fnt", "GJ_button_01.png");
-            m_showOriginalBtn->setNormalImage(newSprite);
-            m_bottomMenu->updateLayout();
-        }
+    if (m_touches.size() == 1) {
+        thumbnail->setPosition(thumbnail->getPosition() + pTouch->getDelta());
         return;
     }
 
-    // Otherwise, fetch original image
-    if (!m_thumbOriginal || !m_thumbSpinner)
-        return;
-    m_thumbSpinner->setVisible(true);
-    auto req = web::WebRequest();
-    req.header("Authorization",
-        fmt::format("Bearer {}",
-            Mod::get()->getSavedValue<std::string>("token")));
-    auto task = req.get(
-        betterThumbnail::makeUrl(fmt::format("/thumbnail/{}", m_levelId)));
+    if (m_touches.size() == 2) {
+        this->m_wasZooming = true;
+        auto it = m_touches.begin();
+        auto firstTouch = *it;
+        ++it;
+        auto secondTouch = *it;
 
-    m_listener.spawn(std::move(task), [this](web::WebResponse res) {
-        if (res.code() >= 200 && res.code() <= 299) {
-            auto data = res.data();
-            if (!data.empty()) {
-                if (m_thumbOriginal) {
-                    m_thumbOriginal->loadFromData(data);
-                    m_thumbOriginal->setVisible(true);
-                    if (m_thumbLabel)
-                        m_thumbLabel->setString("Original Thumbnail");
-                }
-                if (m_thumbReplacement) {
-                    m_thumbReplacement->setVisible(false);
-                }
-                m_originalLoaded = true;
-                m_showingOriginal = true;
-                if (m_thumbSpinner)
-                    m_thumbSpinner->setVisible(false);
-                if (m_showOriginalBtn) {
-                    auto newSprite =
-                        ButtonSprite::create("Show replacement", "goldFont.fnt", "GJ_button_01.png");
-                    m_showOriginalBtn->setNormalImage(newSprite);
-                    m_bottomMenu->updateLayout();
-                }
-            }
-        } else {
-            log::error("Original image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
-            if (m_thumbSpinner)
-                m_thumbSpinner->setVisible(false);
-            Notification::create("Error loading original image.",
-                NotificationIcon::Error)
-                ->show();
+        auto firstLoc = firstTouch->getLocation();
+        auto secondLoc = secondTouch->getLocation();
+        auto center = (firstLoc + secondLoc) / 2;
+        auto distNow = firstLoc.getDistance(secondLoc);
+
+        auto const mult = this->m_initialDistance / distNow;
+        auto zoom = clip(this->m_initialScale / mult, 0.2f, 6.5f);
+        thumbnail->setScale(zoom);
+
+        auto centerDiff = this->m_touchMidPoint - center;
+        thumbnail->setPosition(thumbnail->getPosition() - centerDiff);
+        this->m_touchMidPoint = center;
+    }
+}
+
+void ThumbnailInfoLayer::ccTouchEnded(CCTouch* pTouch, CCEvent* event) {
+    m_touches.erase(pTouch);
+    LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
+    if (this->m_wasZooming && m_touches.size() == 1 && thumbnail) {
+        auto scale = thumbnail->getScale();
+        if (scale < 0.25f) {
+            thumbnail->runAction(
+                CCEaseSineInOut::create(
+                    CCScaleTo::create(0.5f, 0.25f)));
         }
-    });
+        if (scale > 4.0f) {
+            thumbnail->runAction(
+                CCEaseSineInOut::create(
+                    CCScaleTo::create(0.5f, 4.0f)));
+        }
+        this->m_wasZooming = false;
+    }
+}
+
+void ThumbnailInfoLayer::scrollWheel(float y, float x) {
+    LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
+    if (!thumbnail) {
+        return;
+    }
+
+    constexpr float zoomSpeed = 0.01f;
+    float oldScale = thumbnail->getScale();
+    float newScale = oldScale * std::pow(1.f + zoomSpeed, -y);
+    newScale = clip(newScale, 0.25f, 6.f);
+
+    if (std::abs(newScale - oldScale) < 0.0001f)
+        return;
+
+    CCPoint mouseWorld = getMousePos();
+    CCPoint localBefore = thumbnail->convertToNodeSpace(mouseWorld);
+    thumbnail->setScale(newScale);
+
+    CCPoint worldAfter = thumbnail->convertToWorldSpace(localBefore);
+    CCPoint diff = mouseWorld - worldAfter;
+    thumbnail->setPosition(thumbnail->getPosition() + diff);
 }
 
 void ThumbnailInfoLayer::fetchLevel() {
@@ -458,11 +498,91 @@ void ThumbnailInfoLayer::fetchLevel() {
         break;
     }
 
-    if (level && m_levelCell) {
+    if (level) {
         m_level = level;
-        m_levelCell->loadFromLevel(level);
-        if (m_levelCell->m_mainMenu) {
-            m_levelCell->m_mainMenu->setPosition({400, 425});
-        }
     }
+}
+
+void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
+    // Toggle back to the replacement
+    if (m_showingOriginal) {
+        if (m_thumbOriginal)
+            m_thumbOriginal->setVisible(false);
+        if (m_thumbReplacement)
+            m_thumbReplacement->setVisible(true);
+        if (m_thumbLabel)
+            m_thumbLabel->setString("New Thumbnail");
+        m_showingOriginal = false;
+        // update the button label back to 'Show original'
+        if (m_showOriginalBtn) {
+            auto newSprite =
+                ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            m_showOriginalBtn->setNormalImage(newSprite);
+            m_bottomMenu->updateLayout();
+        }
+        return;
+    }
+
+    // If original already loaded, just show it and hide replacement
+    if (m_originalLoaded) {
+        if (m_thumbOriginal)
+            m_thumbOriginal->setVisible(true);
+        if (m_thumbReplacement)
+            m_thumbReplacement->setVisible(false);
+        if (m_thumbLabel)
+            m_thumbLabel->setString("Original Thumbnail");
+        m_showingOriginal = true;
+        if (m_showOriginalBtn) {
+            auto newSprite =
+                ButtonSprite::create("Show replacement", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            m_showOriginalBtn->setNormalImage(newSprite);
+            m_bottomMenu->updateLayout();
+        }
+        return;
+    }
+
+    // Otherwise, fetch original image
+    if (!m_thumbOriginal || !m_thumbSpinner)
+        return;
+    m_thumbSpinner->setVisible(true);
+    auto req = web::WebRequest();
+    req.header("Authorization",
+        fmt::format("Bearer {}",
+            Mod::get()->getSavedValue<std::string>("token")));
+    auto task = req.get(
+        betterThumbnail::makeUrl(fmt::format("/thumbnail/{}", m_levelId)));
+
+    m_listener.spawn(std::move(task), [this](web::WebResponse res) {
+        if (res.code() >= 200 && res.code() <= 299) {
+            auto data = res.data();
+            if (!data.empty()) {
+                if (m_thumbOriginal) {
+                    m_thumbOriginal->loadFromData(data);
+                    m_thumbOriginal->setVisible(true);
+                    if (m_thumbLabel)
+                        m_thumbLabel->setString("Original Thumbnail");
+                }
+                if (m_thumbReplacement) {
+                    m_thumbReplacement->setVisible(false);
+                }
+                m_originalLoaded = true;
+                m_showingOriginal = true;
+                if (m_thumbSpinner)
+                    m_thumbSpinner->setVisible(false);
+                if (m_showOriginalBtn) {
+                    auto newSprite =
+                        ButtonSprite::create("Show replacement", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                    m_showOriginalBtn->setNormalImage(newSprite);
+                    m_bottomMenu->updateLayout();
+                }
+            }
+        } else {
+            log::error("Original image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
+            if (m_thumbSpinner)
+                m_thumbSpinner->setVisible(false);
+            Notification::create("Error loading original image.",
+                NotificationIcon::Error)
+                ->show();
+        }
+    });
 }

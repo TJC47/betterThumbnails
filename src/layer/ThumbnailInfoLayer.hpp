@@ -3,6 +3,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/async.hpp>
 #include <cue/LoadingCircle.hpp>
+#include <set>
 
 using namespace geode::prelude;
 
@@ -20,6 +21,11 @@ public:
     void onReject(CCObject*);
     void onPlayLevelButton(CCObject*);
     void onShowOriginal(CCObject*);
+    void onInfoToggle(CCObject*);
+    bool ccTouchBegan(CCTouch* pTouch, CCEvent* event) override;
+    void ccTouchMoved(CCTouch* pTouch, CCEvent* event) override;
+    void ccTouchEnded(CCTouch* pTouch, CCEvent* event) override;
+    void scrollWheel(float y, float x) override;
     void fetchLevel();
 
 private:
@@ -39,10 +45,17 @@ private:
     LazySprite* m_thumbOriginal = nullptr;
     cue::LoadingCircle* m_thumbSpinner = nullptr;
     CCMenuItemSpriteExtra* m_showOriginalBtn = nullptr;
+    CCMenuItemToggler* m_infoToggle = nullptr;
+    MDTextArea* m_infoTextArea = nullptr;
     bool m_showingOriginal = false;
     bool m_originalLoaded = false;
+    bool m_infoVisible = false;
     CCLabelBMFont* m_thumbLabel = nullptr;
-    LevelCell* m_levelCell;
+    std::set<CCTouch*> m_touches;
+    CCPoint m_touchMidPoint = {0, 0};
+    float m_initialScale = 1.f;
+    float m_initialDistance = 0.f;
+    bool m_wasZooming = false;
     int m_levelFetchRetries = 0;
     GJGameLevel* m_level = nullptr;
 };

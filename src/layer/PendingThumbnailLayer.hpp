@@ -48,6 +48,7 @@ private:
     CCMenu* m_searchMenu = nullptr;
     CCMenuItemSpriteExtra* m_prevBtn = nullptr;
     CCMenuItemSpriteExtra* m_nextBtn = nullptr;
+    CCMenuItemSpriteExtra* m_reloadBtn = nullptr;
 
     geode::TabButton* m_allFilterBtn = nullptr;
     geode::TabButton* m_newFilterBtn = nullptr;
@@ -61,6 +62,7 @@ private:
     int m_queryLevelId = 0;
 
     void onOpenFilterPopup(CCObject*);
+    void onReload(CCObject*);
 
     void updateUI();
     void onPrevPage(CCObject*);
