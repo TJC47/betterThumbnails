@@ -61,6 +61,8 @@ private:
 
     void fetchPage(int page);
     void populateList();
+    void banUser(int id);
+    void unbanUser(int id);
     void onToggleBanned(CCObject*);
     void onPrevPage(CCObject*);
     void onNextPage(CCObject*);

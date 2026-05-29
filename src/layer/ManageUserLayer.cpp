@@ -1,10 +1,13 @@
 #include "ManageUserLayer.hpp"
+#include "../popup/BanReasonPopup.hpp"
 
 #include <Geode/binding/ProfilePage.hpp>
+#include <Geode/binding/UploadActionPopup.hpp>
 
 #include <cue/ListNode.hpp>
 #include <cue/LoadingCircle.hpp>
 
+#include "Geode/ui/BasedButtonSprite.hpp"
 #include "Geode/ui/General.hpp"
 #include <Geode/ui/Button.hpp>
 #include <Geode/ui/MDPopup.hpp>
@@ -225,6 +228,32 @@ void ManageUserLayer::onToggleBanned(CCObject* sender) {
     fetchPage(this->m_currentPage);
 }
 
+void ManageUserLayer::banUser(int id) {
+    auto banPopup = BanReasonPopup::create(id);
+    if (banPopup) banPopup->show();
+}
+
+void ManageUserLayer::unbanUser(int id) {
+    auto popup = UploadActionPopup::create(nullptr, fmt::format("Unbanning user {}...", id));
+    if (popup)
+        popup->show();
+
+    auto req = web::WebRequest();
+    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+    auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", id);
+    auto task = req.send("DELETE", url);
+    this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
+        if (res.code() == 200) {
+            if (popup)
+                popup->showSuccessMessage("User unbanned successfully");
+            this->fetchPage(this->m_currentPage);
+        } else {
+            if (popup)
+                popup->showFailMessage(fmt::format("Unban failed: {}", res.string().unwrapOr("Unknown error")));
+        }
+    });
+}
+
 void ManageUserLayer::fetchPage(int page) {
     auto req = web::WebRequest();
     req.header("Authorization",
@@ -368,7 +397,7 @@ void ManageUserLayer::populateList() {
         }
 
         if (entry.banned) {
-            auto infoBtn = geode::Button::createWithSpriteFrameName("GJ_infoIcon_001.png", [entry](geode::Button* btn) {
+            auto infoBtn = geode::Button::createWithSprite("BT_unbanIcon.png"_spr, [entry](geode::Button* btn) {
                 geode::MDPopup::create(
                     fmt::format("Banned by {}", entry.bannedBy),
                     entry.banReason,
@@ -382,6 +411,19 @@ void ManageUserLayer::populateList() {
 
             usernameLabel->setColor({255, 0, 0});
         }
+
+        auto banBtn = geode::Button::createWithSprite(
+            entry.banned ? "BT_unbanIcon.png"_spr : "BT_banIcon.png"_spr,
+            [this, entry](geode::Button* btn) {
+                if (entry.banned) {
+                    this->unbanUser(entry.id);
+                } else {
+                    this->banUser(entry.id);
+                }
+            });
+        banBtn->setAnchorPoint({.5f, .5f});
+        banBtn->setPosition({row->getContentSize().width - 10.f, row->getContentSize().height / 2.f});
+        row->addChild(banBtn);
 
         auto statsLabel = CCLabelBMFont::create(
             fmt::format("ID {} | Active {} | Pending {} | Rejected {} | Uploads {}",

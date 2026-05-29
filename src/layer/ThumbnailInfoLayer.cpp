@@ -225,9 +225,9 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             id,
             fields["m"]);
 
-        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize{0.f, 7.f});
+        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize());
         m_infoTextArea->setVisible(false);
-        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {9.f, 5.f}, {0, 0}, false);
+        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {9.f, 0.f}, {0, 0}, false);
     }
 
     // check if user role is a moderator/admin, show the button

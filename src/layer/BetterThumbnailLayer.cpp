@@ -10,8 +10,11 @@
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ManageUserLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
+#include "ThumbnailDashboardLayer.hpp"
 #include "../node/NotificationNode.hpp"
 #include "../popup/NotificationMenuPopup.hpp"
+
+using namespace geode::prelude;
 
 BetterThumbnailLayer* BetterThumbnailLayer::create() {
     auto ret = new BetterThumbnailLayer;
@@ -387,10 +390,11 @@ void BetterThumbnailLayer::onMyThumbnail(CCObject*) {
         ->show();
 }
 void BetterThumbnailLayer::onDashboard(CCObject*) {
-    FLAlertLayer::create("Dashboard",
-        "This feature is not implemented yet.",
-        "Ok")
-        ->show();
+    auto layer = ThumbnailDashboardLayer::create();
+    auto scene = CCScene::create();
+    auto transition = CCTransitionFade::create(.5f, scene);
+    scene->addChild(layer);
+    CCDirector::get()->pushScene(transition);
 }
 void BetterThumbnailLayer::onPending(CCObject*) {
     if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
@@ -431,8 +435,7 @@ void BetterThumbnailLayer::onInfoButton(CCObject*) {
     auto acceptUploadThumbnailCount = m_acceptedUploadThumbnailCount;
     auto infoString =
         fmt::format(
-            "Rank: {}\nRank (numerical): {}\nUser ID: {}\nActive "
-            "Thumbnails: {}\nUploaded Thumbnails: {}/{} accepted",
+            "<cg>Rank:</c> {}\n<cc>Rank (numerical)</c>: {}\n<cl>User ID:</c> {}\n<ca>Active Thumbnails:</c> {}\n<co>Uploaded Thumbnails:</c> {}/{} accepted",
             userRank,
             userRankNum,
             userId,
