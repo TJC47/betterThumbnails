@@ -24,8 +24,11 @@ class ThumbnailNode : public cocos2d::CCLayer {
       int m_accountId = 0;
       GJGameLevel* m_level = nullptr;
       CCLabelBMFont* m_levelInfoLabel = nullptr;
+      CCNode* m_creatorNode = nullptr;
+      CCNode* m_replacementNode = nullptr;
       int m_levelFetchRetries = 0;
       static ThumbnailNode* create(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
       bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
       void fetchLevel();
+      void updateBadges();
 };

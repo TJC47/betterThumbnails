@@ -112,6 +112,8 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     gradient->setContentSize(this->getContentSize());
     this->addChild(gradient, 1);
 
+    this->updateBadges();
+
     // Fetch image from API and apply to LazySprite
     auto imageReq = web::WebRequest();
     imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
@@ -164,5 +166,73 @@ void ThumbnailNode::fetchLevel() {
 
     if (this->m_level && this->m_levelInfoLabel) {
         this->m_levelInfoLabel->setString(fmt::format("{} ({})", this->m_level->m_levelName.c_str(), this->m_levelId).c_str());
+        this->updateBadges();
+    }
+}
+
+void ThumbnailNode::updateBadges() {
+    auto contentSize = this->getContentSize();
+
+    if (this->m_level && this->m_level->m_accountID == this->m_accountId && !this->m_creatorNode) {
+        this->m_creatorNode = CCNode::create();
+        this->m_creatorNode->setScale(0.8f);
+        this->m_creatorNode->setPosition({contentSize.width - 10.f, contentSize.height - 10.f});
+        this->addChild(this->m_creatorNode, 3);
+
+        auto badgeBg = NineSlice::create("square02_001.png");
+        badgeBg->setContentSize({133.f, 24.f});
+        badgeBg->setOpacity(150);
+        badgeBg->setAnchorPoint({1, 1});
+        badgeBg->setPosition({5.f, 5.f});
+        this->m_creatorNode->addChild(badgeBg);
+
+        auto hammerIcon = CCSprite::createWithSpriteFrameName("GJ_hammerIcon_001.png");
+        if (hammerIcon) {
+            hammerIcon->setScale(0.7f);
+            hammerIcon->setAnchorPoint({1.f, 1.f});
+            hammerIcon->setPosition({0.f, 0.f});
+            m_creatorNode->addChild(hammerIcon);
+
+            auto creatorLabel = CCLabelBMFont::create("Level Creator", "bigFont.fnt");
+            creatorLabel->setColor({180, 255, 180});
+            creatorLabel->setScale(0.4f);
+            creatorLabel->setAnchorPoint({1.f, 1.f});
+            creatorLabel->setPosition({-hammerIcon->getScaledContentSize().width - 4.f,
+                0.f});
+            m_creatorNode->addChild(creatorLabel);
+        }
+    }
+
+    if (this->m_replacement && !this->m_replacementNode) {
+        this->m_replacementNode = CCNode::create();
+        this->m_replacementNode->setScale(0.8f);
+        float y = contentSize.height - 10.f;
+        if (this->m_creatorNode) {
+            y -= 28.f;
+        }
+        this->m_replacementNode->setPosition({contentSize.width - 10.f, y});
+        this->addChild(this->m_replacementNode, 3);
+
+        auto badgeBg = NineSlice::create("square02_001.png");
+        badgeBg->setContentSize({120.f, 24.f});
+        badgeBg->setOpacity(150);
+        badgeBg->setAnchorPoint({1, 1});
+        badgeBg->setPosition({5.f, 5.f});
+        this->m_replacementNode->addChild(badgeBg);
+
+        auto replacementLabel = CCLabelBMFont::create("Replacement", "bigFont.fnt");
+        replacementLabel->setScale(0.4f);
+        replacementLabel->setColor({255, 180, 100});
+        replacementLabel->setAnchorPoint({1.f, 1.f});
+        replacementLabel->setPosition({-20.f, -0.5f});
+        m_replacementNode->addChild(replacementLabel);
+
+        auto sortIcon = CCSprite::createWithSpriteFrameName("GJ_sortIcon_001.png");
+        if (sortIcon) {
+            sortIcon->setScale(0.6f);
+            sortIcon->setAnchorPoint({1.f, 1.f});
+            sortIcon->setPosition({0.f, 0.f});
+            m_replacementNode->addChild(sortIcon);
+        }
     }
 }
