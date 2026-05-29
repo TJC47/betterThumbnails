@@ -11,9 +11,9 @@
 
 using namespace geode::prelude;
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::string thumbnailUrl) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id)) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, std::move(thumbnailUrl))) {
         ret->autorelease();
         return ret;
     }
@@ -21,7 +21,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::string thumbnailUrl) {
     if (!CCLayer::init())
         return false;
 
@@ -62,6 +62,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_replacement = replacement;
     m_submissionNote = submission_note;
     m_accountId = account_id;
+    m_thumbnailUrl = std::move(thumbnailUrl);
 
     this->fetchLevel();
 
@@ -117,8 +118,10 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     // Fetch image from API and apply to LazySprite
     auto imageReq = web::WebRequest();
     imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
-    auto imageTask = imageReq.get(
-        betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id)));
+    auto imageUrl = this->m_thumbnailUrl.empty()
+        ? betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id))
+        : this->m_thumbnailUrl;
+    auto imageTask = imageReq.get(imageUrl);
     m_listener.spawn(std::move(imageTask), [this, lazySprite, size](web::WebResponse res) {
         if (res.code() >= 200 && res.code() <= 299) {
             auto data = res.data();

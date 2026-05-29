@@ -10,6 +10,7 @@
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ManageUserLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
+#include "MyThumbnailsLayer.hpp"
 #include "ThumbnailDashboardLayer.hpp"
 #include "../node/NotificationNode.hpp"
 #include "../popup/NotificationMenuPopup.hpp"
@@ -385,9 +386,11 @@ void BetterThumbnailLayer::fetchNotifications() {
 }
 
 void BetterThumbnailLayer::onMyThumbnail(CCObject*) {
-    // to do: my thumbnails
-    FLAlertLayer::create("My Thumbnails", "This feature is not implemented yet.", "Ok")
-        ->show();
+    auto layer = MyThumbnailsLayer::create();
+    auto scene = CCScene::create();
+    auto transition = CCTransitionFade::create(.5f, scene);
+    scene->addChild(layer);
+    CCDirector::get()->pushScene(transition);
 }
 void BetterThumbnailLayer::onDashboard(CCObject*) {
     auto layer = ThumbnailDashboardLayer::create();
