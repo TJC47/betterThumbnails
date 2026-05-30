@@ -105,19 +105,22 @@ void NotificationMenuPopup::onClearAll(CCObject*) {
                 return;
             }
 
+            auto upopup = UploadActionPopup::create(nullptr, "Clearing notifications...");
+            upopup->show();
+
             auto req = web::WebRequest();
             req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
             auto url = fmt::format("https://tjcsucht.net/api/bt/clearnotif/{}", m_userId);
             auto task = req.post(url);
 
-            async::spawn(std::move(task), [this](web::WebResponse res) {
+            async::spawn(std::move(task), [this, upopup](web::WebResponse res) {
                 if (res.code() >= 200 && res.code() <= 299) {
                     m_notifications.clear();
                     populateList();
-                    Notification::create("Notifications cleared", NotificationIcon::Success)->show();
-                    this->removeFromParentAndCleanup(true);
+                    upopup->showSuccessMessage("Notifications cleared");
+                    this->onClose(nullptr);
                 } else {
-                    Notification::create(fmt::format("Clear failed: {}", res.string().unwrapOrDefault()), NotificationIcon::Error)->show();
+                    upopup->showFailMessage(fmt::format("Failed to clear notifications: {}", res.string().unwrapOr("Unknown error")));
                 }
             });
         });

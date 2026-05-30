@@ -54,9 +54,9 @@ bool MyThumbnailsLayer::init() {
 
     const float tabY = screenSize.height - 90.f;
     const float tabGap = 120.f;
-    auto activeTab = TabButton::create(TabBaseColor::Selected, TabBaseColor::UnselectedDark, "Active", this, menu_selector(MyThumbnailsLayer::onSelectActive));
-    auto pendingTab = TabButton::create(TabBaseColor::UnselectedDark, TabBaseColor::UnselectedDark, "Pending", this, menu_selector(MyThumbnailsLayer::onSelectPending));
-    auto rejectedTab = TabButton::create(TabBaseColor::UnselectedDark, TabBaseColor::UnselectedDark, "Rejected", this, menu_selector(MyThumbnailsLayer::onSelectRejected));
+    auto activeTab = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Active", this, menu_selector(MyThumbnailsLayer::onSelectActive));
+    auto pendingTab = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Pending", this, menu_selector(MyThumbnailsLayer::onSelectPending));
+    auto rejectedTab = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Rejected", this, menu_selector(MyThumbnailsLayer::onSelectRejected));
 
     m_activeTab = activeTab;
     m_pendingTab = pendingTab;

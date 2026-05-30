@@ -40,6 +40,13 @@ namespace {
     }
 }
 
+static int roleRank(const std::string& role) {
+    auto it = std::find(ROLE_OPTIONS.begin(), ROLE_OPTIONS.end(), std::string_view(role));
+    if (it == ROLE_OPTIONS.end())
+        return 0;
+    return static_cast<int>(std::distance(ROLE_OPTIONS.begin(), it));
+}
+
 CCSprite* ManageUserLayer::spriteForRole(const std::string& role) {
     return badgeForRole(role);
 }
@@ -367,6 +374,10 @@ void ManageUserLayer::populateList() {
         return;
     }
 
+    auto currentRole = Mod::get()->getSavedValue<std::string>("role");
+    auto currentAccountId = Mod::get()->getSavedValue<int>("user_id");
+    auto currentRoleRank = roleRank(currentRole);
+
     for (auto const& entry : this->m_users) {
         auto row = CCLayer::create();
         row->setContentSize({this->m_listNode->getContentSize().width - 20.f, 40.f});
@@ -412,18 +423,21 @@ void ManageUserLayer::populateList() {
             usernameLabel->setColor({255, 0, 0});
         }
 
-        auto banBtn = geode::Button::createWithSprite(
-            entry.banned ? "BT_unbanIcon.png"_spr : "BT_banIcon.png"_spr,
-            [this, entry](geode::Button* btn) {
-                if (entry.banned) {
-                    this->unbanUser(entry.id);
-                } else {
-                    this->banUser(entry.id);
-                }
-            });
-        banBtn->setAnchorPoint({.5f, .5f});
-        banBtn->setPosition({row->getContentSize().width - 10.f, row->getContentSize().height / 2.f});
-        row->addChild(banBtn);
+        auto canBan = currentRoleRank > roleRank(entry.role) && entry.accountId != currentAccountId;
+        if (canBan) {
+            auto banBtn = geode::Button::createWithSprite(
+                entry.banned ? "BT_unbanIcon.png"_spr : "BT_banIcon.png"_spr,
+                [this, entry](geode::Button* btn) {
+                    if (entry.banned) {
+                        this->unbanUser(entry.id);
+                    } else {
+                        this->banUser(entry.id);
+                    }
+                });
+            banBtn->setAnchorPoint({.5f, .5f});
+            banBtn->setPosition({row->getContentSize().width - 10.f, row->getContentSize().height / 2.f});
+            row->addChild(banBtn);
+        }
 
         auto statsLabel = CCLabelBMFont::create(
             fmt::format("ID {} | Active {} | Pending {} | Rejected {} | Uploads {}",

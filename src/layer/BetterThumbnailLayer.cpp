@@ -1,19 +1,17 @@
 #include "BetterThumbnailLayer.hpp"
 
 #include <Geode/Geode.hpp>
-#include <algorithm>
+#include "../popup/NotificationMenuPopup.hpp"
 #include <string>
 
 #include "Geode/ui/General.hpp"
 #include "Geode/ui/Notification.hpp"
-#include "Geode/ui/OverlayManager.hpp"
+#include <Geode/ui/Button.hpp>
 #include "../include/BetterThumbnailConstant.hpp"
 #include "ManageUserLayer.hpp"
 #include "PendingThumbnailLayer.hpp"
 #include "MyThumbnailsLayer.hpp"
 #include "ThumbnailDashboardLayer.hpp"
-#include "../node/NotificationNode.hpp"
-#include "../popup/NotificationMenuPopup.hpp"
 
 using namespace geode::prelude;
 
@@ -196,8 +194,15 @@ bool BetterThumbnailLayer::init() {
     auto infoButton = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this, menu_selector(BetterThumbnailLayer::onInfoButton));
     m_bottomLeftMenu->addChild(infoButton);
-    m_bottomLeftMenu->updateLayout();
 
+    auto notificationButton = geode::Button::createWithNode(CircleButtonSprite::createWithSprite("BT_notificationIcon.png"_spr, .9f, CircleBaseColor::Green, CircleBaseSize::Small), [this](geode::Button* btn) {
+        auto popup = NotificationMenuPopup::create();
+        if (popup) {
+            popup->show();
+        }
+    });
+    m_bottomLeftMenu->addChild(notificationButton);
+    m_bottomLeftMenu->updateLayout();
     // get user info
     auto req = web::WebRequest();
     req.header("Authorization",
@@ -273,116 +278,7 @@ bool BetterThumbnailLayer::init() {
 
     this->setKeypadEnabled(true);
 
-    // fetch notifications for this user and show new ones
-    this->fetchNotifications();
-
     return true;
-}
-
-void BetterThumbnailLayer::fetchNotifications() {
-    auto userId = Mod::get()->getSavedValue<int>("user_id");
-    if (userId <= 0) {
-        return;
-    }
-
-    auto req = web::WebRequest();
-    req.header("Authorization",
-        fmt::format("Bearer {}",
-            Mod::get()->getSavedValue<std::string>("token")));
-
-    auto task = req.get(fmt::format("https://tjcsucht.net/api/bt/getnotif/{}", userId));
-    async::spawn(std::move(task), [this](web::WebResponse res) {
-        if (res.code() < 200 || res.code() > 299) {
-            log::error("Notification API error {}: {}", res.code(), res.string().unwrapOrDefault());
-            return;
-        }
-        auto jsonResult = res.json();
-        if (!jsonResult.isOk()) {
-            log::error("Notification API JSON parse error: {}",
-                jsonResult.unwrapErr());
-            return;
-        }
-
-        auto json = jsonResult.unwrap();
-        if (!json.isObject() || !json["notifications"].isArray()) {
-            log::error("Notification API invalid format: {}",
-                res.string().unwrapOrDefault());
-            return;
-        }
-
-        auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
-        int highestId = m_lastNotificationId;
-
-        std::vector<NotificationMenuPopup::NotificationEntry> newNotifications;
-        for (auto& item : arr) {
-            auto itemId = item["id"].asInt().unwrapOrDefault();
-            if (itemId <= 0 || itemId <= m_lastNotificationId) {
-                continue;
-            }
-
-            auto title = item["title"].asString().unwrapOr("Notification");
-            auto content = item["content"].asString().unwrapOr("New message");
-            auto timestamp = item["timestamp"].asString().unwrapOr("unknown");
-            /*
-            --- Notification Types ---
-            info: normal information, no Icon
-            success: some operation was successful, Checkmark icon
-            warn: some warning occurred, Warn symbol icon
-            error: there was an error in an operation, cross symbol icon
-            critical: there was a critical error in an operation, critical warn symbol icon ?!
-            --- Notification Types ---
-            */
-            auto type = item["notification_type"].asString().unwrapOr("info");
-            /*
-            --- Notification Priorities ---
-            deferMenu: Notification is deferred until the user is in a menu
-            immediate: Notification will be instantly displayed, no matter what the user is doing
-            onLayer: Notification will be deferred until the betterThumbnailLayer is opened
-            --- Notification Priorities ---
-            */
-            auto priority = item["notification_priority"].asString().unwrapOr("deferMenu");
-
-            auto toast = item["toast"].asBool().unwrapOr(false);
-            if (toast) {
-                FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
-            } else {
-                newNotifications.push_back({title, content, timestamp});
-                highestId = std::max(highestId, static_cast<int>(itemId));
-            }
-        }
-
-        if (!newNotifications.empty()) {
-            std::string notifyTitle;
-            std::string notifyMessage;
-
-            if (newNotifications.size() == 1) {
-                notifyTitle = newNotifications[0].title;
-                notifyMessage = newNotifications[0].body;
-            } else {
-                notifyTitle = "Notifications";
-                notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());
-            }
-
-            auto viewCallback = [this, notifications = std::move(newNotifications)]() mutable {
-                auto popup = NotificationMenuPopup::create();
-                if (!popup) {
-                    Notification::create("Error opening notification list", NotificationIcon::Error)->show();
-                    return;
-                }
-                popup->setNotifications(notifications, Mod::get()->getSavedValue<int>("user_id"));
-                popup->show();
-            };
-
-            auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, viewCallback);
-            if (notifUI) {
-                OverlayManager::get()->addChild(notifUI, 100);
-            }
-        }
-
-        if (highestId > m_lastNotificationId) {
-            m_lastNotificationId = highestId;
-        }
-    });
 }
 
 void BetterThumbnailLayer::onMyThumbnail(CCObject*) {
