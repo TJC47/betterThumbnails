@@ -92,16 +92,17 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
     }
 
     auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
-    int highestId = m_lastNotificationId;
+    long long highestTimestamp = m_lastNotificationTimestamp;
     std::vector<NotificationMenuPopup::NotificationEntry> newNotifications;
 
     for (auto& item : arr) {
         int itemId = item["id"].asInt().unwrapOrDefault();
-        if (itemId <= m_lastNotificationId || m_readNotificationIds.contains(itemId)) {
+        long long timestampUnix = item["timestamp_unix"].asInt().unwrapOr(0);
+        if (timestampUnix <= m_lastNotificationTimestamp || m_readNotificationIds.contains(itemId)) {
             continue;
         }
 
-        highestId = std::max(highestId, itemId);
+        highestTimestamp = std::max(highestTimestamp, timestampUnix);
         std::string title = item["title"].asString().unwrapOr("Notification");
         std::string content = item["content"].asString().unwrapOr("New message");
         std::string timestamp = item["timestamp"].asString().unwrapOr("unknown");
@@ -131,11 +132,11 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
             continue;
         }
 
-        newNotifications.push_back({title, content, timestamp, type, itemId});
+        newNotifications.push_back({title, content, timestamp, type, itemId, timestampUnix});
     }
 
-    if (highestId > m_lastNotificationId) {
-        m_lastNotificationId = highestId;
+    if (highestTimestamp > m_lastNotificationTimestamp) {
+        m_lastNotificationTimestamp = highestTimestamp;
     }
 
     if (!newNotifications.empty()) {

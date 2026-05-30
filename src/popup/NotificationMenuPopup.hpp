@@ -18,6 +18,7 @@ public:
         std::string timestamp;
         std::string type = "info";
         int id = 0;
+        long long timestampUnix = 0;
     };
 
     void setNotifications(const std::vector<NotificationEntry>& notifications, int userId);

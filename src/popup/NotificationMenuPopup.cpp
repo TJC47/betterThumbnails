@@ -50,7 +50,7 @@ void NotificationMenuPopup::populateList() {
     m_listNode->clear();
 
     if (m_notifications.empty()) {
-        auto emptyLabel = CCLabelBMFont::create("No notifications", "goldFont.fnt");
+        auto emptyLabel = CCLabelBMFont::create("No New Notifications", "goldFont.fnt");
         emptyLabel->setPosition({m_listNode->getContentSize().width / 2.f, m_listNode->getContentSize().height / 2.f});
         emptyLabel->setScale(0.6f);
         m_listNode->addChild(emptyLabel);
@@ -64,7 +64,7 @@ void NotificationMenuPopup::populateList() {
         auto rowNode = CCLayer::create();
         rowNode->setContentSize({m_listNode->getContentSize().width, rowHeight});
 
-        auto icon = CCSprite::createWithSpriteFrameName(
+        const char* iconName =
             entry.type == "success" ? "GJ_completesIcon_001.png" :
                                     // @geode-ignore(unknown-resource)
                 entry.type == "warn" ? "geode.loader/info-warning.png"
@@ -72,12 +72,22 @@ void NotificationMenuPopup::populateList() {
                                      :
                                     // @geode-ignore(unknown-resource)
                 entry.type == "critical" ? "geode.loader/info-alert.png"
-                                         : nullptr);
+                                         : nullptr;
+
+        CCSprite* icon = nullptr;
+        if (iconName) {
+            auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(iconName);
+            if (frame) {
+                icon = CCSprite::createWithSpriteFrameName(iconName);
+            } else {
+                icon = CCSprite::create(iconName);
+            }
+        }
 
         float titleOffset = 10.f;
         if (icon) {
             icon->setAnchorPoint({0.f, 1.f});
-            icon->setPosition({10.f, rowHeight - 5.f});
+            icon->setPosition({10.f, rowHeight - 7.f});
             icon->setScale(0.7f);
             rowNode->addChild(icon);
             titleOffset += 26.f;
@@ -92,16 +102,16 @@ void NotificationMenuPopup::populateList() {
         auto contentLabel = SimpleTextArea::create(entry.body.c_str(), "bigFont.fnt", 0.5f, rowNode->getContentSize().width - 20.f);
         contentLabel->setAnchorPoint({0.f, 1.f});
         contentLabel->setScale(0.3f);
-        contentLabel->setMaxLines(3);
+        contentLabel->setMaxLines(4);
         contentLabel->setPosition({10.f, rowHeight - 30.f});
         rowNode->addChild(contentLabel);
 
         auto timestampLabel = CCLabelBMFont::create(entry.timestamp.c_str(), "chatFont.fnt");
-        timestampLabel->setAnchorPoint({1.f, .0f});
+        timestampLabel->setAnchorPoint({1.f, 1.f});
         timestampLabel->setColor({0, 0, 0});
         timestampLabel->setAlignment(CCTextAlignment::kCCTextAlignmentRight);
         timestampLabel->setOpacity(100);
-        timestampLabel->setPosition({rowNode->getContentSize().width - 6, 5});
+        timestampLabel->setPosition({rowNode->getContentSize().width - 6, rowHeight - 5});
         timestampLabel->setScale(0.6f);
         rowNode->addChild(timestampLabel);
 

@@ -16,20 +16,30 @@ bool NotificationNode::init(const std::string& title, const std::string& message
     this->addChild(bg, 0);
 
     // Title
-    auto icon = CCSprite::createWithSpriteFrameName(
+    const char* iconName =
         type == "success" ? "GJ_completesIcon_001.png" :
         // @geode-ignore(unknown-resource)
         type == "warn" ? "geode.loader/info-warning.png" :
         type == "error" ? "GJ_deleteIcon_001.png" :
         // @geode-ignore(unknown-resource)
         type == "critical" ? "geode.loader/info-alert.png" :
-        nullptr);
+        nullptr;
+
+    CCSprite* icon = nullptr;
+    if (iconName) {
+        auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(iconName);
+        if (frame) {
+            icon = CCSprite::createWithSpriteFrameName(iconName);
+        } else {
+            icon = CCSprite::create(iconName);
+        }
+    }
 
     float textOffset = 10.f;
     if (icon) {
         icon->setAnchorPoint({0.f, 0.5f});
-        icon->setPosition({10.f, popupHeight - 20.f});
-        icon->setScale(0.7f);
+        icon->setPosition({10.f, popupHeight - 22.f});
+        icon->setScale(0.8f);
         this->addChild(icon, 1);
         textOffset += 26.f;
     }
@@ -42,9 +52,10 @@ bool NotificationNode::init(const std::string& title, const std::string& message
     this->addChild(titleLabel, 1);
 
     // Message
-    auto messageLabel = SimpleTextArea::create(message.c_str(), "bigFont.fnt", 0.5f, popupWidth - 20.f);
+    auto messageLabel = SimpleTextArea::create(message.c_str(), "bigFont.fnt", 0.5f, popupWidth - 25.f);
     messageLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
     messageLabel->setAnchorPoint({0.f, 1.f});
+    messageLabel->setMaxLines(4);
     messageLabel->setScale(0.3f);
     messageLabel->setPosition({10, popupHeight - 30.f});
     this->addChild(messageLabel, 1);

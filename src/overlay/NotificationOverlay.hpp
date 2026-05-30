@@ -27,7 +27,7 @@ private:
     void loadReadNotificationIds();
     void saveReadNotificationIds();
 
-    int m_lastNotificationId = 0;
+    long long m_lastNotificationTimestamp = 0;
     std::unordered_set<int> m_readNotificationIds;
     bool m_isNotificationFetchInProgress = false;
     async::TaskHolder<web::WebResponse> m_notificationListener;
