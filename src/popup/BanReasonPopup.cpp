@@ -33,30 +33,33 @@ bool BanReasonPopup::init(int userId) {
 }
 
 void BanReasonPopup::onSend(CCObject*) {
-    std::string reason = m_input ? m_input->getString() : "";
-    auto popup = UploadActionPopup::create(nullptr, fmt::format("Banning user {}...", m_userId));
-    if (popup)
-        popup->show();
+    createQuickPopup("Ban user?", fmt::format("Are you sure you want to ban this user <cc>{}</c>?", m_userId), "Cancel", "Ban", [this](auto, bool yes) {
+        if (!yes) return;
+        std::string reason = m_input ? m_input->getString() : "";
+        auto popup = UploadActionPopup::create(nullptr, fmt::format("Banning user {}...", m_userId));
+        if (popup)
+            popup->show();
 
-    auto jsonBody = matjson::makeObject({
-        {"reason", reason},
-        {"expires_by", nullptr},
-    });
-    auto req = web::WebRequest();
-    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-    req.header("Content-Type", "application/json");
-    req.bodyJSON(jsonBody);
+        auto jsonBody = matjson::makeObject({
+            {"reason", reason},
+            {"expires_by", nullptr},
+        });
+        auto req = web::WebRequest();
+        req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+        req.header("Content-Type", "application/json");
+        req.bodyJSON(jsonBody);
 
-    auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", m_userId);
-    auto task = req.send("POST", url);
-    this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
-        if (res.code() == 200) {
-            if (popup)
-                popup->showSuccessMessage("User banned successfully");
-            this->onClose(nullptr);
-        } else {
-            if (popup)
-                popup->showFailMessage(fmt::format("Ban failed: {}", res.string().unwrapOr("Unknown error")));
-        }
+        auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", m_userId);
+        auto task = req.send("POST", url);
+        this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
+            if (res.code() == 200) {
+                if (popup)
+                    popup->showSuccessMessage("User banned successfully");
+                this->onClose(nullptr);
+            } else {
+                if (popup)
+                    popup->showFailMessage(fmt::format("Ban failed: {}", res.string().unwrapOr("Unknown error")));
+            }
+        });
     });
 }

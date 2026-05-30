@@ -23,12 +23,12 @@ bool FilterThumbnailPopup::init(int, geode::Function<void(std::string, bool, int
 
     m_usernameInput = TextInput::create(240.f, "Search by username");
     m_usernameInput->setLabel("Username");
-    m_usernameInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 50.f});
+    m_usernameInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 60.f});
     m_mainLayer->addChild(m_usernameInput);
 
     m_levelIdInput = TextInput::create(240.f, "Search by level ID");
     m_levelIdInput->setLabel("Level ID");
-    m_levelIdInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 100.f});
+    m_levelIdInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 110.f});
     m_mainLayer->addChild(m_levelIdInput);
 
     auto applySpr = ButtonSprite::create("Apply", "goldFont.fnt", "GJ_button_01.png", 1.f);

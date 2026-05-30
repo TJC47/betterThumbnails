@@ -48,8 +48,8 @@ bool MyThumbnailsLayer::init() {
     this->addChild(m_listNode, 1);
 
     m_tabMenu = CCMenu::create();
-    m_tabMenu->setPosition({-100.f, 20.f});
-    m_tabMenu->setContentSize(m_listNode->getContentSize());
+    m_tabMenu->setPosition({m_listNode->getContentSize().width / 2.f, m_listNode->getContentSize().height + 28.f});
+    m_tabMenu->setLayout(RowLayout::create()->setGap(20.f));
     m_listNode->addChild(m_tabMenu, -1);
 
     const float tabY = screenSize.height - 90.f;
@@ -69,6 +69,7 @@ bool MyThumbnailsLayer::init() {
     m_tabMenu->addChild(activeTab);
     m_tabMenu->addChild(pendingTab);
     m_tabMenu->addChild(rejectedTab);
+    m_tabMenu->updateLayout();
 
     m_activeTab->toggle(true);
     m_pendingTab->toggle(false);

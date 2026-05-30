@@ -1,4 +1,5 @@
 #include "ManageUserLayer.hpp"
+#include <fmt/format.h>
 #include "../popup/BanReasonPopup.hpp"
 #include "../popup/FilterUsersPopup.hpp"
 
@@ -272,23 +273,26 @@ void ManageUserLayer::banUser(int id) {
 }
 
 void ManageUserLayer::unbanUser(int id) {
-    auto popup = UploadActionPopup::create(nullptr, fmt::format("Unbanning user {}...", id));
-    if (popup)
-        popup->show();
+    createQuickPopup("Unban user?", fmt::format("Are you sure you want to unban <cc>{}</c>?", id), "Cancel", "Unban", [this, id](auto, bool yes) {
+        if (!yes) return;
+        auto popup = UploadActionPopup::create(nullptr, fmt::format("Unbanning user {}...", id));
+        if (popup)
+            popup->show();
 
-    auto req = web::WebRequest();
-    req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
-    auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", id);
-    auto task = req.send("DELETE", url);
-    this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
-        if (res.code() == 200) {
-            if (popup)
-                popup->showSuccessMessage("User unbanned successfully");
-            this->fetchPage(this->m_currentPage);
-        } else {
-            if (popup)
-                popup->showFailMessage(fmt::format("Unban failed: {}", res.string().unwrapOr("Unknown error")));
-        }
+        auto req = web::WebRequest();
+        req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
+        auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", id);
+        auto task = req.send("DELETE", url);
+        this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
+            if (res.code() == 200) {
+                if (popup)
+                    popup->showSuccessMessage("User unbanned successfully");
+                this->fetchPage(this->m_currentPage);
+            } else {
+                if (popup)
+                    popup->showFailMessage(fmt::format("Unban failed: {}", res.string().unwrapOr("Unknown error")));
+            }
+        });
     });
 }
 

@@ -50,8 +50,8 @@ bool PendingThumbnailLayer::init() {
     this->addChild(m_navMenu, 2);
 
     m_filterMenu = CCMenu::create();
-    m_filterMenu->setContentSize(m_listNode->getContentSize());
-    m_filterMenu->setPosition({0, 0});
+    m_filterMenu->setLayout(RowLayout::create()->setGap(20.f));
+    m_filterMenu->setPosition({m_listNode->getContentSize().width / 2.f, m_listNode->getContentSize().height + 28.f});
     m_listNode->addChild(m_filterMenu, -1);
 
     this->m_searchMenu = CCMenu::create();
@@ -87,25 +87,19 @@ bool PendingThumbnailLayer::init() {
     // Hide pagination until data received
     m_navMenu->setVisible(false);
 
-    auto toggleY = m_filterMenu->getContentHeight() + 30.f;
-    auto centerX = m_filterMenu->getContentSize().width / 2.f;
-
-    const float offset = 120.f;
-
     auto allBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "All", this, menu_selector(PendingThumbnailLayer::onFilterAll));
     m_allFilterBtn = allBtn;
-    m_allFilterBtn->setPosition({centerX - offset, toggleY});
     m_filterMenu->addChild(m_allFilterBtn);
 
     auto newBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "New", this, menu_selector(PendingThumbnailLayer::onFilterNew));
     m_newFilterBtn = newBtn;
-    m_newFilterBtn->setPosition({centerX, toggleY});
     m_filterMenu->addChild(m_newFilterBtn);
 
     auto repBtn = TabButton::create(TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Replacement", this, menu_selector(PendingThumbnailLayer::onFilterReplacement));
     m_replacementFilterBtn = repBtn;
-    m_replacementFilterBtn->setPosition({centerX + offset, toggleY});
     m_filterMenu->addChild(m_replacementFilterBtn);
+
+    m_filterMenu->updateLayout();
 
     // select default filter
     m_allFilterBtn->toggle(true);

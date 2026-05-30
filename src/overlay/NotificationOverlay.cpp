@@ -36,7 +36,7 @@ bool NotificationOverlay::init() {
         return false;
     }
     overlayInstance() = this;
-    this->setVisible(false);
+    this->setVisible(true);
     return true;
 }
 
@@ -128,13 +128,7 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
         --- Notification Priorities ---
         */
         std::string priority = item["notification_priority"].asString().unwrapOr("deferMenu");
-        bool toast = item["toast"].asBool().unwrapOr(false);
-
-        if (toast) {
-            // @geode-ignore(unknown-resource)
-            FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
-            continue;
-        }
+        bool isToast = item["toast"].asBool().unwrapOr(false);
 
         bool shouldShowNow = false;
         if (priority == "immediate") {
@@ -147,7 +141,7 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
             shouldShowNow = !isInPlayLayer();
         }
 
-        newNotifications.push_back({title, content, timestamp, type, itemId, timestampUnix, shouldShowNow});
+        newNotifications.push_back({title, content, timestamp, type, itemId, timestampUnix, shouldShowNow, isToast});
     }
 
     if (highestTimestamp > m_lastNotificationTimestamp) {
@@ -166,25 +160,51 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
         }
 
         if (shouldDisplay) {
-            std::string notifyTitle;
-            std::string notifyMessage;
-            std::string notifyType = "info";
-            if (newNotifications.size() == 1) {
-                notifyTitle = newNotifications[0].title;
-                notifyMessage = newNotifications[0].body;
-                notifyType = newNotifications[0].type;
-            } else {
-                notifyTitle = "Notifications";
-                notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());
+            std::vector<NotificationMenuPopup::NotificationEntry> visibleEntries;
+            for (auto const& entry : newNotifications) {
+                if (!entry.shouldShowNow) {
+                    continue;
+                }
+                if (entry.isToast) {
+                    // @geode-ignore(unknown-resource)
+                    FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
+                    NotificationIcon icon = NotificationIcon::None;
+                    if (entry.type == "success") {
+                        icon = NotificationIcon::Success;
+                    } else if (entry.type == "warn") {
+                        icon = NotificationIcon::Warning;
+                    } else if (entry.type == "error") {
+                        icon = NotificationIcon::Error;
+                    } else if (entry.type == "critical") {
+                        icon = NotificationIcon::Error;
+                    }
+                    Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), icon)->show();
+                } else {
+                    visibleEntries.push_back(entry);
+                }
             }
 
-            auto viewCallback = [this, notifications = std::move(newNotifications)]() mutable {
-                this->showNotificationList(std::move(notifications));
-            };
+            if (!visibleEntries.empty()) {
+                std::string notifyTitle;
+                std::string notifyMessage;
+                std::string notifyType = "info";
+                if (visibleEntries.size() == 1) {
+                    notifyTitle = visibleEntries[0].title;
+                    notifyMessage = visibleEntries[0].body;
+                    notifyType = visibleEntries[0].type;
+                } else {
+                    notifyTitle = "Notifications";
+                    notifyMessage = fmt::format("You have {} notifications! Click view", visibleEntries.size());
+                }
 
-            auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, notifyType, viewCallback);
-            if (notifUI) {
-                OverlayManager::get()->addChild(notifUI, 100);
+                auto viewCallback = [this, notifications = std::move(visibleEntries)]() mutable {
+                    this->showNotificationList(std::move(notifications));
+                };
+
+                auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, notifyType, viewCallback);
+                if (notifUI) {
+                    this->addChild(notifUI, 100);
+                }
             }
         }
     }

@@ -20,6 +20,7 @@ public:
         int id = 0;
         long long timestampUnix = 0;
         bool shouldShowNow = false;
+        bool isToast = false;
     };
 
     void setNotifications(const std::vector<NotificationEntry>& notifications, int userId);
