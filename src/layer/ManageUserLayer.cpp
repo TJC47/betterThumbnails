@@ -451,7 +451,7 @@ void ManageUserLayer::populateList() {
         }
 
         if (entry.banned) {
-            auto infoBtn = geode::Button::createWithNode(CircleButtonSprite::createWithSprite("BT_unbanIcon.png"_spr, .9f, CircleBaseColor::Green, CircleBaseSize::Small), [entry](geode::Button* btn) {
+            auto infoBtn = geode::Button::createWithSprite("BT_unbanIcon.png"_spr, [entry](geode::Button* btn) {
                 geode::MDPopup::create(
                     fmt::format("Banned by {}", entry.bannedBy),
                     entry.banReason,
