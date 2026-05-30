@@ -28,7 +28,6 @@ public:
     void ccTouchEnded(CCTouch* pTouch, CCEvent* event) override;
     void scrollWheel(float y, float x) override;
     void fetchLevel();
-    void updateToggleButtonColor();
 
 private:
     // Stored for API calls
@@ -45,7 +44,7 @@ private:
     LazySprite* m_thumbReplacement = nullptr;
     LazySprite* m_thumbOriginal = nullptr;
     cue::LoadingCircle* m_thumbSpinner = nullptr;
-    geode::Button* m_toggleButton = nullptr;
+    CCMenuItemToggler* m_toggleButton = nullptr;
     CCMenuItemToggler* m_infoToggle = nullptr;
     MDTextArea* m_infoTextArea = nullptr;
     NineSlice* m_thumbBg = nullptr;

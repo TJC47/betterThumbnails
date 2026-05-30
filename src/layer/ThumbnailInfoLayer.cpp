@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 
+#include <Geode/binding/CCSpriteGrayscale.hpp>
 #include <cue/LoadingCircle.hpp>
 #include <Geode/ui/Button.hpp>
 
@@ -84,9 +85,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     thumbBg->addChild(infoMenu, 10);
 
     auto infoOffSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
-    auto infoOnSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
-    if (infoOnSpr)
-        infoOnSpr->setColor({120, 120, 120});
+    auto infoOnSpr = CCSpriteGrayscale::createWithSpriteFrameName("GJ_infoIcon_001.png");
 
     m_infoToggle = CCMenuItemToggler::create(
         infoOffSpr,
@@ -124,15 +123,18 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     stencilClip->addChild(thumbOriginal);
 
     if (m_replacementFlag) {
-        m_toggleButton = geode::Button::createWithNode(
-            CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Gray, CircleBaseSize::Small),
-            [this](geode::Button* btn) {
-                this->onShowOriginal(nullptr);
-            });
+        auto toggleOff = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Gray, CircleBaseSize::Small);
+        auto toggleOn = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Cyan, CircleBaseSize::Small);
+        m_toggleButton = CCMenuItemToggler::create(
+            toggleOff,
+            toggleOn,
+            this,
+            menu_selector(ThumbnailInfoLayer::onShowOriginal));
         m_toggleButton->setScale(0.7f);
         m_toggleButton->setPosition({thumbBg->getContentSize().width, 0.f});
-        thumbBg->addChild(m_toggleButton, 10);
-        updateToggleButtonColor();
+        m_toggleButton->toggle(true);
+        infoMenu->addChild(m_toggleButton, 10);
+        Notification::create("Viewing replacement thumbnail.", NotificationIcon::Info)->show();
     }
 
     auto spinner = cue::LoadingCircle::create(true);
@@ -560,57 +562,41 @@ void ThumbnailInfoLayer::fetchLevel() {
     }
 }
 
-void ThumbnailInfoLayer::updateToggleButtonColor() {
-    if (!m_toggleButton) {
-        return;
-    }
-
-    CircleBaseColor color = m_showingOriginal ? CircleBaseColor::Cyan : CircleBaseColor::Gray;
-    auto sprite = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, color, CircleBaseSize::Small);
-    if (!sprite) {
-        return;
-    }
-
-    auto oldNode = m_toggleButton->getDisplayNode();
-    if (oldNode) {
-        oldNode->removeFromParent();
-    }
-
-    sprite->setAnchorPoint({0.5f, 0.5f});
-    sprite->setPosition({0.f, 0.f});
-    m_toggleButton->addChild(sprite);
-}
-
 void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
     // Toggle back to the replacement
     if (m_showingOriginal) {
-        if (m_thumbOriginal)
+        if (m_thumbOriginal) {
             m_thumbOriginal->setVisible(false);
-        if (m_thumbReplacement)
-            m_thumbReplacement->setVisible(true);
-        m_showingOriginal = false;
-        if (m_toggleButton) {
-            updateToggleButtonColor();
+            m_toggleButton->toggle(true);
         }
+        if (m_thumbReplacement) {
+            m_thumbReplacement->setVisible(true);
+            m_toggleButton->toggle(true);
+            m_showingOriginal = false;
+        }
+        Notification::create("Viewing replacement thumbnail.", NotificationIcon::Info)->show();
         return;
     }
 
     // If original already loaded, just show it and hide replacement
     if (m_originalLoaded) {
-        if (m_thumbOriginal)
+        if (m_thumbOriginal) {
             m_thumbOriginal->setVisible(true);
-        if (m_thumbReplacement)
-            m_thumbReplacement->setVisible(false);
-        m_showingOriginal = true;
-        if (m_toggleButton) {
-            updateToggleButtonColor();
+            m_toggleButton->toggle(false);
         }
+        if (m_thumbReplacement) {
+            m_thumbReplacement->setVisible(false);
+            m_toggleButton->toggle(false);
+            m_showingOriginal = true;
+        }
+        Notification::create("Viewing original thumbnail.", NotificationIcon::Info)->show();
         return;
     }
 
     // Otherwise, fetch original image
-    if (!m_thumbOriginal || !m_thumbSpinner)
+    if (!m_thumbOriginal || !m_thumbSpinner) {
         return;
+    }
     m_thumbSpinner->setVisible(true);
     auto req = web::WebRequest();
     req.header("Authorization",
@@ -634,17 +620,17 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                 m_showingOriginal = true;
                 if (m_thumbSpinner)
                     m_thumbSpinner->setVisible(false);
-                if (m_toggleButton) {
-                    updateToggleButtonColor();
-                }
+
+                Notification::create("Viewing original thumbnail.", NotificationIcon::Info)->show();
+                return;
             }
-        } else {
-            log::error("Original image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
-            if (m_thumbSpinner)
-                m_thumbSpinner->setVisible(false);
-            Notification::create("Error loading original image.",
-                NotificationIcon::Error)
-                ->show();
         }
+
+        log::error("Original image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
+        if (m_thumbSpinner)
+            m_thumbSpinner->setVisible(false);
+        Notification::create("Error loading original image.",
+            NotificationIcon::Error)
+            ->show();
     });
 }
