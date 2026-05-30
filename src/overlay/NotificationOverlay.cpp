@@ -131,7 +131,7 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
         bool isToast = item["toast"].asBool().unwrapOr(false);
 
         bool shouldShowNow = false;
-        if (priority == "immediate") {
+        if (priority == "immediate" && Mod::get()->getSettingValue<bool>("allow-notifications-gameplay") == true) {
             shouldShowNow = true;
         } else if (priority == "deferMenu") {
             shouldShowNow = !isInPlayLayer();
