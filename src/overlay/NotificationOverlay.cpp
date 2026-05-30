@@ -5,10 +5,14 @@
 #include <Geode/Geode.hpp>
 #include <charconv>
 #include <sstream>
+#include "../layer/BetterThumbnailLayer.hpp"
 #include "../node/NotificationNode.hpp"
 #include "../popup/NotificationMenuPopup.hpp"
 
 using namespace geode::prelude;
+
+static bool isInPlayLayer();
+static bool isOnBetterThumbnailLayer();
 
 namespace {
     NotificationOverlay*& overlayInstance() {
@@ -132,7 +136,18 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
             continue;
         }
 
-        newNotifications.push_back({title, content, timestamp, type, itemId, timestampUnix});
+        bool shouldShowNow = false;
+        if (priority == "immediate") {
+            shouldShowNow = true;
+        } else if (priority == "deferMenu") {
+            shouldShowNow = !isInPlayLayer();
+        } else if (priority == "onLayer") {
+            shouldShowNow = isOnBetterThumbnailLayer();
+        } else {
+            shouldShowNow = !isInPlayLayer();
+        }
+
+        newNotifications.push_back({title, content, timestamp, type, itemId, timestampUnix, shouldShowNow});
     }
 
     if (highestTimestamp > m_lastNotificationTimestamp) {
@@ -142,25 +157,35 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
     if (!newNotifications.empty()) {
         m_notifications.insert(m_notifications.end(), newNotifications.begin(), newNotifications.end());
 
-        std::string notifyTitle;
-        std::string notifyMessage;
-        std::string notifyType = "info";
-        if (newNotifications.size() == 1) {
-            notifyTitle = newNotifications[0].title;
-            notifyMessage = newNotifications[0].body;
-            notifyType = newNotifications[0].type;
-        } else {
-            notifyTitle = "Notifications";
-            notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());
+        bool shouldDisplay = false;
+        for (auto const& entry : newNotifications) {
+            if (entry.shouldShowNow) {
+                shouldDisplay = true;
+                break;
+            }
         }
 
-        auto viewCallback = [this, notifications = std::move(newNotifications)]() mutable {
-            this->showNotificationList(std::move(notifications));
-        };
+        if (shouldDisplay) {
+            std::string notifyTitle;
+            std::string notifyMessage;
+            std::string notifyType = "info";
+            if (newNotifications.size() == 1) {
+                notifyTitle = newNotifications[0].title;
+                notifyMessage = newNotifications[0].body;
+                notifyType = newNotifications[0].type;
+            } else {
+                notifyTitle = "Notifications";
+                notifyMessage = fmt::format("You have {} notifications! Click view", newNotifications.size());
+            }
 
-        auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, notifyType, viewCallback);
-        if (notifUI) {
-            OverlayManager::get()->addChild(notifUI, 100);
+            auto viewCallback = [this, notifications = std::move(newNotifications)]() mutable {
+                this->showNotificationList(std::move(notifications));
+            };
+
+            auto notifUI = NotificationNode::create(notifyTitle, notifyMessage, notifyType, viewCallback);
+            if (notifUI) {
+                OverlayManager::get()->addChild(notifUI, 100);
+            }
         }
     }
 
@@ -225,6 +250,30 @@ void NotificationOverlay::saveReadNotificationIds() {
         raw += std::to_string(id);
     }
     Mod::get()->setSavedValue<std::string>("read_notification_ids", raw);
+}
+
+static bool isInPlayLayer() {
+    return PlayLayer::get() != nullptr;
+}
+
+static bool isOnBetterThumbnailLayer() {
+    auto scene = CCDirector::sharedDirector()->getRunningScene();
+    if (!scene) {
+        return false;
+    }
+
+    auto children = scene->getChildren();
+    if (!children) {
+        return false;
+    }
+
+    for (unsigned i = 0; i < children->count(); ++i) {
+        auto child = static_cast<CCObject*>(children->objectAtIndex(i));
+        if (typeinfo_cast<BetterThumbnailLayer*>(child)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 NotificationOverlay* NotificationOverlay::get() {

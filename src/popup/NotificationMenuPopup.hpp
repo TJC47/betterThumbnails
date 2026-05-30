@@ -19,6 +19,7 @@ public:
         std::string type = "info";
         int id = 0;
         long long timestampUnix = 0;
+        bool shouldShowNow = false;
     };
 
     void setNotifications(const std::vector<NotificationEntry>& notifications, int userId);
