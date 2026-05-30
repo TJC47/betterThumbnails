@@ -19,7 +19,6 @@ private:
     void onPending(CCObject*);
     void onManage(CCObject*);
     void onInfoButton(CCObject*);
-    void fetchNotifications();
 
     CCSprite* myThumbSprite = nullptr;
     CCSprite* dashboardSprite = nullptr;
@@ -33,6 +32,4 @@ private:
     int m_activeThumbnailCount = 0;
     int m_uploadThumbnailCount = 0;
     int m_acceptedUploadThumbnailCount = 0;
-
-    int m_lastNotificationId = -1;
 };

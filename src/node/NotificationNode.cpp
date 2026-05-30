@@ -3,7 +3,7 @@
 
 using namespace geode::prelude;
 
-bool NotificationNode::init(const std::string& title, const std::string& message, Callback viewCallback) {
+bool NotificationNode::init(const std::string& title, const std::string& message, const std::string& type, Callback viewCallback) {
     if (!CCLayer::init())
         return false;
 
@@ -16,24 +16,46 @@ bool NotificationNode::init(const std::string& title, const std::string& message
     this->addChild(bg, 0);
 
     // Title
+    auto icon = CCSprite::createWithSpriteFrameName(
+        type == "success" ? "GJ_completesIcon_001.png" :
+        // @geode-ignore(unknown-resource)
+        type == "warn" ? "geode.loader/info-warning.png" :
+        type == "error" ? "GJ_deleteIcon_001.png" :
+        // @geode-ignore(unknown-resource)
+        type == "critical" ? "geode.loader/info-alert.png" :
+        nullptr);
+
+    float textOffset = 10.f;
+    if (icon) {
+        icon->setAnchorPoint({0.f, 0.5f});
+        icon->setPosition({10.f, popupHeight - 20.f});
+        icon->setScale(0.7f);
+        this->addChild(icon, 1);
+        textOffset += 26.f;
+    }
+
     auto titleLabel = CCLabelBMFont::create(title.c_str(), "goldFont.fnt");
-    titleLabel->setPosition({popupWidth / 2.f, popupHeight - 18.f});
-    titleLabel->limitLabelWidth(popupWidth - 20, 1.f, 0.5f);
+    titleLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+    titleLabel->setPosition({textOffset, popupHeight - 5.f});
+    titleLabel->setAnchorPoint({0.f, 1.f});
+    titleLabel->limitLabelWidth(popupWidth - textOffset - 10.f, 1.f, 0.5f);
     this->addChild(titleLabel, 1);
 
     // Message
-    auto messageLabel = CCLabelBMFont::create(message.c_str(), "bigFont.fnt");
-    messageLabel->setPosition({popupWidth / 2.f, popupHeight / 2.f + 5.f});
-    messageLabel->limitLabelWidth(popupWidth - 20, 0.5f, 0.3f);
+    auto messageLabel = SimpleTextArea::create(message.c_str(), "bigFont.fnt", 0.5f, popupWidth - 20.f);
+    messageLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
+    messageLabel->setAnchorPoint({0.f, 1.f});
+    messageLabel->setScale(0.3f);
+    messageLabel->setPosition({10, popupHeight - 30.f});
     this->addChild(messageLabel, 1);
 
     m_viewCallback = std::move(viewCallback);
 
     if (m_viewCallback) {
-        auto viewBtnSprite = ButtonSprite::create("View", "bigFont.fnt", "GJ_button_01.png", 0.6f);
+        auto viewBtnSprite = ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 1.f);
         viewBtnSprite->setScale(0.6f);
         auto viewBtn = CCMenuItemSpriteExtra::create(viewBtnSprite, this, menu_selector(NotificationNode::onViewButton));
-        viewBtn->setPosition({popupWidth / 2.f, 20.f});
+        viewBtn->setPosition({popupWidth - 30, 20.f});
         auto menu = CCMenu::create();
         menu->addChild(viewBtn);
         menu->setPosition({0.f, 0.f});
@@ -65,9 +87,9 @@ bool NotificationNode::init(const std::string& title, const std::string& message
     return true;
 }
 
-NotificationNode* NotificationNode::create(const std::string& title, const std::string& message, Callback viewCallback) {
+NotificationNode* NotificationNode::create(const std::string& title, const std::string& message, const std::string& type, Callback viewCallback) {
     auto ret = new NotificationNode();
-    if (ret && ret->init(title, message, viewCallback)) {
+    if (ret && ret->init(title, message, type, viewCallback)) {
         ret->autorelease();
         return ret;
     }

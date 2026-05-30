@@ -16,6 +16,8 @@ public:
         std::string title;
         std::string body;
         std::string timestamp;
+        std::string type = "info";
+        int id = 0;
     };
 
     void setNotifications(const std::vector<NotificationEntry>& notifications, int userId);

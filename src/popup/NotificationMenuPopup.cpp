@@ -21,7 +21,7 @@ bool NotificationMenuPopup::init() {
     setTitle("All Notifications");
 
     m_listNode = cue::ListNode::create({m_mainLayer->getContentWidth() - 40.f, m_mainLayer->getContentHeight() - 100.f}, {0, 0, 0, 0}, cue::ListBorderStyle::Comments);
-    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f});
+    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f - 5.f, m_mainLayer->getContentSize().height / 2.f});
     m_listNode->getScrollLayer()->m_contentLayer->setLayout(
         ColumnLayout::create()
             ->setGap(0.f)
@@ -62,23 +62,46 @@ void NotificationMenuPopup::populateList() {
 
     for (auto const& entry : m_notifications) {
         auto rowNode = CCLayer::create();
-        rowNode->setContentSize({m_listNode->getContentSize().width - 20.f, rowHeight});
+        rowNode->setContentSize({m_listNode->getContentSize().width, rowHeight});
+
+        auto icon = CCSprite::createWithSpriteFrameName(
+            entry.type == "success" ? "GJ_completesIcon_001.png" :
+                                    // @geode-ignore(unknown-resource)
+                entry.type == "warn" ? "geode.loader/info-warning.png"
+            : entry.type == "error"  ? "GJ_deleteIcon_001.png"
+                                     :
+                                    // @geode-ignore(unknown-resource)
+                entry.type == "critical" ? "geode.loader/info-alert.png"
+                                         : nullptr);
+
+        float titleOffset = 10.f;
+        if (icon) {
+            icon->setAnchorPoint({0.f, 1.f});
+            icon->setPosition({10.f, rowHeight - 5.f});
+            icon->setScale(0.7f);
+            rowNode->addChild(icon);
+            titleOffset += 26.f;
+        }
 
         auto titleLabel = CCLabelBMFont::create(entry.title.c_str(), "goldFont.fnt");
         titleLabel->setAnchorPoint({0.f, 1.f});
-        titleLabel->setPosition({10.f, rowHeight - 8.f});
-        titleLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, .8f, 0.5f);
+        titleLabel->setPosition({titleOffset, rowHeight - 5.f});
+        titleLabel->limitLabelWidth(rowNode->getContentSize().width - titleOffset - 10.f, .8f, 0.5f);
         rowNode->addChild(titleLabel);
 
-        auto contentLabel = CCLabelBMFont::create(entry.body.c_str(), "bigFont.fnt");
-        contentLabel->setAnchorPoint({0.f, .5f});
-        contentLabel->setPosition({10.f, rowHeight / 2.f});
-        contentLabel->limitLabelWidth(rowNode->getContentSize().width - 20.f, .5f, 0.4f);
+        auto contentLabel = SimpleTextArea::create(entry.body.c_str(), "bigFont.fnt", 0.5f, rowNode->getContentSize().width - 20.f);
+        contentLabel->setAnchorPoint({0.f, 1.f});
+        contentLabel->setScale(0.3f);
+        contentLabel->setMaxLines(3);
+        contentLabel->setPosition({10.f, rowHeight - 30.f});
         rowNode->addChild(contentLabel);
 
         auto timestampLabel = CCLabelBMFont::create(entry.timestamp.c_str(), "chatFont.fnt");
         timestampLabel->setAnchorPoint({1.f, .0f});
-        timestampLabel->setPosition({rowNode->getContentSize().width, 5});
+        timestampLabel->setColor({0, 0, 0});
+        timestampLabel->setAlignment(CCTextAlignment::kCCTextAlignmentRight);
+        timestampLabel->setOpacity(100);
+        timestampLabel->setPosition({rowNode->getContentSize().width - 6, 5});
         timestampLabel->setScale(0.6f);
         rowNode->addChild(timestampLabel);
 
@@ -87,6 +110,10 @@ void NotificationMenuPopup::populateList() {
 
     m_listNode->updateLayout();
     m_listNode->scrollToTop();
+
+    auto scrollBar = Scrollbar::create(m_listNode->getScrollLayer());
+    scrollBar->setPosition({m_mainLayer->getContentSize().width - 15.f, m_mainLayer->getContentSize().height / 2.f});
+    m_mainLayer->addChild(scrollBar);
 }
 
 void NotificationMenuPopup::onClearAll(CCObject*) {

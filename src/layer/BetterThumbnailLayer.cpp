@@ -1,4 +1,5 @@
 #include "BetterThumbnailLayer.hpp"
+#include "../overlay/NotificationOverlay.hpp"
 
 #include <Geode/Geode.hpp>
 #include "../popup/NotificationMenuPopup.hpp"
@@ -196,6 +197,11 @@ bool BetterThumbnailLayer::init() {
     m_bottomLeftMenu->addChild(infoButton);
 
     auto notificationButton = geode::Button::createWithNode(CircleButtonSprite::createWithSprite("BT_notificationIcon.png"_spr, .9f, CircleBaseColor::Green, CircleBaseSize::Small), [this](geode::Button* btn) {
+        if (auto overlay = NotificationOverlay::get()) {
+            overlay->showNotificationList();
+            return;
+        }
+
         auto popup = NotificationMenuPopup::create();
         if (popup) {
             popup->show();
