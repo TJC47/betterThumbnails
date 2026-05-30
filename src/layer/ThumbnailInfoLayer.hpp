@@ -4,6 +4,7 @@
 #include <Geode/utils/async.hpp>
 #include <cue/LoadingCircle.hpp>
 #include <set>
+#include <Geode/ui/Button.hpp>
 
 using namespace geode::prelude;
 
@@ -27,6 +28,7 @@ public:
     void ccTouchEnded(CCTouch* pTouch, CCEvent* event) override;
     void scrollWheel(float y, float x) override;
     void fetchLevel();
+    void updateToggleButtonColor();
 
 private:
     // Stored for API calls
@@ -40,11 +42,10 @@ private:
     std::string m_submissionNote;
 
     async::TaskHolder<web::WebResponse> m_listener;
-    CCMenu* m_bottomMenu = nullptr;
     LazySprite* m_thumbReplacement = nullptr;
     LazySprite* m_thumbOriginal = nullptr;
     cue::LoadingCircle* m_thumbSpinner = nullptr;
-    CCMenuItemSpriteExtra* m_showOriginalBtn = nullptr;
+    geode::Button* m_toggleButton = nullptr;
     CCMenuItemToggler* m_infoToggle = nullptr;
     MDTextArea* m_infoTextArea = nullptr;
     NineSlice* m_thumbBg = nullptr;

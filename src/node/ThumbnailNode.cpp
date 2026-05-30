@@ -7,13 +7,28 @@
 
 #include "../include/BetterThumbnailConstant.hpp"
 #include "../layer/ThumbnailInfoLayer.hpp"
+#include <cue/LoadingCircle.hpp>
 #include "Geode/utils/general.hpp"
 
 using namespace geode::prelude;
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, bool showViewButton, std::string thumbnailUrl) {
+static std::string parseSubmissionNoteField(std::string const& note, std::string const& key) {
+    auto keyEq = fmt::format("{}=", key);
+    auto pos = note.find(keyEq);
+    if (pos == std::string::npos) {
+        return {};
+    }
+    pos += keyEq.size();
+    auto end = note.find(';', pos);
+    if (end == std::string::npos) {
+        end = note.size();
+    }
+    return note.substr(pos, end - pos);
+}
+
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, accepted_time, showViewButton, std::move(thumbnailUrl))) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, accepted_time, std::move(thumbnailUrl), mode)) {
         ret->autorelease();
         return ret;
     }
@@ -21,7 +36,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, bool showViewButton, std::string thumbnailUrl) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
     if (!CCLayer::init())
         return false;
 
@@ -63,12 +78,12 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_submissionNote = submission_note;
     m_accountId = account_id;
     m_acceptedTime = accepted_time;
-    m_showViewButton = showViewButton;
+    m_mode = mode;
+    m_showViewButton = (m_mode == Mode::PendingThumbnail);
+    m_levelName = parseSubmissionNoteField(m_submissionNote, "ln");
     m_thumbnailUrl = std::move(thumbnailUrl);
 
-    this->fetchLevel();
-
-    auto levelNameText = this->m_level ? std::string(this->m_level->m_levelName.c_str()) : std::string("Unknown Level");
+    auto levelNameText = (this->m_levelName.empty() ? std::string("Unknown Level") : this->m_levelName);
     this->m_levelInfoLabel = CCLabelBMFont::create(fmt::format("{} ({})", levelNameText, this->m_levelId).c_str(), "goldFont.fnt");
     this->m_levelInfoLabel->setAnchorPoint({0.f, 0.5f});
     this->m_levelInfoLabel->setPosition({rightX, usernameY});
@@ -100,8 +115,12 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
             auto scene = LevelInfoLayer::scene(m_level, false);
             CCDirector::get()->pushScene(
                 CCTransitionFade::create(.5f, scene));
+            return;
         }
+        m_openOnLevelLoaded = true;
+        this->fetchLevel();
     });
+    this->m_playBtn = playBtn;
 
     auto actionMenu = CCMenu::create();
     actionMenu->setPosition({rightX, 20.f});
@@ -132,8 +151,8 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     auto imageReq = web::WebRequest();
     imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
     auto imageUrl = this->m_thumbnailUrl.empty()
-        ? betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id))
-        : this->m_thumbnailUrl;
+                        ? betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id))
+                        : this->m_thumbnailUrl;
     auto imageTask = imageReq.get(imageUrl);
     m_listener.spawn(std::move(imageTask), [this, lazySprite, size](web::WebResponse res) {
         if (res.code() >= 200 && res.code() <= 299) {
@@ -150,39 +169,96 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
 }
 
 void ThumbnailNode::fetchLevel() {
-    auto glm = GameLevelManager::sharedState();
-    auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
-    auto key = searchObj->getKey();
-    CCArray* levels = nullptr;
-
-    if (key && key[0]) {
-        levels = glm->getStoredOnlineLevels(key);
-    }
-
-    if (!levels || levels->count() == 0) {
-        if (this->m_levelFetchRetries < 10 && key && key[0]) {
-            glm->getOnlineLevels(searchObj);
-            this->m_levelFetchRetries++;
-            auto delay = CCDelayTime::create(1.0f);
-            auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailNode::fetchLevel));
-            auto sequence = CCSequence::create(delay, callback, nullptr);
-            this->runAction(sequence);
+    if (this->m_level) {
+        if (this->m_openOnLevelLoaded) {
+            auto scene = LevelInfoLayer::scene(m_level, false);
+            CCDirector::get()->pushScene(CCTransitionFade::create(.5f, scene));
+            this->m_openOnLevelLoaded = false;
+        }
+        if (this->m_levelLoadingCircle) {
+            this->m_levelLoadingCircle->fadeOut();
         }
         return;
     }
 
-    for (int i = 0; i < levels->count(); ++i) {
-        auto level = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
-        if (!level) {
-            continue;
-        }
-        m_level = level;
-        break;
+    if (m_levelId <= 0) {
+        return;
     }
 
-    if (this->m_level && this->m_levelInfoLabel) {
-        this->m_levelInfoLabel->setString(fmt::format("{} ({})", this->m_level->m_levelName.c_str(), this->m_levelId).c_str());
-        this->updateBadges();
+    if (this->m_openOnLevelLoaded && !this->m_levelLoadingCircle) {
+        this->m_levelLoadingCircle = cue::LoadingCircle::create(true);
+        this->m_levelLoadingCircle->setScale(0.5f);
+        if (this->m_playBtn) {
+            this->m_levelLoadingCircle->setPosition({this->m_playBtn->getContentSize().width / 2.f, this->m_playBtn->getContentSize().height / 2.f});
+            this->m_playBtn->addChild(this->m_levelLoadingCircle, 2);
+        } else {
+            this->m_levelLoadingCircle->setPosition({this->getContentSize().width / 2.f, this->getContentSize().height / 2.f});
+            this->addChild(this->m_levelLoadingCircle, 3);
+        }
+    }
+    if (this->m_levelLoadingCircle) {
+        this->m_levelLoadingCircle->fadeIn();
+    }
+
+    auto glm = GameLevelManager::sharedState();
+    if (auto saved = glm->getSavedLevel(m_levelId)) {
+        this->m_level = saved;
+        if (this->m_levelInfoLabel) {
+            this->m_levelInfoLabel->setString(fmt::format("{} ({})", this->m_level->m_levelName.c_str(), this->m_levelId).c_str());
+            this->updateBadges();
+        }
+        if (this->m_levelLoadingCircle) {
+            this->m_levelLoadingCircle->fadeOut();
+        }
+        if (this->m_openOnLevelLoaded) {
+            auto scene = LevelInfoLayer::scene(m_level, false);
+            CCDirector::get()->pushScene(CCTransitionFade::create(.5f, scene));
+            this->m_openOnLevelLoaded = false;
+        }
+        return;
+    }
+
+    auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
+    auto key = searchObj->getKey();
+    if (!key || !key[0]) {
+        return;
+    }
+
+    CCArray* levels = glm->getStoredOnlineLevels(key);
+    if (levels && levels->count() > 0) {
+        for (int i = 0; i < levels->count(); ++i) {
+            auto level = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
+            if (!level) {
+                continue;
+            }
+            m_level = level;
+            break;
+        }
+    }
+
+    if (this->m_level) {
+        if (this->m_levelInfoLabel) {
+            this->m_levelInfoLabel->setString(fmt::format("{} ({})", this->m_level->m_levelName.c_str(), this->m_levelId).c_str());
+            this->updateBadges();
+        }
+        if (this->m_levelLoadingCircle) {
+            this->m_levelLoadingCircle->fadeOut();
+        }
+        if (m_openOnLevelLoaded) {
+            auto scene = LevelInfoLayer::scene(m_level, false);
+            CCDirector::get()->pushScene(CCTransitionFade::create(.5f, scene));
+            m_openOnLevelLoaded = false;
+        }
+        return;
+    }
+
+    if (this->m_levelFetchRetries < 10) {
+        glm->getOnlineLevels(searchObj);
+        this->m_levelFetchRetries++;
+        auto delay = CCDelayTime::create(1.0f);
+        auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailNode::fetchLevel));
+        auto sequence = CCSequence::create(delay, callback, nullptr);
+        this->runAction(sequence);
     }
 }
 

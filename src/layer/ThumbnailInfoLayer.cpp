@@ -67,9 +67,9 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     // thumb bg
     auto thumbBg = NineSlice::create("GJ_square05.png");
     thumbBg->setPosition(
-        {screenSize.width / 2.f, screenSize.height / 2.f + 15.f});
+        {screenSize.width / 2.f, screenSize.height / 2.f});
     thumbBg->setContentSize({300.f, 170.f});
-    thumbBg->setScale(1.1f);
+    thumbBg->setScale(1.3f);
     this->addChild(thumbBg);
     m_thumbBg = thumbBg;
 
@@ -123,6 +123,18 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     stencilClip->addChild(thumbReplacement);
     stencilClip->addChild(thumbOriginal);
 
+    if (m_replacementFlag) {
+        m_toggleButton = geode::Button::createWithNode(
+            CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Gray, CircleBaseSize::Small),
+            [this](geode::Button* btn) {
+                this->onShowOriginal(nullptr);
+            });
+        m_toggleButton->setScale(0.7f);
+        m_toggleButton->setPosition({thumbBg->getContentSize().width, 0.f});
+        thumbBg->addChild(m_toggleButton, 10);
+        updateToggleButtonColor();
+    }
+
     auto spinner = cue::LoadingCircle::create(true);
     spinner->addToLayer(thumbBg, 2);
     m_thumbSpinner = spinner;
@@ -148,21 +160,6 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
                     spinner->fadeOut();
             }
         });
-
-    m_bottomMenu = CCMenu::create();
-    m_bottomMenu->setPosition({screenSize.width / 2.f, 25.f});
-    m_bottomMenu->setContentSize({screenSize.width - 40.f, 40.f});
-    m_bottomMenu->setLayout(RowLayout::create()->setGap(10.f));
-    this->addChild(m_bottomMenu, 2);
-
-    // If this thumbnail is a replacement, add a Show original button under the thumb
-    if (m_replacementFlag) {
-        auto showSpr =
-            ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-        m_showOriginalBtn = CCMenuItemSpriteExtra::create(
-            showSpr, this, menu_selector(ThumbnailInfoLayer::onShowOriginal));
-        m_bottomMenu->addChild(m_showOriginalBtn);
-    }
 
     if (!m_submissionNote.empty()) {
         std::map<std::string, std::string> fields;
@@ -209,13 +206,13 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         // this->addChildAtPosition(noteTextArea, Anchor::Right, {-115.f, -120.f}, false);
 
         std::string infoText = fmt::format(
-            "### <cg>Level ID:</c> {}\n"
-            "### <ca>Level Name:</c> {}\n"
-            "### <cs>Uploaded by:</c> {} ({})\n"
-            "### <cc>Accepted:</c> {}\n"
-            "### <cl>Replacement:</c> {}\n"
-            "### <co>Thumbnail ID:</c> {}\n"
-            "### <cb>Note:</c> {}\n\n",
+            "##### <cg>Level ID:</c> {}\n"
+            "##### <ca>Level Name:</c> {}\n"
+            "##### <cs>Uploaded by:</c> {} ({})\n"
+            "##### <cc>Accepted:</c> {}\n"
+            "##### <cl>Replacement:</c> {}\n"
+            "##### <co>Thumbnail ID:</c> {}\n"
+            "##### <cb>Note:</c> {}\n\n",
             level_id,
             level_name,
             username,
@@ -225,7 +222,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             id,
             fields["m"]);
 
-        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize());
+        m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(90.f, 70.f));
         m_infoTextArea->setVisible(false);
         thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {9.f, 0.f}, {0, 0}, false);
     }
@@ -246,17 +243,15 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
                 ThumbnailInfoLayer::onReject(btn);
             });
 
-        auto playBtnSprite = ButtonSprite::create(
-            "Play Level", "goldFont.fnt", "GJ_button_01.png");
         auto playBtn = geode::Button::createWithNode(
-            playBtnSprite, [this](geode::Button* btn) {
+            CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png"), [this](geode::Button* btn) {
                 ThumbnailInfoLayer::onPlayLevelButton(btn);
             });
-        m_bottomMenu->addChild(playBtn);
-        m_bottomMenu->updateLayout();
+        playBtn->setScale(0.3f);
+        infoMenu->addChildAtPosition(playBtn, Anchor::TopLeft, {0.f, 0.f}, false);
 
         auto actionMenu = CCMenu::create();
-        actionMenu->setPosition({screenSize.width / 2.f, 60.f});
+        actionMenu->setPosition({screenSize.width / 2.f, 25.f});
         actionMenu->setContentSize({screenSize.width - 40.f, 40.f});
         actionMenu->setLayout(RowLayout::create()->setGap(5.f));
         actionMenu->addChild(acceptBtn);
@@ -455,39 +450,46 @@ void ThumbnailInfoLayer::scrollWheel(float y, float x) {
 }
 
 void ThumbnailInfoLayer::fetchLevel() {
-    auto glm = GameLevelManager::sharedState();
-    auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
-    auto key = searchObj->getKey();
-    CCArray* levels = nullptr;
-
-    if (key && key[0]) {
-        levels = glm->getStoredOnlineLevels(key);
-    }
-
-    if (!levels || levels->count() == 0) {
-        if (m_levelFetchRetries > 10) return;
-
-        if (key && key[0]) {
-            glm->getOnlineLevels(searchObj);
-        }
-
-        m_levelFetchRetries++;
-        auto delay = CCDelayTime::create(1.0f);
-        auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailInfoLayer::fetchLevel));
-        auto sequence = CCSequence::create(delay, callback, nullptr);
-        this->runAction(sequence);
+    if (m_levelId <= 0) {
         return;
     }
 
+    auto glm = GameLevelManager::sharedState();
     GJGameLevel* level = nullptr;
-    for (int i = 0; i < levels->count(); ++i) {
-        auto l = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
-        if (!l) {
-            continue;
+
+    if (auto saved = glm->getSavedLevel(m_levelId)) {
+        level = saved;
+    } else {
+        auto searchObj = GJSearchObject::create(SearchType::Search, numToString<int>(m_levelId));
+        auto key = searchObj->getKey();
+        if (!key || !key[0]) {
+            return;
         }
 
-        level = l;
-        break;
+        auto levels = glm->getStoredOnlineLevels(key);
+        if (!levels || levels->count() == 0) {
+            if (m_levelFetchRetries > 10) {
+                return;
+            }
+
+            glm->getOnlineLevels(searchObj);
+            m_levelFetchRetries++;
+            auto delay = CCDelayTime::create(1.0f);
+            auto callback = CCCallFunc::create(this, callfunc_selector(ThumbnailInfoLayer::fetchLevel));
+            auto sequence = CCSequence::create(delay, callback, nullptr);
+            this->runAction(sequence);
+            return;
+        }
+
+        for (int i = 0; i < levels->count(); ++i) {
+            auto l = typeinfo_cast<GJGameLevel*>(levels->objectAtIndex(i));
+            if (!l) {
+                continue;
+            }
+
+            level = l;
+            break;
+        }
     }
 
     if (level) {
@@ -558,6 +560,27 @@ void ThumbnailInfoLayer::fetchLevel() {
     }
 }
 
+void ThumbnailInfoLayer::updateToggleButtonColor() {
+    if (!m_toggleButton) {
+        return;
+    }
+
+    CircleBaseColor color = m_showingOriginal ? CircleBaseColor::Cyan : CircleBaseColor::Gray;
+    auto sprite = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, color, CircleBaseSize::Small);
+    if (!sprite) {
+        return;
+    }
+
+    auto oldNode = m_toggleButton->getDisplayNode();
+    if (oldNode) {
+        oldNode->removeFromParent();
+    }
+
+    sprite->setAnchorPoint({0.5f, 0.5f});
+    sprite->setPosition({0.f, 0.f});
+    m_toggleButton->addChild(sprite);
+}
+
 void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
     // Toggle back to the replacement
     if (m_showingOriginal) {
@@ -566,12 +589,8 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         if (m_thumbReplacement)
             m_thumbReplacement->setVisible(true);
         m_showingOriginal = false;
-        // update the button label back to 'Show original'
-        if (m_showOriginalBtn) {
-            auto newSprite =
-                ButtonSprite::create("Show original", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-            m_showOriginalBtn->setNormalImage(newSprite);
-            m_bottomMenu->updateLayout();
+        if (m_toggleButton) {
+            updateToggleButtonColor();
         }
         return;
     }
@@ -583,11 +602,8 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         if (m_thumbReplacement)
             m_thumbReplacement->setVisible(false);
         m_showingOriginal = true;
-        if (m_showOriginalBtn) {
-            auto newSprite =
-                ButtonSprite::create("Show replacement", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-            m_showOriginalBtn->setNormalImage(newSprite);
-            m_bottomMenu->updateLayout();
+        if (m_toggleButton) {
+            updateToggleButtonColor();
         }
         return;
     }
@@ -618,11 +634,8 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                 m_showingOriginal = true;
                 if (m_thumbSpinner)
                     m_thumbSpinner->setVisible(false);
-                if (m_showOriginalBtn) {
-                    auto newSprite =
-                        ButtonSprite::create("Show replacement", 140, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-                    m_showOriginalBtn->setNormalImage(newSprite);
-                    m_bottomMenu->updateLayout();
+                if (m_toggleButton) {
+                    updateToggleButtonColor();
                 }
             }
         } else {

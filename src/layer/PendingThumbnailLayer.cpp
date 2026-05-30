@@ -358,8 +358,23 @@ void PendingThumbnailLayer::updateUI() {
 
     for (int i = start; i < end; ++i) {
         auto& item = filtered[i];
+        if (item.level_id <= 0) {
+            continue;
+        }
         auto thumbNode = ThumbnailNode::create(
-            m_listNode->getContentSize(), item.id, item.user_id, item.username, item.level_id, item.accepted, item.upload_time, item.replacement, item.submission_note, item.account_id);
+            m_listNode->getContentSize(),
+            item.id,
+            item.user_id,
+            item.username,
+            item.level_id,
+            item.accepted,
+            item.upload_time,
+            item.replacement,
+            item.submission_note,
+            item.account_id,
+            "",
+            "",
+            ThumbnailNode::Mode::PendingThumbnail);
         thumbNode->setAnchorPoint({0.5f, 1.0f});
         m_listNode->addCell(thumbNode);
     }

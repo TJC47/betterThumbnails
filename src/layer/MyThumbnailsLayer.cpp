@@ -229,6 +229,9 @@ void MyThumbnailsLayer::updateUI() {
     auto currentUserId = Mod::get()->getSavedValue<int>("user_id");
     auto currentUsername = Mod::get()->getSavedValue<std::string>("username");
     for (auto const& entry : m_uploads) {
+        if (entry.level_id <= 0) {
+            continue;
+        }
         auto thumbNode = ThumbnailNode::create(
             m_listNode->getContentSize(),
             entry.id,
@@ -241,8 +244,8 @@ void MyThumbnailsLayer::updateUI() {
             entry.submission_note,
             currentUserId,
             entry.accepted_time,
-            m_mode == UploadMode::Pending,
-            fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", entry.level_id));
+            fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", entry.level_id),
+            ThumbnailNode::Mode::MyThumbnail);
         thumbNode->setAnchorPoint({0.5f, 1.0f});
         m_listNode->addCell(thumbNode);
     }
