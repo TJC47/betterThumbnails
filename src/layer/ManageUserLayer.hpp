@@ -57,6 +57,11 @@ private:
     bool m_showBannedOnly = false;
     std::string m_selectedRole = "Any";
 
+    std::string m_usernameFilter;
+    std::string m_userIdFilter;
+    std::string m_accountIdFilter;
+    std::string m_discordIdFilter;
+
     std::vector<ManageUserEntry> m_users;
 
     void fetchPage(int page);
@@ -66,5 +71,7 @@ private:
     void onToggleBanned(CCObject*);
     void onPrevPage(CCObject*);
     void onNextPage(CCObject*);
+    void onOpenFilterUsersPopup(CCObject*);
+    void onApplyUserFilters(std::string username, std::string userId, std::string accountId, std::string discordId);
     CCSprite* spriteForRole(const std::string& role);
 };

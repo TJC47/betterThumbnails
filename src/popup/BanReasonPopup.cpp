@@ -17,9 +17,10 @@ bool BanReasonPopup::init(int userId) {
         return false;
 
     m_userId = userId;
-    setTitle("Ban Reason");
+    setTitle(fmt::format("Ban User ID: {}", userId));
 
     m_input = TextInput::create(220.f, "Reason for ban");
+    m_input->setLabel("Ban Reason");
     m_input->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f + 5.f});
     m_mainLayer->addChild(m_input);
 

@@ -15,17 +15,19 @@ FilterThumbnailPopup* FilterThumbnailPopup::create(geode::Function<void(std::str
 }
 
 bool FilterThumbnailPopup::init(int, geode::Function<void(std::string, bool, int)> onApply) {
-    if (!Popup::init(300.f, 160.f))
+    if (!Popup::init(300.f, 180.f))
         return false;
 
     m_callback = std::move(onApply);
     setTitle("Filter Thumbnails");
 
     m_usernameInput = TextInput::create(240.f, "Search by username");
+    m_usernameInput->setLabel("Username");
     m_usernameInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 50.f});
     m_mainLayer->addChild(m_usernameInput);
 
     m_levelIdInput = TextInput::create(240.f, "Search by level ID");
+    m_levelIdInput->setLabel("Level ID");
     m_levelIdInput->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height - 100.f});
     m_mainLayer->addChild(m_levelIdInput);
 

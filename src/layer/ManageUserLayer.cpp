@@ -1,5 +1,6 @@
 #include "ManageUserLayer.hpp"
 #include "../popup/BanReasonPopup.hpp"
+#include "../popup/FilterUsersPopup.hpp"
 
 #include <Geode/binding/ProfilePage.hpp>
 #include <Geode/binding/UploadActionPopup.hpp>
@@ -113,6 +114,20 @@ bool ManageUserLayer::init() {
     this->addChild(this->m_filterMenu, 2);
     this->m_showBannedOnly = false;
 
+    // @geode-ignore(unknown-resource)
+    auto filterBtn = geode::Button::createWithNode(
+        EditorButtonSprite::createWithSpriteFrameName(
+            // @geode-ignore(unknown-resource)
+            "geode.loader/search.png",
+            1.f,
+            EditorBaseColor::Gray,
+            EditorBaseSize::Normal),
+        [this](geode::Button* btn) {
+            ManageUserLayer::onOpenFilterUsersPopup(btn);
+        });
+    filterBtn->setPosition({22.f, 60.f});
+    this->addChild(filterBtn);
+
     auto bannedOff = EditorButtonSprite::createWithSprite(
         "BT_banIcon.png"_spr,
         1.f,
@@ -225,7 +240,23 @@ void ManageUserLayer::onNextPage(CCObject*) {
     if (this->m_currentPage < this->m_totalPages)
         fetchPage(m_currentPage + 1);
 }
+void ManageUserLayer::onOpenFilterUsersPopup(CCObject*) {
+    auto popup = FilterUsersPopup::create([this](std::string username, std::string userId, std::string accountId, std::string discordId) {
+        this->onApplyUserFilters(std::move(username), std::move(userId), std::move(accountId), std::move(discordId));
+    });
+    if (popup) {
+        popup->show();
+    }
+}
 
+void ManageUserLayer::onApplyUserFilters(std::string username, std::string userId, std::string accountId, std::string discordId) {
+    this->m_usernameFilter = std::move(username);
+    this->m_userIdFilter = std::move(userId);
+    this->m_accountIdFilter = std::move(accountId);
+    this->m_discordIdFilter = std::move(discordId);
+    this->m_currentPage = 1;
+    fetchPage(this->m_currentPage);
+}
 void ManageUserLayer::onToggleBanned(CCObject* sender) {
     auto toggle = typeinfo_cast<CCMenuItemToggler*>(sender);
     if (!toggle)
@@ -275,6 +306,14 @@ void ManageUserLayer::fetchPage(int page) {
         req.param("banned", "true");
     if (this->m_selectedRole != "Any")
         req.param("role", this->m_selectedRole);
+    if (!this->m_usernameFilter.empty())
+        req.param("username", this->m_usernameFilter);
+    if (!this->m_userIdFilter.empty())
+        req.param("id", this->m_userIdFilter);
+    if (!this->m_accountIdFilter.empty())
+        req.param("account_id", this->m_accountIdFilter);
+    if (!this->m_discordIdFilter.empty())
+        req.param("discord_id", this->m_discordIdFilter);
 
     auto url = betterThumbnail::makeUrl("/admin/users");
 
@@ -408,7 +447,7 @@ void ManageUserLayer::populateList() {
         }
 
         if (entry.banned) {
-            auto infoBtn = geode::Button::createWithSprite("BT_unbanIcon.png"_spr, [entry](geode::Button* btn) {
+            auto infoBtn = geode::Button::createWithNode(CircleButtonSprite::createWithSprite("BT_unbanIcon.png"_spr, .9f, CircleBaseColor::Green, CircleBaseSize::Small), [entry](geode::Button* btn) {
                 geode::MDPopup::create(
                     fmt::format("Banned by {}", entry.bannedBy),
                     entry.banReason,
@@ -425,8 +464,12 @@ void ManageUserLayer::populateList() {
 
         auto canBan = currentRoleRank > roleRank(entry.role) && entry.accountId != currentAccountId;
         if (canBan) {
-            auto banBtn = geode::Button::createWithSprite(
-                entry.banned ? "BT_unbanIcon.png"_spr : "BT_banIcon.png"_spr,
+            auto banBtn = geode::Button::createWithNode(
+                CircleButtonSprite::createWithSprite(
+                    entry.banned ? "BT_unbanIcon.png"_spr : "BT_banIcon.png"_spr,
+                    .9f,
+                    CircleBaseColor::Red,
+                    CircleBaseSize::Small),
                 [this, entry](geode::Button* btn) {
                     if (entry.banned) {
                         this->unbanUser(entry.id);
