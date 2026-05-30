@@ -482,6 +482,7 @@ void ManageUserLayer::populateList() {
                     }
                 });
             banBtn->setAnchorPoint({.5f, .5f});
+            banBtn->setScale(0.8);
             banBtn->setPosition({row->getContentSize().width - 10.f, row->getContentSize().height / 2.f});
             row->addChild(banBtn);
         }
