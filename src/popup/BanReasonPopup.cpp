@@ -13,7 +13,7 @@ BanReasonPopup* BanReasonPopup::create(int userId) {
 }
 
 bool BanReasonPopup::init(int userId) {
-    if (!Popup::init(260.f, 120.f, "GJ_square05.png"))
+    if (!Popup::init(260.f, 140.f, "GJ_square05.png"))
         return false;
 
     m_userId = userId;
@@ -40,6 +40,8 @@ void BanReasonPopup::onSend(CCObject*) {
         if (popup)
             popup->show();
 
+        Ref<UploadActionPopup> popupRef = popup;
+
         auto jsonBody = matjson::makeObject({
             {"reason", reason},
             {"expires_by", nullptr},
@@ -51,14 +53,13 @@ void BanReasonPopup::onSend(CCObject*) {
 
         auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", m_userId);
         auto task = req.send("POST", url);
-        this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
+        this->m_listener.spawn(std::move(task), [this, popupRef](web::WebResponse res) {
+            if (!popupRef) return;
             if (res.code() == 200) {
-                if (popup)
-                    popup->showSuccessMessage("User banned successfully");
+                if (popupRef) popupRef->showSuccessMessage("User banned successfully");
                 this->onClose(nullptr);
             } else {
-                if (popup)
-                    popup->showFailMessage(fmt::format("Ban failed: {}", res.string().unwrapOr("Unknown error")));
+                if (popupRef) popupRef->showFailMessage(fmt::format("Ban failed: {}", res.string().unwrapOr("Unknown error")));
             }
         });
     });

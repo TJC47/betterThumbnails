@@ -13,14 +13,14 @@
 
 using namespace geode::prelude;
 
-CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
+CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
     auto scene = CCScene::create();
     scene->addChild(ThumbnailInfoLayer::create(
-        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id));
+        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, std::move(onAcceptedCallback)));
     return scene;
 }
 
-ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
+ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
     auto ret = new ThumbnailInfoLayer;
     if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id)) {
         ret->autorelease();
@@ -30,7 +30,7 @@ ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::s
     return nullptr;
 }
 
-bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id) {
+bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
     if (!CCLayer::init())
         return false;
 
@@ -46,6 +46,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     m_uploadTime = upload_time;
     m_replacementFlag = replacement;
     m_submissionNote = submission_note;
+    m_onAcceptedCallback = std::move(onAcceptedCallback);
 
     auto bg = createLayerBG();
     if (bg != nullptr)
@@ -86,6 +87,8 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
 
     auto infoOffSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
     auto infoOnSpr = CCSpriteGrayscale::createWithSpriteFrameName("GJ_infoIcon_001.png");
+    infoOffSpr->setScale(0.8f);
+    infoOnSpr->setScale(0.8f);
 
     m_infoToggle = CCMenuItemToggler::create(
         infoOffSpr,
@@ -211,7 +214,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             "##### <cg>Level ID:</c> {}\n"
             "##### <ca>Level Name:</c> {}\n"
             "##### <cs>Uploaded by:</c> {} ({})\n"
-            "##### <cc>Accepted:</c> {}\n"
+            // "##### <cc>Accepted:</c> {}\n"
             "##### <cl>Replacement:</c> {}\n"
             "##### <co>Thumbnail ID:</c> {}\n"
             "##### <cb>Note:</c> {}\n\n",
@@ -219,14 +222,15 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             level_name,
             username,
             user_id,
-            accepted ? "Yes" : "No",
+            // accepted ? "Yes" : "No",
             replacement ? "Yes" : "No",
             id,
             fields["m"]);
 
         m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(90.f, 70.f));
         m_infoTextArea->setVisible(false);
-        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {9.f, 0.f}, {0, 0}, false);
+        thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {15.f, 10.f}, {0, 0}, false);
+        
     }
 
     // check if user role is a moderator/admin, show the button
@@ -286,6 +290,9 @@ void ThumbnailInfoLayer::onAccept(CCObject*) {
         if (res.code() >= 200 && res.code() <= 299) {
             CCDirector::get()->popSceneWithTransition(
                 0.5f, PopTransition::kPopTransitionFade);
+            if (this->m_onAcceptedCallback) {
+                this->m_onAcceptedCallback();
+            }
             Notification::create("Thumbnail accepted.", NotificationIcon::Success)
                 ->show();
         } else {

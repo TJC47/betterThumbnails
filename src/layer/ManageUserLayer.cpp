@@ -279,18 +279,19 @@ void ManageUserLayer::unbanUser(int id) {
         if (popup)
             popup->show();
 
+        Ref<UploadActionPopup> popupRef = popup;
+
         auto req = web::WebRequest();
         req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
         auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", id);
         auto task = req.send("DELETE", url);
-        this->m_listener.spawn(std::move(task), [this, popup](web::WebResponse res) {
+        this->m_listener.spawn(std::move(task), [this, popupRef](web::WebResponse res) {
+            if (!popupRef) return;
             if (res.code() == 200) {
-                if (popup)
-                    popup->showSuccessMessage("User unbanned successfully");
+                if (popupRef) popupRef->showSuccessMessage("User unbanned successfully");
                 this->fetchPage(this->m_currentPage);
             } else {
-                if (popup)
-                    popup->showFailMessage(fmt::format("Unban failed: {}", res.string().unwrapOr("Unknown error")));
+                if (popupRef) popupRef->showFailMessage(fmt::format("Unban failed: {}", res.string().unwrapOr("Unknown error")));
             }
         });
     });

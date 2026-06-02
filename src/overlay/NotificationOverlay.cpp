@@ -44,7 +44,7 @@ void NotificationOverlay::onEnter() {
     CCLayer::onEnter();
     this->loadReadNotificationIds();
     this->fetchNotifications();
-    this->schedule(schedule_selector(NotificationOverlay::pollNotifications), 30.0f);
+    this->schedule(schedule_selector(NotificationOverlay::pollNotifications), m_pollInterval);
 }
 
 void NotificationOverlay::onExit() {
@@ -93,6 +93,11 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
         log::error("Notification API invalid format: {}", res.string().unwrapOrDefault());
         m_isNotificationFetchInProgress = false;
         return;
+    }
+
+    int interval = json["interval"].asInt().unwrapOr(static_cast<int>(m_pollInterval));
+    if (interval > 0 && static_cast<float>(interval) != m_pollInterval) {
+        this->updatePollingSchedule(static_cast<float>(interval));
     }
 
     auto arr = json["notifications"].asArray().copied().unwrapOrDefault();
@@ -294,6 +299,12 @@ static bool isOnBetterThumbnailLayer() {
         }
     }
     return false;
+}
+
+void NotificationOverlay::updatePollingSchedule(float interval) {
+    m_pollInterval = interval;
+    this->unschedule(schedule_selector(NotificationOverlay::pollNotifications));
+    this->schedule(schedule_selector(NotificationOverlay::pollNotifications), m_pollInterval);
 }
 
 NotificationOverlay* NotificationOverlay::get() {

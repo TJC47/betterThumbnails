@@ -26,6 +26,7 @@ public:
     static PendingThumbnailLayer* create();
     bool init() override;
     void keyBackClicked() override;
+    void reloadPage();
 
 private:
     enum class FilterMode {

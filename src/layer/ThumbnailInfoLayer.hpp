@@ -4,6 +4,7 @@
 #include <Geode/utils/async.hpp>
 #include <cue/LoadingCircle.hpp>
 #include <set>
+#include <functional>
 #include <Geode/ui/Button.hpp>
 
 using namespace geode::prelude;
@@ -11,9 +12,10 @@ using namespace geode::prelude;
 class ThumbnailInfoLayer : public CCLayer {
 public:
     static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
-    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
+    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
+    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
 
-    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
+    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
 
     void keyBackClicked() override;
 
@@ -39,6 +41,7 @@ private:
     std::string m_uploadTime;
     bool m_replacementFlag = false;
     std::string m_submissionNote;
+    std::function<void()> m_onAcceptedCallback;
 
     async::TaskHolder<web::WebResponse> m_listener;
     LazySprite* m_thumbReplacement = nullptr;

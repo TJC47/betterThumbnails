@@ -26,10 +26,12 @@ private:
     void processNotificationResponse(web::WebResponse res);
     void loadReadNotificationIds();
     void saveReadNotificationIds();
+    void updatePollingSchedule(float interval);
 
     long long m_lastNotificationTimestamp = 0;
     std::unordered_set<int> m_readNotificationIds;
     bool m_isNotificationFetchInProgress = false;
+    float m_pollInterval = 30.0f;
     async::TaskHolder<web::WebResponse> m_notificationListener;
     std::vector<NotificationMenuPopup::NotificationEntry> m_notifications;
 };

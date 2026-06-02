@@ -3,6 +3,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/ui/General.hpp>
 #include <Geode/ui/Notification.hpp>
+#include <Geode/ui/ProgressBar.hpp>
 
 using namespace geode::prelude;
 
@@ -40,70 +41,202 @@ bool ThumbnailDashboardLayer::init() {
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
     m_title = CCLabelBMFont::create("Welcome...", "goldFont.fnt");
     m_title->setAnchorPoint({0.5f, 1.f});
-    m_title->setPosition({screenSize.width / 2.f, screenSize.height - 40.f});
+    m_title->setPosition({screenSize.width / 2.f, screenSize.height - 20.f});
     m_title->setScale(0.8f);
     this->addChildAtPosition(m_title, Anchor::Top, {0.f, -20.f}, false);
 
-    m_statsNode = CCNode::create();
-    m_statsNode->setAnchorPoint({0.5, 0.5});
-    m_statsNode->setContentWidth(255.f);
-    m_statsNode->setPosition({screenSize.width / 2.f, screenSize.height - 60.f});
-    this->addChild(m_statsNode);
+    // acceptance stats
+    m_acceptanceStatsNode = CCNode::create();
+    m_acceptanceStatsNode->setAnchorPoint({0.5f, 0.5f});
+    m_acceptanceStatsNode->setContentSize({180.f, 60.f});
+    m_acceptanceStatsNode->setPosition({screenSize.width / 2.f - 100.f, screenSize.height - 80.f});
+    this->addChild(m_acceptanceStatsNode);
 
-    auto statsBg = NineSlice::create("square02_001.png");
-    statsBg->setContentSize({280.f, 40.f});
-    statsBg->setOpacity(150);
-    statsBg->setAnchorPoint({0.f, 1.f});
-    statsBg->setPosition({-5.f, 5.f});
-    m_statsNode->addChild(statsBg);
+    auto acceptanceStatsBg = NineSlice::create("square02_001.png");
+    acceptanceStatsBg->setContentSize(m_acceptanceStatsNode->getContentSize());
+    acceptanceStatsBg->setOpacity(150);
+    acceptanceStatsBg->setPosition(m_acceptanceStatsNode->getContentSize() / 2.f);
+    m_acceptanceStatsNode->addChild(acceptanceStatsBg);
 
-    m_acceptanceLabel = CCLabelBMFont::create("Acceptance Rate:\n-", "bigFont.fnt");
-    m_acceptanceLabel->setScale(0.4f);
-    m_acceptanceLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-    m_acceptanceLabel->setAnchorPoint({0.f, 1.f});
-    m_acceptanceLabel->setPosition({0.f, m_statsNode->getContentSize().height});
-    m_statsNode->addChild(m_acceptanceLabel);
+    auto acceptanceStatsTitle = CCLabelBMFont::create("Acceptance Rate", "goldFont.fnt");
+    acceptanceStatsTitle->limitLabelWidth(m_acceptanceStatsNode->getContentWidth(), 0.5f, 0.2f);
+    acceptanceStatsTitle->setPosition({m_acceptanceStatsNode->getContentSize().width / 2.f, m_acceptanceStatsNode->getContentSize().height - 10.f});
+    m_acceptanceStatsNode->addChild(acceptanceStatsTitle);
 
-    m_activeThumbnailsLabel = CCLabelBMFont::create("Active Thumbnails:\n-", "bigFont.fnt");
-    m_activeThumbnailsLabel->setScale(0.4f);
-    m_activeThumbnailsLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-    m_activeThumbnailsLabel->setAnchorPoint({0.f, 1.f});
-    m_activeThumbnailsLabel->setPosition({140.f, 0.f});
-    m_statsNode->addChild(m_activeThumbnailsLabel);
+    m_acceptanceLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_acceptanceLabel->limitLabelWidth(m_acceptanceStatsNode->getContentWidth(), 0.6f, 0.2f);
+    m_acceptanceLabel->setPosition({m_acceptanceStatsNode->getContentSize().width / 2.f, m_acceptanceStatsNode->getContentSize().height / 2.f - 5.f});
+    m_acceptanceStatsNode->addChild(m_acceptanceLabel);
 
+    // active thumbnails
+    m_activeThumbnailsNode = CCNode::create();
+    m_activeThumbnailsNode->setContentSize({180.f, 60.f});
+    m_activeThumbnailsNode->setAnchorPoint({0.5f, 0.5f});
+    m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 100.f, screenSize.height - 80.f});
+    this->addChild(m_activeThumbnailsNode);
+
+    auto activeThumbnailsBg = NineSlice::create("square02_001.png");
+    activeThumbnailsBg->setContentSize(m_activeThumbnailsNode->getContentSize());
+    activeThumbnailsBg->setOpacity(150);
+    activeThumbnailsBg->setPosition(m_activeThumbnailsNode->getContentSize() / 2.f);
+    m_activeThumbnailsNode->addChild(activeThumbnailsBg);
+
+    auto activeThumbnailsTitle = CCLabelBMFont::create("Active Thumbnails", "goldFont.fnt");
+    activeThumbnailsTitle->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
+    activeThumbnailsTitle->setPosition({m_activeThumbnailsNode->getContentSize().width / 2.f, m_activeThumbnailsNode->getContentSize().height - 10.f});
+    m_activeThumbnailsNode->addChild(activeThumbnailsTitle);
+
+    m_activeThumbnailsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_activeThumbnailsLabel->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.6f, 0.2f);
+    m_activeThumbnailsLabel->setPosition({m_activeThumbnailsNode->getContentSize().width / 2.f, m_activeThumbnailsNode->getContentSize().height / 2.f - 5.f});
+    m_activeThumbnailsNode->addChild(m_activeThumbnailsLabel);
+
+    // Acceptance rate progress bar
+    m_progressBar = geode::ProgressBar::create(geode::ProgressBarStyle::Solid);
+    m_progressBar->setAnchorPoint({0.5f, 0.5f});
+    m_progressBar->setPosition({screenSize.width / 2.f, screenSize.height - 130.f});
+    m_progressBar->showProgressLabel(true);
+    m_progressBar->updateProgress(0.f);
+    m_progressBar->setFillColor({86, 211, 142});
+    this->addChild(m_progressBar);
+
+    // uploads
     m_uploadStatsNode = CCNode::create();
-    m_uploadStatsNode->setPosition({screenSize.width / 2.f, screenSize.height - 110.f});
-    m_uploadStatsNode->setAnchorPoint({0.5, 0.5});
-    m_uploadStatsNode->setContentWidth(255.f);
+    m_uploadStatsNode->setContentSize({140.f, 60.f});
+    m_uploadStatsNode->setAnchorPoint({0.5f, 0.5f});
+    m_uploadStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 180.f});
     this->addChild(m_uploadStatsNode);
 
     auto uploadStatsBg = NineSlice::create("square02_001.png");
-    uploadStatsBg->setContentSize({260.f, 40.f});
+    uploadStatsBg->setContentSize(m_uploadStatsNode->getContentSize());
     uploadStatsBg->setOpacity(150);
-    uploadStatsBg->setAnchorPoint({0.f, 1.f});
-    uploadStatsBg->setPosition({-5.f, 5.f});
+    uploadStatsBg->setPosition(m_uploadStatsNode->getContentSize() / 2.f);
     m_uploadStatsNode->addChild(uploadStatsBg);
 
-    m_acceptedUploadsLabel = CCLabelBMFont::create("Accepted:\n-", "bigFont.fnt");
-    m_acceptedUploadsLabel->setScale(0.39f);
-    m_acceptedUploadsLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-    m_acceptedUploadsLabel->setAnchorPoint({0.f, 1.f});
-    m_acceptedUploadsLabel->setPosition({0.f, 0.f});
-    m_uploadStatsNode->addChild(m_acceptedUploadsLabel);
+    auto uploadStatsTitle = CCLabelBMFont::create("Uploads", "goldFont.fnt");
+    uploadStatsTitle->limitLabelWidth(m_uploadStatsNode->getContentWidth(), 0.5f, 0.2f);
+    uploadStatsTitle->setPosition({m_uploadStatsNode->getContentSize().width / 2.f, m_uploadStatsNode->getContentSize().height - 10.f});
+    m_uploadStatsNode->addChild(uploadStatsTitle);
 
-    m_acceptedLevelsLabel = CCLabelBMFont::create("Unique Levels:\n-", "bigFont.fnt");
-    m_acceptedLevelsLabel->setScale(0.39f);
-    m_acceptedLevelsLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-    m_acceptedLevelsLabel->setAnchorPoint({0.f, 1.f});
-    m_acceptedLevelsLabel->setPosition({80.f, 0.f});
-    m_uploadStatsNode->addChild(m_acceptedLevelsLabel);
+    m_uploadLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_uploadLabel->limitLabelWidth(m_uploadStatsNode->getContentWidth(), 0.6f, 0.2f);
+    m_uploadLabel->setPosition({m_uploadStatsNode->getContentSize().width / 2.f, m_uploadStatsNode->getContentSize().height / 2.f - 5.f});
+    m_uploadStatsNode->addChild(m_uploadLabel);
 
-    m_pendingUploadsLabel = CCLabelBMFont::create("Pending:\n-", "bigFont.fnt");
-    m_pendingUploadsLabel->setScale(0.39f);
-    m_pendingUploadsLabel->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-    m_pendingUploadsLabel->setAnchorPoint({0.f, 1.f});
-    m_pendingUploadsLabel->setPosition({195.f, 0.f});
-    m_uploadStatsNode->addChild(m_pendingUploadsLabel);
+    // accepted
+    m_acceptanceUploadsNode = CCNode::create();
+    m_acceptanceUploadsNode->setContentSize({140.f, 60.f});
+    m_acceptanceUploadsNode->setAnchorPoint({0.5f, 0.5f});
+    m_acceptanceUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 180.f});
+    this->addChild(m_acceptanceUploadsNode);
+
+    auto acceptanceStatsBg2 = NineSlice::create("square02_001.png");
+    acceptanceStatsBg2->setContentSize(m_acceptanceUploadsNode->getContentSize());
+    acceptanceStatsBg2->setOpacity(150);
+    acceptanceStatsBg2->setPosition(m_acceptanceUploadsNode->getContentSize() / 2.f);
+    m_acceptanceUploadsNode->addChild(acceptanceStatsBg2);
+
+    auto acceptanceStatsTitle2 = CCLabelBMFont::create("Accepted", "goldFont.fnt");
+    acceptanceStatsTitle2->limitLabelWidth(m_acceptanceUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    acceptanceStatsTitle2->setPosition({m_acceptanceUploadsNode->getContentSize().width / 2.f, m_acceptanceUploadsNode->getContentSize().height - 10.f});
+    m_acceptanceUploadsNode->addChild(acceptanceStatsTitle2);
+
+    m_acceptanceUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_acceptanceUploadsLabel->limitLabelWidth(m_acceptanceUploadsNode->getContentWidth(), 0.6f, 0.2f);
+    m_acceptanceUploadsLabel->setPosition({m_acceptanceUploadsNode->getContentSize().width / 2.f, m_acceptanceUploadsNode->getContentSize().height / 2.f - 5.f});
+    m_acceptanceUploadsNode->addChild(m_acceptanceUploadsLabel);
+
+    // unique levels
+    m_uniqueLevelsNode = CCNode::create();
+    m_uniqueLevelsNode->setContentSize({140.f, 60.f});
+    m_uniqueLevelsNode->setAnchorPoint({0.5f, 0.5f});
+    m_uniqueLevelsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 180.f});
+    this->addChild(m_uniqueLevelsNode);
+
+    auto uniqueLevelsBg = NineSlice::create("square02_001.png");
+    uniqueLevelsBg->setContentSize(m_uniqueLevelsNode->getContentSize());
+    uniqueLevelsBg->setOpacity(150);
+    uniqueLevelsBg->setPosition(m_uniqueLevelsNode->getContentSize() / 2.f);
+    m_uniqueLevelsNode->addChild(uniqueLevelsBg);
+
+    auto uniqueLevelsTitle = CCLabelBMFont::create("Unique Levels", "goldFont.fnt");
+    uniqueLevelsTitle->limitLabelWidth(m_uniqueLevelsNode->getContentWidth(), 0.5f, 0.2f);
+    uniqueLevelsTitle->setPosition({m_uniqueLevelsNode->getContentSize().width / 2.f, m_uniqueLevelsNode->getContentSize().height - 10.f});
+    m_uniqueLevelsNode->addChild(uniqueLevelsTitle);
+
+    m_uniqueLevelsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_uniqueLevelsLabel->limitLabelWidth(m_uniqueLevelsNode->getContentWidth(), 0.6f, 0.2f);
+    m_uniqueLevelsLabel->setPosition({m_uniqueLevelsNode->getContentSize().width / 2.f, m_uniqueLevelsNode->getContentSize().height / 2.f - 5.f});
+    m_uniqueLevelsNode->addChild(m_uniqueLevelsLabel);
+
+    // rejected uploads (upload_count - accepted_upload_count)
+    m_rejectedUploadsNode = CCNode::create();
+    m_rejectedUploadsNode->setContentSize({140.f, 60.f});
+    m_rejectedUploadsNode->setAnchorPoint({0.5f, 0.5f});
+    m_rejectedUploadsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 250.f});
+    this->addChild(m_rejectedUploadsNode);
+
+    auto rejectedUploadsBg = NineSlice::create("square02_001.png");
+    rejectedUploadsBg->setContentSize(m_rejectedUploadsNode->getContentSize());
+    rejectedUploadsBg->setOpacity(150);
+    rejectedUploadsBg->setPosition(m_rejectedUploadsNode->getContentSize() / 2.f);
+    m_rejectedUploadsNode->addChild(rejectedUploadsBg);
+
+    auto rejectedUploadsTitle = CCLabelBMFont::create("Rejected Uploads", "goldFont.fnt");
+    rejectedUploadsTitle->limitLabelWidth(m_rejectedUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    rejectedUploadsTitle->setPosition({m_rejectedUploadsNode->getContentSize().width / 2.f, m_rejectedUploadsNode->getContentSize().height - 10.f});
+    m_rejectedUploadsNode->addChild(rejectedUploadsTitle);
+
+    m_rejectedUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_rejectedUploadsLabel->limitLabelWidth(m_rejectedUploadsNode->getContentWidth(), 0.6f, 0.2f);
+    m_rejectedUploadsLabel->setPosition({m_rejectedUploadsNode->getContentSize().width / 2.f, m_rejectedUploadsNode->getContentSize().height / 2.f - 5.f});
+    m_rejectedUploadsNode->addChild(m_rejectedUploadsLabel);
+
+    // pending uploads
+    m_pendingUploadsNode = CCNode::create();
+    m_pendingUploadsNode->setContentSize({140.f, 60.f});
+    m_pendingUploadsNode->setAnchorPoint({0.5f, 0.5f});
+    m_pendingUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 250.f});
+    this->addChild(m_pendingUploadsNode);
+
+    auto pendingUploadsBg = NineSlice::create("square02_001.png");
+    pendingUploadsBg->setContentSize(m_pendingUploadsNode->getContentSize());
+    pendingUploadsBg->setOpacity(150);
+    pendingUploadsBg->setPosition(m_pendingUploadsNode->getContentSize() / 2.f);
+    m_pendingUploadsNode->addChild(pendingUploadsBg);
+
+    auto pendingUploadsTitle = CCLabelBMFont::create("Pending Uploads", "goldFont.fnt");
+    pendingUploadsTitle->limitLabelWidth(m_pendingUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    pendingUploadsTitle->setPosition({m_pendingUploadsNode->getContentSize().width / 2.f, m_pendingUploadsNode->getContentSize().height - 10.f});
+    m_pendingUploadsNode->addChild(pendingUploadsTitle);
+
+    m_pendingUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_pendingUploadsLabel->limitLabelWidth(m_pendingUploadsNode->getContentWidth(), 0.6f, 0.2f);
+    m_pendingUploadsLabel->setPosition({m_pendingUploadsNode->getContentSize().width / 2.f, m_pendingUploadsNode->getContentSize().height / 2.f - 5.f});
+    m_pendingUploadsNode->addChild(m_pendingUploadsLabel);
+
+    // replaced thumbnails (accepted_upload_count - accepted_level_count)
+    m_replacedThumbnailsNode = CCNode::create();
+    m_replacedThumbnailsNode->setContentSize({140.f, 60.f});
+    m_replacedThumbnailsNode->setAnchorPoint({0.5f, 0.5f});
+    m_replacedThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 250.f});
+    this->addChild(m_replacedThumbnailsNode);
+
+    auto replacedThumbnailsBg = NineSlice::create("square02_001.png");
+    replacedThumbnailsBg->setContentSize(m_replacedThumbnailsNode->getContentSize());
+    replacedThumbnailsBg->setOpacity(150);
+    replacedThumbnailsBg->setPosition(m_replacedThumbnailsNode->getContentSize() / 2.f);
+    m_replacedThumbnailsNode->addChild(replacedThumbnailsBg);
+
+    auto replacedThumbnailsTitle = CCLabelBMFont::create("Replaced Thumbnails", "goldFont.fnt");
+    replacedThumbnailsTitle->limitLabelWidth(m_replacedThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
+    replacedThumbnailsTitle->setPosition({m_replacedThumbnailsNode->getContentSize().width / 2.f, m_replacedThumbnailsNode->getContentSize().height - 10.f});
+    m_replacedThumbnailsNode->addChild(replacedThumbnailsTitle);
+
+    m_replacedThumbnailsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_replacedThumbnailsLabel->limitLabelWidth(m_replacedThumbnailsNode->getContentWidth(), 0.6f, 0.2f);
+    m_replacedThumbnailsLabel->setPosition({m_replacedThumbnailsNode->getContentSize().width / 2.f, m_replacedThumbnailsNode->getContentSize().height / 2.f - 5.f});
+    m_replacedThumbnailsNode->addChild(m_replacedThumbnailsLabel);
 
     this->fetchDashboard();
     this->setKeypadEnabled(true);
@@ -141,33 +274,45 @@ void ThumbnailDashboardLayer::fetchDashboard() {
             return;
         }
 
-        auto acceptedLevelCount = data["accepted_level_count"].asInt().unwrapOrDefault();
-        auto acceptedUploadCount = data["accepted_upload_count"].asInt().unwrapOrDefault();
-        auto accountId = data["account_id"].asInt().unwrapOrDefault();
-        auto activeThumbnailCount = data["active_thumbnail_count"].asInt().unwrapOrDefault();
-        auto id = data["id"].asInt().unwrapOrDefault();
-        auto levelCount = data["level_count"].asInt().unwrapOrDefault();
-        auto pendingUploadCount = data["pending_upload_count"].asInt().unwrapOrDefault();
-        auto role = data["role"].asString().unwrapOr("unknown");
-        auto uploadCount = data["upload_count"].asInt().unwrapOrDefault();
-        auto username = data["username"].asString().unwrapOr("unknown");
+        int acceptedLevelCount = data["accepted_level_count"].asInt().unwrapOrDefault();
+        int acceptedUploadCount = data["accepted_upload_count"].asInt().unwrapOrDefault();
+        int accountId = data["account_id"].asInt().unwrapOrDefault();
+        int activeThumbnailCount = data["active_thumbnail_count"].asInt().unwrapOrDefault();
+        int id = data["id"].asInt().unwrapOrDefault();
+        int levelCount = data["level_count"].asInt().unwrapOrDefault();
+        int pendingUploadCount = data["pending_upload_count"].asInt().unwrapOrDefault();
+        std::string role = data["role"].asString().unwrapOr("unknown");
+        int uploadCount = data["upload_count"].asInt().unwrapOrDefault();
+        std::string username = data["username"].asString().unwrapOr("unknown");
 
         m_title->setString(fmt::format("Welcome, {}!", username).c_str());
+        int rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
         if (m_acceptanceLabel) {
-            auto rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
-            m_acceptanceLabel->setString(fmt::format("Acceptance Rate:\n{}%", rate).c_str());
+            m_acceptanceLabel->setTargetCount(rate);
         }
         if (m_activeThumbnailsLabel) {
-            m_activeThumbnailsLabel->setString(fmt::format("Active Thumbnails:\n{}", activeThumbnailCount).c_str());
+            m_activeThumbnailsLabel->setTargetCount(activeThumbnailCount);
         }
-        if (m_acceptedUploadsLabel) {
-            m_acceptedUploadsLabel->setString(fmt::format("Accepted:\n{}", acceptedUploadCount).c_str());
+        if (m_uploadLabel) {
+            m_uploadLabel->setTargetCount(uploadCount);
         }
-        if (m_acceptedLevelsLabel) {
-            m_acceptedLevelsLabel->setString(fmt::format("Unique Levels:\n{}", acceptedLevelCount).c_str());
+        if (m_progressBar) {
+            m_progressBar->updateProgress(static_cast<float>(rate));
+        }
+        if (m_acceptanceUploadsLabel) {
+            m_acceptanceUploadsLabel->setTargetCount(acceptedUploadCount);
+        }
+        if (m_uniqueLevelsLabel) {
+            m_uniqueLevelsLabel->setTargetCount(levelCount);
+        }
+        if (m_rejectedUploadsLabel) {
+            m_rejectedUploadsLabel->setTargetCount(uploadCount - acceptedUploadCount);
         }
         if (m_pendingUploadsLabel) {
-            m_pendingUploadsLabel->setString(fmt::format("Pending:\n{}", pendingUploadCount).c_str());
+            m_pendingUploadsLabel->setTargetCount(pendingUploadCount);
+        }
+        if (m_replacedThumbnailsLabel) {
+            m_replacedThumbnailsLabel->setTargetCount(acceptedUploadCount - activeThumbnailCount);
         }
     });
 }

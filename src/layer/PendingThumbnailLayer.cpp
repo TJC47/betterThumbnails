@@ -318,6 +318,10 @@ void PendingThumbnailLayer::onReload(CCObject*) {
     fetchPage(m_currentPage);
 }
 
+void PendingThumbnailLayer::reloadPage() {
+    fetchPage(m_currentPage);
+}
+
 void PendingThumbnailLayer::updateUI() {
     if (!m_listNode)
         return;
@@ -375,6 +379,7 @@ void PendingThumbnailLayer::updateUI() {
             "",
             "",
             ThumbnailNode::Mode::PendingThumbnail);
+        thumbNode->setPendingLayer(this);
         thumbNode->setAnchorPoint({0.5f, 1.0f});
         m_listNode->addCell(thumbNode);
     }

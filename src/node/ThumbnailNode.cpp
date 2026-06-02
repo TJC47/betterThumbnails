@@ -1,4 +1,5 @@
 #include "ThumbnailNode.hpp"
+#include "../layer/PendingThumbnailLayer.hpp"
 
 #include <Geode/Geode.hpp>
 #include <Geode/loader/Mod.hpp>
@@ -107,7 +108,22 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     }
 
     auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote, m_accountId)));
+        auto pendingLayer = m_pendingLayer;
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(
+            m_thumbId,
+            m_userId,
+            m_username,
+            m_levelId,
+            m_accepted,
+            m_uploadTime,
+            m_replacement,
+            m_submissionNote,
+            m_accountId,
+            [pendingLayer]() {
+                if (pendingLayer) {
+                    pendingLayer->reloadPage();
+                }
+            })));
     });
 
     auto playBtn = geode::Button::createWithNode(ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
@@ -166,6 +182,10 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     });
 
     return true;
+}
+
+void ThumbnailNode::setPendingLayer(PendingThumbnailLayer* pendingLayer) {
+    this->m_pendingLayer = pendingLayer;
 }
 
 void ThumbnailNode::fetchLevel() {

@@ -9,6 +9,8 @@
 
 using namespace geode::prelude;
 
+class PendingThumbnailLayer;
+
 class ThumbnailNode : public cocos2d::CCLayer {
 public:
     async::TaskHolder<web::WebResponse> m_listener;
@@ -26,6 +28,7 @@ public:
     std::string m_acceptedTime;
     bool m_showViewButton = true;
     std::string m_thumbnailUrl;
+    PendingThumbnailLayer* m_pendingLayer = nullptr;
     enum class Mode {
         MyThumbnail,
         PendingThumbnail,
@@ -43,4 +46,5 @@ public:
     bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time = "", std::string thumbnailUrl = "", Mode mode = Mode::MyThumbnail);
     void fetchLevel();
     void updateBadges();
+    void setPendingLayer(PendingThumbnailLayer* pendingLayer);
 };
