@@ -29,7 +29,7 @@ bool PendingThumbnailLayer::init() {
 
     float listWidth = 356.f;
     float listHeight = 220.f;
-    m_listNode = cue::ListNode::create({listWidth, listHeight}, {0, 0, 0, 100}, cue::ListBorderStyle::SlimLevels);
+    m_listNode = cue::ListNode::create({listWidth, listHeight}, {191, 114, 62, 255}, cue::ListBorderStyle::SlimLevels);
     m_listNode->setAnchorPoint({0.5f, 0.5f});
     m_listNode->setPosition({screenSize.width / 2.f, screenSize.height / 2.f - 10.f});
     m_listNode->getScrollLayer()->m_contentLayer->setLayout(

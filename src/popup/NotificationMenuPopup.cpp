@@ -15,13 +15,14 @@ NotificationMenuPopup* NotificationMenuPopup::create() {
 }
 
 bool NotificationMenuPopup::init() {
-    if (!Popup::init(440.f, 290.f))
+    if (!Popup::init(440.f, 280.f))
         return false;
 
     setTitle("All Notifications");
 
-    m_listNode = cue::ListNode::create({m_mainLayer->getContentWidth() - 40.f, m_mainLayer->getContentHeight() - 100.f}, {0, 0, 0, 0}, cue::ListBorderStyle::Comments);
-    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f - 5.f, m_mainLayer->getContentSize().height / 2.f});
+    m_listNode = cue::ListNode::create({m_mainLayer->getContentWidth() - 40.f, m_mainLayer->getContentHeight() - 85.f}, {191, 114, 62, 255}, cue::ListBorderStyle::Comments);
+    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f - 5.f, m_mainLayer->getContentSize().height - 40.f});
+    m_listNode->setAnchorPoint({0.5f, 1.f});
     m_listNode->getScrollLayer()->m_contentLayer->setLayout(
         ColumnLayout::create()
             ->setGap(0.f)

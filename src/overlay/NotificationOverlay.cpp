@@ -173,20 +173,22 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
                 if (entry.isToast) {
                     // @geode-ignore(unknown-resource)
                     FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif03.ogg");
-                    NotificationIcon icon = NotificationIcon::None;
                     if (entry.type == "success") {
-                        icon = NotificationIcon::Success;
+                        Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), NotificationIcon::Success)->show();
                     } else if (entry.type == "warn") {
-                        icon = NotificationIcon::Warning;
+                        Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), NotificationIcon::Warning)->show();
                     } else if (entry.type == "error") {
-                        icon = NotificationIcon::Error;
+                        Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), NotificationIcon::Error)->show();
                     } else if (entry.type == "critical") {
-                        icon = NotificationIcon::Error;
+                        // @geode-ignore(unknown-resource)
+                        auto icon = CCSprite::createWithSpriteFrameName("geode.loader/info-alert.png");
+                        Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), icon)->show();
+                    } else {
+                        Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), NotificationIcon::None)->show();
                     }
-                    Notification::create(fmt::format("[BetterThumbs]: {}", entry.body).c_str(), icon)->show();
-                } else {
-                    visibleEntries.push_back(entry);
+                    continue;
                 }
+                visibleEntries.push_back(entry);
             }
 
             if (!visibleEntries.empty()) {

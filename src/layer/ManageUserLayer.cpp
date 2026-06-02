@@ -79,7 +79,7 @@ bool ManageUserLayer::init() {
     auto listWidth = 356.f;
     auto listHeight = 220.f;
     this->m_listNode = cue::ListNode::create(
-        {listWidth, listHeight}, {0, 0, 0, 90}, cue::ListBorderStyle::Levels);
+        {listWidth, listHeight}, {191, 114, 62, 255}, cue::ListBorderStyle::Levels);
     this->m_listNode->setAnchorPoint({0.5f, 0.5f});
     this->m_listNode->setPosition({screenSize.width / 2.f, screenSize.height / 2.f - 5.f});
     this->m_listNode->getScrollLayer()->m_contentLayer->setLayout(

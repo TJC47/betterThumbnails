@@ -4,6 +4,7 @@
 #include <Geode/ui/General.hpp>
 #include <Geode/ui/Notification.hpp>
 #include <Geode/ui/ProgressBar.hpp>
+#include <cue/LoadingCircle.hpp>
 
 using namespace geode::prelude;
 
@@ -39,7 +40,7 @@ bool ThumbnailDashboardLayer::init() {
     addBackButton(this, BackButtonStyle::Green);
 
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
-    m_title = CCLabelBMFont::create("Welcome...", "goldFont.fnt");
+    m_title = CCLabelBMFont::create("-", "goldFont.fnt");
     m_title->setAnchorPoint({0.5f, 1.f});
     m_title->setPosition({screenSize.width / 2.f, screenSize.height - 20.f});
     m_title->setScale(0.8f);
@@ -248,22 +249,39 @@ void ThumbnailDashboardLayer::keyBackClicked() {
 }
 
 void ThumbnailDashboardLayer::fetchDashboard() {
+    auto overlay = CCBlockLayer::create();
+    overlay->setPosition({0, 0});
+    auto loadingCircle = cue::LoadingCircle::create(true);
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    loadingCircle->setPosition({winSize.width / 2.f, winSize.height / 2.f});
+    overlay->addChild(loadingCircle, 2);
+    this->addChild(overlay, 100);
+    addBackButton(overlay, BackButtonStyle::Blue);
+
+    auto removeOverlay = [overlay]() {
+        if (overlay) {
+            overlay->removeFromParent();
+        }
+    };
+
     auto req = web::WebRequest();
     auto authHeader = fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token"));
     req.header("Authorization", authHeader.c_str());
     auto task = req.get("https://levelthumbs.prevter.me/user/me");
 
-    m_listener.spawn(std::move(task), [this](web::WebResponse res) {
+    m_listener.spawn(std::move(task), [this, removeOverlay](web::WebResponse res) {
         if (res.code() < 200 || res.code() > 299) {
             auto message = res.string().unwrapOr("Unknown error");
             auto notificationText = std::string("Dashboard fetch failed: ") + message;
             Notification::create(notificationText.c_str(), NotificationIcon::Error)->show();
+            removeOverlay();
             return;
         }
 
         auto jsonRes = res.json();
         if (!jsonRes.isOk()) {
             Notification::create("Failed to parse dashboard response.", NotificationIcon::Error)->show();
+            removeOverlay();
             return;
         }
 
@@ -271,6 +289,7 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         auto data = json["data"];
         if (!data.isObject()) {
             Notification::create("Dashboard response missing data.", NotificationIcon::Error)->show();
+            removeOverlay();
             return;
         }
 
@@ -285,7 +304,7 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         int uploadCount = data["upload_count"].asInt().unwrapOrDefault();
         std::string username = data["username"].asString().unwrapOr("unknown");
 
-        m_title->setString(fmt::format("Welcome, {}!", username).c_str());
+        m_title->setString(fmt::format("{}'s Thumbnails Dashboard", username).c_str());
         int rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
         if (m_acceptanceLabel) {
             m_acceptanceLabel->setTargetCount(rate);
@@ -314,5 +333,6 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         if (m_replacedThumbnailsLabel) {
             m_replacedThumbnailsLabel->setTargetCount(acceptedUploadCount - activeThumbnailCount);
         }
+        removeOverlay();
     });
 }
