@@ -165,6 +165,7 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
         }
 
         if (shouldDisplay) {
+            auto pendingNotifications = CCArray::create();
             std::vector<NotificationMenuPopup::NotificationEntry> visibleEntries;
             for (auto const& entry : newNotifications) {
                 if (!entry.shouldShowNow) {
@@ -188,10 +189,24 @@ void NotificationOverlay::processNotificationResponse(web::WebResponse res) {
                     }
                     continue;
                 }
+
+                auto notifNode = NotificationNode::create(entry.title, entry.body, entry.type, [this, entry]() {
+                    this->showNotificationList(std::vector<NotificationMenuPopup::NotificationEntry>{entry});
+                });
+                if (notifNode) {
+                    pendingNotifications->addObject(notifNode);
+                }
                 visibleEntries.push_back(entry);
             }
 
-            if (!visibleEntries.empty()) {
+            if (pendingNotifications->count() > 0) {
+                for (unsigned i = 0; i < pendingNotifications->count(); ++i) {
+                    auto notifNode = static_cast<NotificationNode*>(pendingNotifications->objectAtIndex(i));
+                    if (notifNode) {
+                        this->addChild(notifNode, 100);
+                    }
+                }
+            } else if (!visibleEntries.empty()) {
                 std::string notifyTitle;
                 std::string notifyMessage;
                 std::string notifyType = "info";

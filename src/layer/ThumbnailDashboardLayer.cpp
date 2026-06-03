@@ -5,6 +5,7 @@
 #include <Geode/ui/Notification.hpp>
 #include <Geode/ui/ProgressBar.hpp>
 #include <cue/LoadingCircle.hpp>
+#include "Geode/ui/BasedButtonSprite.hpp"
 
 using namespace geode::prelude;
 
@@ -48,7 +49,7 @@ bool ThumbnailDashboardLayer::init() {
     // acceptance stats
     m_acceptanceStatsNode = CCNode::create();
     m_acceptanceStatsNode->setAnchorPoint({0.5f, 0.5f});
-    m_acceptanceStatsNode->setContentSize({180.f, 60.f});
+    m_acceptanceStatsNode->setContentSize({140.f, 60.f});
     m_acceptanceStatsNode->setPosition({screenSize.width / 2.f - 100.f, screenSize.height - 80.f});
     this->addChild(m_acceptanceStatsNode);
 
@@ -58,10 +59,10 @@ bool ThumbnailDashboardLayer::init() {
     acceptanceStatsBg->setPosition(m_acceptanceStatsNode->getContentSize() / 2.f);
     m_acceptanceStatsNode->addChild(acceptanceStatsBg);
 
-    auto acceptanceStatsTitle = CCLabelBMFont::create("Acceptance Rate", "goldFont.fnt");
-    acceptanceStatsTitle->limitLabelWidth(m_acceptanceStatsNode->getContentWidth(), 0.5f, 0.2f);
-    acceptanceStatsTitle->setPosition({m_acceptanceStatsNode->getContentSize().width / 2.f, m_acceptanceStatsNode->getContentSize().height - 10.f});
-    m_acceptanceStatsNode->addChild(acceptanceStatsTitle);
+    m_acceptanceTitle = CCLabelBMFont::create("Acceptance Rate", "goldFont.fnt");
+    m_acceptanceTitle->limitLabelWidth(m_acceptanceStatsNode->getContentWidth(), 0.5f, 0.2f);
+    m_acceptanceTitle->setPosition({m_acceptanceStatsNode->getContentSize().width / 2.f, m_acceptanceStatsNode->getContentSize().height - 10.f});
+    m_acceptanceStatsNode->addChild(m_acceptanceTitle);
 
     m_acceptanceLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_acceptanceLabel->limitLabelWidth(m_acceptanceStatsNode->getContentWidth(), 0.6f, 0.2f);
@@ -70,7 +71,7 @@ bool ThumbnailDashboardLayer::init() {
 
     // active thumbnails
     m_activeThumbnailsNode = CCNode::create();
-    m_activeThumbnailsNode->setContentSize({180.f, 60.f});
+    m_activeThumbnailsNode->setContentSize({140.f, 60.f});
     m_activeThumbnailsNode->setAnchorPoint({0.5f, 0.5f});
     m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 100.f, screenSize.height - 80.f});
     this->addChild(m_activeThumbnailsNode);
@@ -81,10 +82,10 @@ bool ThumbnailDashboardLayer::init() {
     activeThumbnailsBg->setPosition(m_activeThumbnailsNode->getContentSize() / 2.f);
     m_activeThumbnailsNode->addChild(activeThumbnailsBg);
 
-    auto activeThumbnailsTitle = CCLabelBMFont::create("Active Thumbnails", "goldFont.fnt");
-    activeThumbnailsTitle->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
-    activeThumbnailsTitle->setPosition({m_activeThumbnailsNode->getContentSize().width / 2.f, m_activeThumbnailsNode->getContentSize().height - 10.f});
-    m_activeThumbnailsNode->addChild(activeThumbnailsTitle);
+    m_activeThumbnailsTitle = CCLabelBMFont::create("Active Thumbnails", "goldFont.fnt");
+    m_activeThumbnailsTitle->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
+    m_activeThumbnailsTitle->setPosition({m_activeThumbnailsNode->getContentSize().width / 2.f, m_activeThumbnailsNode->getContentSize().height - 10.f});
+    m_activeThumbnailsNode->addChild(m_activeThumbnailsTitle);
 
     m_activeThumbnailsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_activeThumbnailsLabel->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.6f, 0.2f);
@@ -113,10 +114,10 @@ bool ThumbnailDashboardLayer::init() {
     uploadStatsBg->setPosition(m_uploadStatsNode->getContentSize() / 2.f);
     m_uploadStatsNode->addChild(uploadStatsBg);
 
-    auto uploadStatsTitle = CCLabelBMFont::create("Uploads", "goldFont.fnt");
-    uploadStatsTitle->limitLabelWidth(m_uploadStatsNode->getContentWidth(), 0.5f, 0.2f);
-    uploadStatsTitle->setPosition({m_uploadStatsNode->getContentSize().width / 2.f, m_uploadStatsNode->getContentSize().height - 10.f});
-    m_uploadStatsNode->addChild(uploadStatsTitle);
+    m_uploadTitle = CCLabelBMFont::create("Uploads", "goldFont.fnt");
+    m_uploadTitle->limitLabelWidth(m_uploadStatsNode->getContentWidth(), 0.5f, 0.2f);
+    m_uploadTitle->setPosition({m_uploadStatsNode->getContentSize().width / 2.f, m_uploadStatsNode->getContentSize().height - 10.f});
+    m_uploadStatsNode->addChild(m_uploadTitle);
 
     m_uploadLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_uploadLabel->limitLabelWidth(m_uploadStatsNode->getContentWidth(), 0.6f, 0.2f);
@@ -136,10 +137,10 @@ bool ThumbnailDashboardLayer::init() {
     acceptanceStatsBg2->setPosition(m_acceptanceUploadsNode->getContentSize() / 2.f);
     m_acceptanceUploadsNode->addChild(acceptanceStatsBg2);
 
-    auto acceptanceStatsTitle2 = CCLabelBMFont::create("Accepted", "goldFont.fnt");
-    acceptanceStatsTitle2->limitLabelWidth(m_acceptanceUploadsNode->getContentWidth(), 0.5f, 0.2f);
-    acceptanceStatsTitle2->setPosition({m_acceptanceUploadsNode->getContentSize().width / 2.f, m_acceptanceUploadsNode->getContentSize().height - 10.f});
-    m_acceptanceUploadsNode->addChild(acceptanceStatsTitle2);
+    m_acceptanceUploadsTitle = CCLabelBMFont::create("Accepted", "goldFont.fnt");
+    m_acceptanceUploadsTitle->limitLabelWidth(m_acceptanceUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    m_acceptanceUploadsTitle->setPosition({m_acceptanceUploadsNode->getContentSize().width / 2.f, m_acceptanceUploadsNode->getContentSize().height - 10.f});
+    m_acceptanceUploadsNode->addChild(m_acceptanceUploadsTitle);
 
     m_acceptanceUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_acceptanceUploadsLabel->limitLabelWidth(m_acceptanceUploadsNode->getContentWidth(), 0.6f, 0.2f);
@@ -159,10 +160,10 @@ bool ThumbnailDashboardLayer::init() {
     uniqueLevelsBg->setPosition(m_uniqueLevelsNode->getContentSize() / 2.f);
     m_uniqueLevelsNode->addChild(uniqueLevelsBg);
 
-    auto uniqueLevelsTitle = CCLabelBMFont::create("Unique Levels", "goldFont.fnt");
-    uniqueLevelsTitle->limitLabelWidth(m_uniqueLevelsNode->getContentWidth(), 0.5f, 0.2f);
-    uniqueLevelsTitle->setPosition({m_uniqueLevelsNode->getContentSize().width / 2.f, m_uniqueLevelsNode->getContentSize().height - 10.f});
-    m_uniqueLevelsNode->addChild(uniqueLevelsTitle);
+    m_uniqueLevelsTitle = CCLabelBMFont::create("Unique Levels", "goldFont.fnt");
+    m_uniqueLevelsTitle->limitLabelWidth(m_uniqueLevelsNode->getContentWidth(), 0.5f, 0.2f);
+    m_uniqueLevelsTitle->setPosition({m_uniqueLevelsNode->getContentSize().width / 2.f, m_uniqueLevelsNode->getContentSize().height - 10.f});
+    m_uniqueLevelsNode->addChild(m_uniqueLevelsTitle);
 
     m_uniqueLevelsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_uniqueLevelsLabel->limitLabelWidth(m_uniqueLevelsNode->getContentWidth(), 0.6f, 0.2f);
@@ -182,10 +183,10 @@ bool ThumbnailDashboardLayer::init() {
     rejectedUploadsBg->setPosition(m_rejectedUploadsNode->getContentSize() / 2.f);
     m_rejectedUploadsNode->addChild(rejectedUploadsBg);
 
-    auto rejectedUploadsTitle = CCLabelBMFont::create("Rejected Uploads", "goldFont.fnt");
-    rejectedUploadsTitle->limitLabelWidth(m_rejectedUploadsNode->getContentWidth(), 0.5f, 0.2f);
-    rejectedUploadsTitle->setPosition({m_rejectedUploadsNode->getContentSize().width / 2.f, m_rejectedUploadsNode->getContentSize().height - 10.f});
-    m_rejectedUploadsNode->addChild(rejectedUploadsTitle);
+    m_rejectedUploadsTitle = CCLabelBMFont::create("Rejected Uploads", "goldFont.fnt");
+    m_rejectedUploadsTitle->limitLabelWidth(m_rejectedUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    m_rejectedUploadsTitle->setPosition({m_rejectedUploadsNode->getContentSize().width / 2.f, m_rejectedUploadsNode->getContentSize().height - 10.f});
+    m_rejectedUploadsNode->addChild(m_rejectedUploadsTitle);
 
     m_rejectedUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_rejectedUploadsLabel->limitLabelWidth(m_rejectedUploadsNode->getContentWidth(), 0.6f, 0.2f);
@@ -205,10 +206,10 @@ bool ThumbnailDashboardLayer::init() {
     pendingUploadsBg->setPosition(m_pendingUploadsNode->getContentSize() / 2.f);
     m_pendingUploadsNode->addChild(pendingUploadsBg);
 
-    auto pendingUploadsTitle = CCLabelBMFont::create("Pending Uploads", "goldFont.fnt");
-    pendingUploadsTitle->limitLabelWidth(m_pendingUploadsNode->getContentWidth(), 0.5f, 0.2f);
-    pendingUploadsTitle->setPosition({m_pendingUploadsNode->getContentSize().width / 2.f, m_pendingUploadsNode->getContentSize().height - 10.f});
-    m_pendingUploadsNode->addChild(pendingUploadsTitle);
+    m_pendingUploadsTitle = CCLabelBMFont::create("Pending Uploads", "goldFont.fnt");
+    m_pendingUploadsTitle->limitLabelWidth(m_pendingUploadsNode->getContentWidth(), 0.5f, 0.2f);
+    m_pendingUploadsTitle->setPosition({m_pendingUploadsNode->getContentSize().width / 2.f, m_pendingUploadsNode->getContentSize().height - 10.f});
+    m_pendingUploadsNode->addChild(m_pendingUploadsTitle);
 
     m_pendingUploadsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_pendingUploadsLabel->limitLabelWidth(m_pendingUploadsNode->getContentWidth(), 0.6f, 0.2f);
@@ -228,17 +229,101 @@ bool ThumbnailDashboardLayer::init() {
     replacedThumbnailsBg->setPosition(m_replacedThumbnailsNode->getContentSize() / 2.f);
     m_replacedThumbnailsNode->addChild(replacedThumbnailsBg);
 
-    auto replacedThumbnailsTitle = CCLabelBMFont::create("Replaced Thumbnails", "goldFont.fnt");
-    replacedThumbnailsTitle->limitLabelWidth(m_replacedThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
-    replacedThumbnailsTitle->setPosition({m_replacedThumbnailsNode->getContentSize().width / 2.f, m_replacedThumbnailsNode->getContentSize().height - 10.f});
-    m_replacedThumbnailsNode->addChild(replacedThumbnailsTitle);
+    m_replacedThumbnailsTitle = CCLabelBMFont::create("Replaced Thumbnails", "goldFont.fnt");
+    m_replacedThumbnailsTitle->limitLabelWidth(m_replacedThumbnailsNode->getContentWidth(), 0.5f, 0.2f);
+    m_replacedThumbnailsTitle->setPosition({m_replacedThumbnailsNode->getContentSize().width / 2.f, m_replacedThumbnailsNode->getContentSize().height - 10.f});
+    m_replacedThumbnailsNode->addChild(m_replacedThumbnailsTitle);
 
     m_replacedThumbnailsLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
     m_replacedThumbnailsLabel->limitLabelWidth(m_replacedThumbnailsNode->getContentWidth(), 0.6f, 0.2f);
     m_replacedThumbnailsLabel->setPosition({m_replacedThumbnailsNode->getContentSize().width / 2.f, m_replacedThumbnailsNode->getContentSize().height / 2.f - 5.f});
     m_replacedThumbnailsNode->addChild(m_replacedThumbnailsLabel);
 
+    // users total
+    m_usersTotalNode = CCNode::create();
+    m_usersTotalNode->setContentSize({140.f, 60.f});
+    m_usersTotalNode->setAnchorPoint({0.5f, 0.5f});
+    m_usersTotalNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 280.f});
+    this->addChild(m_usersTotalNode);
+    m_usersTotalNode->setVisible(false);
+
+    auto usersTotalBg = NineSlice::create("square02_001.png");
+    usersTotalBg->setContentSize(m_usersTotalNode->getContentSize());
+    usersTotalBg->setOpacity(150);
+    usersTotalBg->setPosition(m_usersTotalNode->getContentSize() / 2.f);
+    m_usersTotalNode->addChild(usersTotalBg);
+
+    m_usersTotalTitle = CCLabelBMFont::create("Total Users", "goldFont.fnt");
+    m_usersTotalTitle->limitLabelWidth(m_usersTotalNode->getContentWidth(), 0.5f, 0.2f);
+    m_usersTotalTitle->setPosition({m_usersTotalNode->getContentSize().width / 2.f, m_usersTotalNode->getContentSize().height - 10.f});
+    m_usersTotalNode->addChild(m_usersTotalTitle);
+
+    m_usersTotalLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_usersTotalLabel->limitLabelWidth(m_usersTotalNode->getContentWidth(), 0.6f, 0.2f);
+    m_usersTotalLabel->setPosition({m_usersTotalNode->getContentSize().width / 2.f, m_usersTotalNode->getContentSize().height / 2.f - 5.f});
+    m_usersTotalNode->addChild(m_usersTotalLabel);
+
+    // users per month
+    m_usersPerMonthNode = CCNode::create();
+    m_usersPerMonthNode->setContentSize({140.f, 60.f});
+    m_usersPerMonthNode->setAnchorPoint({0.5f, 0.5f});
+    m_usersPerMonthNode->setPosition({screenSize.width / 2.f, screenSize.height - 280.f});
+    this->addChild(m_usersPerMonthNode);
+    m_usersPerMonthNode->setVisible(false);
+
+    auto usersPerMonthBg = NineSlice::create("square02_001.png");
+    usersPerMonthBg->setContentSize(m_usersPerMonthNode->getContentSize());
+    usersPerMonthBg->setOpacity(150);
+    usersPerMonthBg->setPosition(m_usersPerMonthNode->getContentSize() / 2.f);
+    m_usersPerMonthNode->addChild(usersPerMonthBg);
+
+    m_usersPerMonthTitle = CCLabelBMFont::create("Users/Month", "goldFont.fnt");
+    m_usersPerMonthTitle->limitLabelWidth(m_usersPerMonthNode->getContentWidth(), 0.5f, 0.2f);
+    m_usersPerMonthTitle->setPosition({m_usersPerMonthNode->getContentSize().width / 2.f, m_usersPerMonthNode->getContentSize().height - 10.f});
+    m_usersPerMonthNode->addChild(m_usersPerMonthTitle);
+
+    m_usersPerMonthLabel = CCCounterLabel::create(0, "bigFont.fnt", FormatterType::Integer);
+    m_usersPerMonthLabel->limitLabelWidth(m_usersPerMonthNode->getContentWidth(), 0.6f, 0.2f);
+    m_usersPerMonthLabel->setPosition({m_usersPerMonthNode->getContentSize().width / 2.f, m_usersPerMonthNode->getContentSize().height / 2.f - 5.f});
+    m_usersPerMonthNode->addChild(m_usersPerMonthLabel);
+
+    // storage
+    m_storageNode = CCNode::create();
+    m_storageNode->setContentSize({140.f, 60.f});
+    m_storageNode->setAnchorPoint({0.5f, 0.5f});
+    m_storageNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 280.f});
+    this->addChild(m_storageNode);
+    m_storageNode->setVisible(false);
+
+    auto storageBg = NineSlice::create("square02_001.png");
+    storageBg->setContentSize(m_storageNode->getContentSize());
+    storageBg->setOpacity(150);
+    storageBg->setPosition(m_storageNode->getContentSize() / 2.f);
+    m_storageNode->addChild(storageBg);
+
+    m_storageTitle = CCLabelBMFont::create("Storage Used", "goldFont.fnt");
+    m_storageTitle->limitLabelWidth(m_storageNode->getContentWidth(), 0.5f, 0.2f);
+    m_storageTitle->setPosition({m_storageNode->getContentSize().width / 2.f, m_storageNode->getContentSize().height - 10.f});
+    m_storageNode->addChild(m_storageTitle);
+
+    m_storageLabel = CCLabelBMFont::create("0 B", "bigFont.fnt");
+    m_storageLabel->limitLabelWidth(m_storageNode->getContentWidth(), 0.6f, 0.2f);
+    m_storageLabel->setPosition({m_storageNode->getContentSize().width / 2.f, m_storageNode->getContentSize().height / 2.f - 5.f});
+    m_storageNode->addChild(m_storageLabel);
+
+    auto menu = CCMenu::create();
+    menu->setPosition({0, 0});
+    this->addChild(menu);
+
+    auto statsBtnSprite = CircleButtonSprite::createWithSprite("BT_meIcon.png"_spr, .8f, CircleBaseColor::Green, CircleBaseSize::Medium);
+    auto statsBtnSpriteOn = CircleButtonSprite::createWithSprite("BT_globalIcon.png"_spr, 1.f, CircleBaseColor::Green, CircleBaseSize::Medium);
+
+    m_statsToggler = CCMenuItemToggler::create(statsBtnSprite, statsBtnSpriteOn, this, menu_selector(ThumbnailDashboardLayer::onToggleStats));
+    m_statsToggler->setPosition({screenSize.width - 35.f, screenSize.height - 35.f});
+    menu->addChild(m_statsToggler);
+
     this->fetchDashboard();
+    this->fetchGlobalStats();
     this->setKeypadEnabled(true);
     return true;
 }
@@ -303,35 +388,118 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         int uploadCount = data["upload_count"].asInt().unwrapOrDefault();
         std::string username = data["username"].asString().unwrapOr("unknown");
 
-        m_title->setString(fmt::format("{}'s Thumbnails Dashboard", username).c_str());
-        int rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
-        if (m_acceptanceLabel) {
-            m_acceptanceLabel->setTargetCount(rate);
-        }
-        if (m_activeThumbnailsLabel) {
-            m_activeThumbnailsLabel->setTargetCount(activeThumbnailCount);
-        }
-        if (m_uploadLabel) {
-            m_uploadLabel->setTargetCount(uploadCount);
-        }
-        if (m_progressBar) {
-            m_progressBar->updateProgress(static_cast<float>(rate));
-        }
-        if (m_acceptanceUploadsLabel) {
-            m_acceptanceUploadsLabel->setTargetCount(acceptedUploadCount);
-        }
-        if (m_uniqueLevelsLabel) {
-            m_uniqueLevelsLabel->setTargetCount(levelCount);
-        }
-        if (m_rejectedUploadsLabel) {
-            m_rejectedUploadsLabel->setTargetCount(uploadCount - acceptedUploadCount);
-        }
-        if (m_pendingUploadsLabel) {
-            m_pendingUploadsLabel->setTargetCount(pendingUploadCount);
-        }
-        if (m_replacedThumbnailsLabel) {
-            m_replacedThumbnailsLabel->setTargetCount(acceptedUploadCount - activeThumbnailCount);
-        }
+        m_userStats.levelCount = levelCount;
+        m_userStats.uploadCount = uploadCount;
+        m_userStats.acceptedUploadCount = acceptedUploadCount;
+        m_userStats.activeThumbnailCount = activeThumbnailCount;
+        m_userStats.pendingUploadCount = pendingUploadCount;
+        m_userStats.username = username;
+
+        this->updateUI();
         removeOverlay();
     });
+}
+
+void ThumbnailDashboardLayer::fetchGlobalStats() {
+    auto req = web::WebRequest();
+    auto task = req.get("https://levelthumbs.prevter.me/stats");
+
+    m_statsListener.spawn(std::move(task), [this](web::WebResponse res) {
+        if (res.code() < 200 || res.code() > 299) return;
+        auto jsonRes = res.json();
+        if (!jsonRes.isOk()) return;
+        auto json = jsonRes.unwrap();
+        auto data = json["data"];
+        if (!data.isObject()) return;
+
+        m_globalStats.accepted_uploads_total = data["accepted_uploads_total"].asInt().unwrapOrDefault();
+        m_globalStats.current_pending_uploads = data["current_pending_uploads"].asInt().unwrapOrDefault();
+        m_globalStats.pending_uploads_total = data["pending_uploads_total"].asInt().unwrapOrDefault();
+        m_globalStats.storage = data["storage"].asInt().unwrapOrDefault();
+        m_globalStats.thumbnails = data["thumbnails"].asInt().unwrapOrDefault();
+        m_globalStats.total_levels = data["total_levels"].asInt().unwrapOrDefault();
+        m_globalStats.uploads_total = data["uploads_total"].asInt().unwrapOrDefault();
+        m_globalStats.users_per_month = data["users_per_month"].asInt().unwrapOrDefault();
+        m_globalStats.users_total = data["users_total"].asInt().unwrapOrDefault();
+
+        this->updateUI();
+    });
+}
+
+void ThumbnailDashboardLayer::onToggleStats(CCObject* sender) {
+    m_showingGlobalStats = !m_statsToggler->isToggled();
+    this->updateUI();
+}
+
+void ThumbnailDashboardLayer::updateUI() {
+    auto screenSize = CCDirector::sharedDirector()->getWinSize();
+    if (m_showingGlobalStats) {
+        m_title->setString("Global Thumbnails Dashboard");
+
+        int uploadCount = m_globalStats.uploads_total;
+        int acceptedUploadCount = m_globalStats.accepted_uploads_total;
+        int rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
+
+        m_acceptanceStatsNode->setVisible(false);
+        m_progressBar->setVisible(false);
+        m_activeThumbnailsNode->setPosition({screenSize.width / 2.f, screenSize.height - 80.f});
+        m_uploadStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 150.f});
+        m_acceptanceUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 150.f});
+        m_uniqueLevelsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 150.f});
+        m_rejectedUploadsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 215.f});
+        m_pendingUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 215.f});
+        m_replacedThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 215.f});
+
+        m_activeThumbnailsLabel->setTargetCount(m_globalStats.thumbnails);
+        m_uploadLabel->setTargetCount(uploadCount);
+        m_acceptanceUploadsLabel->setTargetCount(acceptedUploadCount);
+        m_uniqueLevelsLabel->setTargetCount(m_globalStats.total_levels);
+        m_rejectedUploadsLabel->setTargetCount(uploadCount - acceptedUploadCount);
+        m_pendingUploadsLabel->setTargetCount(m_globalStats.current_pending_uploads);
+        m_replacedThumbnailsLabel->setTargetCount(acceptedUploadCount - m_globalStats.thumbnails);
+
+        m_usersTotalNode->setVisible(true);
+        m_usersTotalLabel->setTargetCount(m_globalStats.users_total);
+        m_usersPerMonthNode->setVisible(true);
+        m_usersPerMonthLabel->setTargetCount(m_globalStats.users_per_month);
+        m_storageNode->setVisible(true);
+
+        double storageGB = m_globalStats.storage / (1024.0 * 1024.0 * 1024.0);
+        double storageMB = m_globalStats.storage / (1024.0 * 1024.0);
+        if (storageGB >= 1.0) {
+            m_storageLabel->setString(fmt::format("{:.2f} GB", storageGB).c_str());
+        } else {
+            m_storageLabel->setString(fmt::format("{:.2f} MB", storageMB).c_str());
+        }
+    } else {
+        m_title->setString(fmt::format("{}'s Thumbnails Dashboard", m_userStats.username).c_str());
+
+        int uploadCount = m_userStats.uploadCount;
+        int acceptedUploadCount = m_userStats.acceptedUploadCount;
+        int rate = uploadCount > 0 ? static_cast<int>((acceptedUploadCount * 100 + uploadCount / 2) / uploadCount) : 0;
+
+        m_acceptanceStatsNode->setVisible(true);
+        m_progressBar->setVisible(true);
+        m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 100.f, screenSize.height - 80.f});
+        m_uploadStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 180.f});
+        m_acceptanceUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 180.f});
+        m_uniqueLevelsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 180.f});
+        m_rejectedUploadsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 250.f});
+        m_pendingUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 250.f});
+        m_replacedThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 250.f});
+
+        m_acceptanceLabel->setTargetCount(rate);
+        m_activeThumbnailsLabel->setTargetCount(m_userStats.activeThumbnailCount);
+        m_uploadLabel->setTargetCount(uploadCount);
+        m_progressBar->updateProgress(static_cast<float>(rate));
+        m_acceptanceUploadsLabel->setTargetCount(acceptedUploadCount);
+        m_uniqueLevelsLabel->setTargetCount(m_userStats.levelCount);
+        m_rejectedUploadsLabel->setTargetCount(uploadCount - acceptedUploadCount);
+        m_pendingUploadsLabel->setTargetCount(m_userStats.pendingUploadCount);
+        m_replacedThumbnailsLabel->setTargetCount(acceptedUploadCount - m_userStats.activeThumbnailCount);
+
+        m_usersTotalNode->setVisible(false);
+        m_usersPerMonthNode->setVisible(false);
+        m_storageNode->setVisible(false);
+    }
 }

@@ -285,6 +285,10 @@ void ThumbnailNode::fetchLevel() {
 void ThumbnailNode::updateBadges() {
     auto contentSize = this->getContentSize();
 
+    const float badgeGap = 4.f;
+    const float badgeHeight = 24.f;
+    const float badgeRowHeight = badgeHeight + badgeGap;
+
     if (this->m_level && this->m_level->m_accountID == this->m_accountId && !this->m_creatorNode) {
         this->m_creatorNode = CCNode::create();
         this->m_creatorNode->setScale(0.8f);
@@ -292,7 +296,7 @@ void ThumbnailNode::updateBadges() {
         this->addChild(this->m_creatorNode, 3);
 
         auto badgeBg = NineSlice::create("square02_001.png");
-        badgeBg->setContentSize({133.f, 24.f});
+        badgeBg->setContentSize({133.f, badgeHeight});
         badgeBg->setOpacity(150);
         badgeBg->setAnchorPoint({1, 1});
         badgeBg->setPosition({5.f, 5.f});
@@ -320,13 +324,13 @@ void ThumbnailNode::updateBadges() {
         this->m_replacementNode->setScale(0.8f);
         float y = contentSize.height - 10.f;
         if (this->m_creatorNode) {
-            y -= 28.f;
+            y -= badgeRowHeight;
         }
         this->m_replacementNode->setPosition({contentSize.width - 10.f, y});
         this->addChild(this->m_replacementNode, 3);
 
         auto badgeBg = NineSlice::create("square02_001.png");
-        badgeBg->setContentSize({120.f, 24.f});
+        badgeBg->setContentSize({120.f, badgeHeight});
         badgeBg->setOpacity(150);
         badgeBg->setAnchorPoint({1, 1});
         badgeBg->setPosition({5.f, 5.f});
