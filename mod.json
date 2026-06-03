@@ -25,7 +25,8 @@
 	],
 	"description": "Adds in-game features for Level Thumbnails.",
 	"dependencies": {
-		"prevter.imageplus": ">=1.0.0"
+		"prevter.imageplus": ">=1.1.0",
+		"cdc.level_thumbnails": ">=2.3.0"
 	},
 	"links": {
 		"source": "https://github.com/TJC47/betterThumbnails",
