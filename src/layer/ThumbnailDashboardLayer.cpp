@@ -277,7 +277,7 @@ bool ThumbnailDashboardLayer::init() {
     usersPerMonthBg->setPosition(m_usersPerMonthNode->getContentSize() / 2.f);
     m_usersPerMonthNode->addChild(usersPerMonthBg);
 
-    m_usersPerMonthTitle = CCLabelBMFont::create("Users/Month", "goldFont.fnt");
+    m_usersPerMonthTitle = CCLabelBMFont::create("Monthly Users", "goldFont.fnt");
     m_usersPerMonthTitle->limitLabelWidth(m_usersPerMonthNode->getContentWidth(), 0.5f, 0.2f);
     m_usersPerMonthTitle->setPosition({m_usersPerMonthNode->getContentSize().width / 2.f, m_usersPerMonthNode->getContentSize().height - 10.f});
     m_usersPerMonthNode->addChild(m_usersPerMonthTitle);

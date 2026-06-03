@@ -109,21 +109,11 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
 
     auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
         auto pendingLayer = m_pendingLayer;
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(
-            m_thumbId,
-            m_userId,
-            m_username,
-            m_levelId,
-            m_accepted,
-            m_uploadTime,
-            m_replacement,
-            m_submissionNote,
-            m_accountId,
-            [pendingLayer]() {
-                if (pendingLayer) {
-                    pendingLayer->reloadPage();
-                }
-            })));
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote, m_accountId, [pendingLayer]() {
+            if (pendingLayer) {
+                pendingLayer->reloadPage();
+            }
+        })));
     });
 
     auto playBtn = geode::Button::createWithNode(ButtonSprite::create("Play Level", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
@@ -289,7 +279,9 @@ void ThumbnailNode::updateBadges() {
     const float badgeHeight = 24.f;
     const float badgeRowHeight = badgeHeight + badgeGap;
 
-    if (this->m_level && this->m_level->m_accountID == this->m_accountId && !this->m_creatorNode) {
+    bool isCreator = parseSubmissionNoteField(this->m_submissionNote, "ci") == numToString<int>(this->m_accountId);
+
+    if (isCreator && !this->m_creatorNode) {
         this->m_creatorNode = CCNode::create();
         this->m_creatorNode->setScale(0.8f);
         this->m_creatorNode->setPosition({contentSize.width - 10.f, contentSize.height - 10.f});
