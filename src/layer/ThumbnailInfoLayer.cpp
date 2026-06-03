@@ -75,11 +75,6 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     this->addChild(thumbBg);
     m_thumbBg = thumbBg;
 
-    auto thumbBorder = NineSlice::create("GJ_square07.png");
-    thumbBorder->setContentSize(thumbBg->getContentSize());
-    thumbBorder->setPosition(thumbBg->getContentSize() / 2);
-    thumbBg->addChild(thumbBorder, 5);
-
     auto infoMenu = CCMenu::create();
     infoMenu->setPosition({0, 0});
     infoMenu->setContentSize(thumbBg->getContentSize());
@@ -126,16 +121,13 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     stencilClip->addChild(thumbOriginal);
 
     if (m_replacementFlag) {
-        auto toggleOff = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Gray, CircleBaseSize::Small);
-        auto toggleOn = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Cyan, CircleBaseSize::Small);
-        m_toggleButton = CCMenuItemToggler::create(
-            toggleOff,
-            toggleOn,
+        auto buttonSpr = CircleButtonSprite::createWithSpriteFrameName("GJ_sortIcon_001.png", 1.f, CircleBaseColor::Green, CircleBaseSize::Small);
+        buttonSpr->setScale(0.7f);
+        m_toggleButton = CCMenuItemSpriteExtra::create(
+            buttonSpr,
             this,
             menu_selector(ThumbnailInfoLayer::onShowOriginal));
-        m_toggleButton->setScale(0.7f);
         m_toggleButton->setPosition({thumbBg->getContentSize().width, 0.f});
-        m_toggleButton->toggle(true);
         infoMenu->addChild(m_toggleButton, 10);
         Notification::create("Viewing replacement thumbnail.", NotificationIcon::Info)->show();
     }
@@ -230,9 +222,10 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
         m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(90.f, 70.f));
         m_infoTextArea->setVisible(false);
         thumbBg->addChildAtPosition(m_infoTextArea, Anchor::BottomLeft, {15.f, 10.f}, {0, 0}, false);
-        
     }
 
+    this->setTouchMode(kCCTouchesOneByOne);
+    this->setTouchPriority(kCCMenuHandlerPriority - 1);
     // check if user role is a moderator/admin, show the button
     if (betterThumbnail::hasRoleAtLeast(betterThumbnail::RoleNum::Moderator)) {
         auto acceptBtn = geode::Button::createWithNode(
@@ -347,6 +340,10 @@ void ThumbnailInfoLayer::onInfoToggle(CCObject* sender) {
     }
 }
 
+void ThumbnailInfoLayer::registerWithTouchDispatcher() {
+    CCTouchDispatcher::get()->addTargetedDelegate(this, kCCMenuHandlerPriority - 1, true);
+}
+
 float clip(float n, float lower, float upper) {
     return std::max(lower, std::min(n, upper));
 }
@@ -362,7 +359,10 @@ bool ThumbnailInfoLayer::ccTouchBegan(CCTouch* pTouch, CCEvent* event) {
         return false;
     }
 
-    if (m_touches.size() == 1) {
+    this->m_draggingThumbnail = true;
+    m_touches.insert(pTouch);
+
+    if (m_touches.size() == 2) {
         auto firstTouch = *m_touches.begin();
         auto firstLoc = firstTouch->getLocation();
         auto secondLoc = pTouch->getLocation();
@@ -379,13 +379,12 @@ bool ThumbnailInfoLayer::ccTouchBegan(CCTouch* pTouch, CCEvent* event) {
             thumbnail->getPositionY() + thumbnail->getScaledContentHeight() * -(oldAnchor.y - clip(newAnchorY, 0, 1))});
     }
 
-    m_touches.insert(pTouch);
     return true;
 }
 
 void ThumbnailInfoLayer::ccTouchMoved(CCTouch* pTouch, CCEvent* event) {
     LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
-    if (!thumbnail) {
+    if (!thumbnail || !this->m_draggingThumbnail) {
         return;
     }
 
@@ -418,6 +417,9 @@ void ThumbnailInfoLayer::ccTouchMoved(CCTouch* pTouch, CCEvent* event) {
 
 void ThumbnailInfoLayer::ccTouchEnded(CCTouch* pTouch, CCEvent* event) {
     m_touches.erase(pTouch);
+    if (m_touches.empty()) {
+        this->m_draggingThumbnail = false;
+    }
     LazySprite* thumbnail = m_showingOriginal ? m_thumbOriginal : m_thumbReplacement;
     if (this->m_wasZooming && m_touches.size() == 1 && thumbnail) {
         auto scale = thumbnail->getScale();
@@ -433,6 +435,14 @@ void ThumbnailInfoLayer::ccTouchEnded(CCTouch* pTouch, CCEvent* event) {
         }
         this->m_wasZooming = false;
     }
+}
+
+void ThumbnailInfoLayer::ccTouchCancelled(CCTouch* pTouch, CCEvent* event) {
+    m_touches.erase(pTouch);
+    if (m_touches.empty()) {
+        this->m_draggingThumbnail = false;
+    }
+    this->m_wasZooming = false;
 }
 
 void ThumbnailInfoLayer::scrollWheel(float y, float x) {
@@ -569,41 +579,35 @@ void ThumbnailInfoLayer::fetchLevel() {
     }
 }
 
-void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
-    // Toggle back to the replacement
+void ThumbnailInfoLayer::onShowOriginal(CCObject* sender) {
     if (m_showingOriginal) {
         if (m_thumbOriginal) {
             m_thumbOriginal->setVisible(false);
-            m_toggleButton->toggle(true);
         }
         if (m_thumbReplacement) {
             m_thumbReplacement->setVisible(true);
-            m_toggleButton->toggle(true);
-            m_showingOriginal = false;
         }
+        m_showingOriginal = false;
         Notification::create("Viewing replacement thumbnail.", NotificationIcon::Info)->show();
         return;
     }
 
-    // If original already loaded, just show it and hide replacement
-    if (m_originalLoaded) {
+    if (m_thumbOriginal && m_thumbOriginal->isLoaded()) {
         if (m_thumbOriginal) {
             m_thumbOriginal->setVisible(true);
-            m_toggleButton->toggle(false);
         }
         if (m_thumbReplacement) {
             m_thumbReplacement->setVisible(false);
-            m_toggleButton->toggle(false);
-            m_showingOriginal = true;
         }
+        m_showingOriginal = true;
         Notification::create("Viewing original thumbnail.", NotificationIcon::Info)->show();
         return;
     }
 
-    // Otherwise, fetch original image
     if (!m_thumbOriginal || !m_thumbSpinner) {
         return;
     }
+
     m_thumbSpinner->setVisible(true);
     auto req = web::WebRequest();
     req.header("Authorization",
@@ -623,7 +627,6 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
                 if (m_thumbReplacement) {
                     m_thumbReplacement->setVisible(false);
                 }
-                m_originalLoaded = true;
                 m_showingOriginal = true;
                 if (m_thumbSpinner)
                     m_thumbSpinner->setVisible(false);
@@ -636,6 +639,12 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject*) {
         log::error("Original image fetch error: {} {}", res.code(), res.string().unwrapOr(""));
         if (m_thumbSpinner)
             m_thumbSpinner->setVisible(false);
+        if (m_thumbOriginal) {
+            m_thumbOriginal->setVisible(false);
+        }
+        if (m_thumbReplacement) {
+            m_thumbReplacement->setVisible(true);
+        }
         Notification::create("Error loading original image.",
             NotificationIcon::Error)
             ->show();

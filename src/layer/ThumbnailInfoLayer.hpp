@@ -25,9 +25,11 @@ public:
     void onPlayLevelButton(CCObject*);
     void onShowOriginal(CCObject*);
     void onInfoToggle(CCObject*);
+    void registerWithTouchDispatcher() override;
     bool ccTouchBegan(CCTouch* pTouch, CCEvent* event) override;
     void ccTouchMoved(CCTouch* pTouch, CCEvent* event) override;
     void ccTouchEnded(CCTouch* pTouch, CCEvent* event) override;
+    void ccTouchCancelled(CCTouch* pTouch, CCEvent* event) override;
     void scrollWheel(float y, float x) override;
     void fetchLevel();
 
@@ -47,15 +49,15 @@ private:
     LazySprite* m_thumbReplacement = nullptr;
     LazySprite* m_thumbOriginal = nullptr;
     cue::LoadingCircle* m_thumbSpinner = nullptr;
-    CCMenuItemToggler* m_toggleButton = nullptr;
+    CCMenuItemSpriteExtra* m_toggleButton = nullptr;
     CCMenuItemToggler* m_infoToggle = nullptr;
     MDTextArea* m_infoTextArea = nullptr;
     NineSlice* m_thumbBg = nullptr;
     CCNode* m_creatorNode = nullptr;
     CCNode* m_replacementNode = nullptr;
     bool m_showingOriginal = false;
-    bool m_originalLoaded = false;
     bool m_infoVisible = false;
+    bool m_draggingThumbnail = false;
     std::set<CCTouch*> m_touches;
     CCPoint m_touchMidPoint = {0, 0};
     float m_initialScale = 1.f;

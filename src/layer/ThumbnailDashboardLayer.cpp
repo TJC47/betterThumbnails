@@ -29,8 +29,7 @@ bool ThumbnailDashboardLayer::init() {
         return false;
     }
 
-    addSideArt(this, SideArt::TopLeft, false);
-    addSideArt(this, SideArt::Bottom, false);
+    addSideArt(this, SideArt::All, false);
 
     auto bg = createLayerBG();
     if (bg != nullptr) {
@@ -42,7 +41,7 @@ bool ThumbnailDashboardLayer::init() {
     auto screenSize = CCDirector::sharedDirector()->getWinSize();
     m_title = CCLabelBMFont::create("-", "goldFont.fnt");
     m_title->setAnchorPoint({0.5f, 1.f});
-    m_title->setPosition({screenSize.width / 2.f, screenSize.height - 20.f});
+    m_title->setPosition({screenSize.width / 2.f, screenSize.height - 15.f});
     m_title->setScale(0.8f);
     this->addChildAtPosition(m_title, Anchor::Top, {0.f, -20.f}, false);
 
@@ -93,7 +92,7 @@ bool ThumbnailDashboardLayer::init() {
     m_activeThumbnailsNode->addChild(m_activeThumbnailsLabel);
 
     // Acceptance rate progress bar
-    m_progressBar = geode::ProgressBar::create(geode::ProgressBarStyle::Solid);
+    m_progressBar = ProgressBar::create(ProgressBarStyle::Solid);
     m_progressBar->setAnchorPoint({0.5f, 0.5f});
     m_progressBar->setPosition({screenSize.width / 2.f, screenSize.height - 130.f});
     m_progressBar->showProgressLabel(true);
