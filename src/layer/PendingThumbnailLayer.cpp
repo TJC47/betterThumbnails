@@ -14,8 +14,10 @@ bool PendingThumbnailLayer::init() {
         return false;
 
     auto bg = createLayerBG();
-    if (bg)
+    if (bg) {
+        bg->setColor(ccc3(130, 0, 219));
         this->addChild(bg, -1);
+    }
     else
         return false;
 
