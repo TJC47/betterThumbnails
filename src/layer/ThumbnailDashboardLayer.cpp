@@ -34,6 +34,7 @@ bool ThumbnailDashboardLayer::init() {
 
     auto bg = createLayerBG();
     if (bg != nullptr) {
+        bg->setColor(ccc3(49, 44, 133));
         this->addChild(bg, -1);
     }
 
