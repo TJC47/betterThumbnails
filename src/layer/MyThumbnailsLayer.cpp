@@ -25,9 +25,10 @@ bool MyThumbnailsLayer::init() {
     }
 
     auto bg = createLayerBG();
-    if (bg)
+    if (bg) {
+        bg->setColor(ccc3(0, 122, 85));
         this->addChild(bg, -1);
-
+    }
     addSideArt(this, SideArt::BottomLeft, false);
     addSideArt(this, SideArt::BottomRight, false);
     addBackButton(this, BackButtonStyle::Green);

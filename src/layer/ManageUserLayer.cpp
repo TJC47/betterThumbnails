@@ -68,9 +68,10 @@ bool ManageUserLayer::init() {
         return false;
 
     auto bg = createLayerBG();
-    if (bg)
+    if (bg) {
+        bg->setColor(ccc3(0, 105, 168));
         this->addChild(bg, -1);
-
+    }
     addSideArt(this, SideArt::BottomLeft, false);
     addSideArt(this, SideArt::BottomRight, false);
 

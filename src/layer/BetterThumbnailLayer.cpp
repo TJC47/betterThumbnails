@@ -32,6 +32,8 @@ bool BetterThumbnailLayer::init() {
 
     auto bg = createLayerBG();
     if (bg != nullptr) {
+        if (Mod::get()->getSettingValue<bool>("random-thumbnail-background")) bg->setColor(ccc3(30, 26, 77));
+        else bg->setColor(ccc3(79, 57, 246));
         this->addChild(bg, -1);
     } else {
         log::error("createLayerBG returned nullptr");
