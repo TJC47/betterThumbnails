@@ -1,4 +1,5 @@
 #include "NotificationMenuPopup.hpp"
+#include "../include/BetterThumbnailConstant.hpp"
 #include <Geode/Geode.hpp>
 #include <cue/ListNode.hpp>
 
@@ -148,7 +149,7 @@ void NotificationMenuPopup::onClearAll(CCObject*) {
 
             Ref<UploadActionPopup> popupRef = upopup;
 
-            auto req = web::WebRequest();
+            auto req = betterThumbnail::createWebRequest();
             req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
             auto url = fmt::format("https://tjcsucht.net/api/bt/clearnotif/{}", m_userId);
             auto task = req.post(url);

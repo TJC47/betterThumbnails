@@ -1,4 +1,5 @@
 #include "ThumbnailDashboardLayer.hpp"
+#include "../include/BetterThumbnailConstant.hpp"
 
 #include <Geode/Geode.hpp>
 #include <Geode/ui/General.hpp>
@@ -348,7 +349,7 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         }
     };
 
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     auto authHeader = fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token"));
     req.header("Authorization", authHeader.c_str());
     auto task = req.get("https://levelthumbs.prevter.me/user/me");
@@ -401,7 +402,7 @@ void ThumbnailDashboardLayer::fetchDashboard() {
 }
 
 void ThumbnailDashboardLayer::fetchGlobalStats() {
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     auto task = req.get("https://levelthumbs.prevter.me/stats");
 
     m_statsListener.spawn(std::move(task), [this](web::WebResponse res) {

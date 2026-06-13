@@ -136,7 +136,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     spinner->addToLayer(thumbBg, 2);
     m_thumbSpinner = spinner;
 
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
@@ -271,7 +271,7 @@ void ThumbnailInfoLayer::keyBackClicked() {
 }
 
 void ThumbnailInfoLayer::onAccept(CCObject*) {
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));
@@ -298,7 +298,7 @@ void ThumbnailInfoLayer::onAccept(CCObject*) {
 
 void ThumbnailInfoLayer::onReject(CCObject*) {
     auto popup = RejectReasonPopup::create(m_id, [this](std::string reason) {
-        auto req = web::WebRequest();
+        auto req = betterThumbnail::createWebRequest();
         req.header("Authorization",
             fmt::format("Bearer {}",
                 Mod::get()->getSavedValue<std::string>("token")));
@@ -609,7 +609,7 @@ void ThumbnailInfoLayer::onShowOriginal(CCObject* sender) {
     }
 
     m_thumbSpinner->setVisible(true);
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));

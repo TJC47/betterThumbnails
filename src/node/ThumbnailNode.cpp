@@ -154,7 +154,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     this->updateBadges();
 
     // Fetch image from API and apply to LazySprite
-    auto imageReq = web::WebRequest();
+    auto imageReq = betterThumbnail::createWebRequest();
     imageReq.header("Authorization", std::string("Bearer ") + Mod::get()->getSavedValue<std::string>("token"));
     auto imageUrl = this->m_thumbnailUrl.empty()
                         ? betterThumbnail::makeUrl(fmt::format("/pending/{}/image", id))

@@ -281,7 +281,7 @@ void ManageUserLayer::unbanUser(int id) {
 
         Ref<UploadActionPopup> popupRef = popup;
 
-        auto req = web::WebRequest();
+        auto req = betterThumbnail::createWebRequest();
         req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
         auto url = fmt::format("https://levelthumbs.prevter.me/admin/ban/{}", id);
         auto task = req.send("DELETE", url);
@@ -298,7 +298,7 @@ void ManageUserLayer::unbanUser(int id) {
 }
 
 void ManageUserLayer::fetchPage(int page) {
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));

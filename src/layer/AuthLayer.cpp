@@ -61,7 +61,7 @@ void AuthLayer::startAuthProcess() {
             auto argon_token = res.unwrap();
             Mod::get()->setSavedValue<std::string>("token", argon_token);
 
-            auto req = web::WebRequest();
+            auto req = betterThumbnail::createWebRequest();
             req.bodyJSON(
                 matjson::makeObject({{"account_id", GJAccountManager::get()->m_accountID},
                     {"user_id", static_cast<int>(GameManager::get()->m_playerUserID)},

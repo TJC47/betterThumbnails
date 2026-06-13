@@ -206,7 +206,7 @@ void PendingThumbnailLayer::onOpenFilterPopup(CCObject*) {
 }
 
 void PendingThumbnailLayer::fetchPage(int page) {
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));

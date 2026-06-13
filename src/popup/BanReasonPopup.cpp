@@ -1,4 +1,5 @@
-#include "BanReasonPopup.hpp"
+#include "../popup/BanReasonPopup.hpp"
+#include "../include/BetterThumbnailConstant.hpp"
 
 using namespace geode::prelude;
 
@@ -46,7 +47,7 @@ void BanReasonPopup::onSend(CCObject*) {
             {"reason", reason},
             {"expires_by", nullptr},
         });
-        auto req = web::WebRequest();
+        auto req = betterThumbnail::createWebRequest();
         req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
         req.header("Content-Type", "application/json");
         req.bodyJSON(jsonBody);

@@ -1,4 +1,5 @@
 #include "NotificationOverlay.hpp"
+#include "../include/BetterThumbnailConstant.hpp"
 #include <Geode/ui/Notification.hpp>
 #include <Geode/ui/OverlayManager.hpp>
 #include <Geode/utils/async.hpp>
@@ -66,7 +67,7 @@ void NotificationOverlay::fetchNotifications() {
     }
 
     m_isNotificationFetchInProgress = true;
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
     auto task = req.get(fmt::format("https://tjcsucht.net/api/bt/getnotif/{}", userId));
     m_notificationListener.spawn(std::move(task), [this](web::WebResponse res) {

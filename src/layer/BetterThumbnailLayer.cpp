@@ -210,7 +210,7 @@ bool BetterThumbnailLayer::init() {
     m_bottomLeftMenu->addChild(notificationButton);
     m_bottomLeftMenu->updateLayout();
     // get user info
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization",
         fmt::format("Bearer {}",
             Mod::get()->getSavedValue<std::string>("token")));

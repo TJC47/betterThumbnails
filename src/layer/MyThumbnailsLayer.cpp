@@ -170,7 +170,7 @@ std::string MyThumbnailsLayer::endpointForMode(MyThumbnailsLayer::UploadMode mod
 void MyThumbnailsLayer::fetchPage(int page) {
     m_currentPage = page;
     auto mode = endpointForMode(m_mode);
-    auto req = web::WebRequest();
+    auto req = betterThumbnail::createWebRequest();
     req.header("Authorization", fmt::format("Bearer {}", Mod::get()->getSavedValue<std::string>("token")));
     auto url = betterThumbnail::makeUrl(fmt::format("/user/me/uploads/{}?page={}&per_page={}", mode, page, ITEMS_PER_PAGE));
 
