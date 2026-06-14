@@ -12,13 +12,34 @@
 
 using namespace geode::prelude;
 
-static bool isInPlayLayer();
-static bool isOnBetterThumbnailLayer();
-
 namespace {
     NotificationOverlay*& overlayInstance() {
         static NotificationOverlay* instance = nullptr;
         return instance;
+    }
+
+    bool isInPlayLayer() {
+        return PlayLayer::get() != nullptr;
+    }
+
+    bool isOnBetterThumbnailLayer() {
+        auto scene = CCDirector::sharedDirector()->getRunningScene();
+        if (!scene) {
+            return false;
+        }
+
+        auto children = scene->getChildren();
+        if (!children) {
+            return false;
+        }
+
+        for (unsigned i = 0; i < children->count(); ++i) {
+            auto child = static_cast<CCObject*>(children->objectAtIndex(i));
+            if (typeinfo_cast<BetterThumbnailLayer*>(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -290,33 +311,9 @@ void NotificationOverlay::saveReadNotificationIds() {
             raw.push_back(',');
         }
         first = false;
-        raw += std::to_string(id);
+        raw += numToString(id);
     }
     Mod::get()->setSavedValue<std::string>("read_notification_ids", raw);
-}
-
-static bool isInPlayLayer() {
-    return PlayLayer::get() != nullptr;
-}
-
-static bool isOnBetterThumbnailLayer() {
-    auto scene = CCDirector::sharedDirector()->getRunningScene();
-    if (!scene) {
-        return false;
-    }
-
-    auto children = scene->getChildren();
-    if (!children) {
-        return false;
-    }
-
-    for (unsigned i = 0; i < children->count(); ++i) {
-        auto child = static_cast<CCObject*>(children->objectAtIndex(i));
-        if (typeinfo_cast<BetterThumbnailLayer*>(child)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void NotificationOverlay::updatePollingSchedule(float interval) {
