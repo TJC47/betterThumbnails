@@ -13,8 +13,17 @@
 
 using namespace geode::prelude;
 
-static std::string parseSubmissionNoteField(std::string const& note, std::string const& key) {
-    auto keyEq = fmt::format("{}=", key);
+static std::string parseNoteDataField(std::string const& note, std::string const& jsonKey, std::string const& oldKey) {
+    if (note.starts_with("{")) {
+        auto jsonRes = matjson::parse(note);
+        if (jsonRes.isOk()) {
+            auto val = jsonRes.unwrap()[jsonKey];
+            if (val.isString()) return val.asString().unwrapOrDefault();
+            if (val.isNumber()) return geode::utils::numToString(val.asInt().unwrapOrDefault());
+        }
+        return {};
+    }
+    auto keyEq = fmt::format("{}=", oldKey);
     auto pos = note.find(keyEq);
     if (pos == std::string::npos) {
         return {};
@@ -27,9 +36,9 @@ static std::string parseSubmissionNoteField(std::string const& note, std::string
     return note.substr(pos, end - pos);
 }
 
-ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
+ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
     auto ret = new ThumbnailNode();
-    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, accepted_time, std::move(thumbnailUrl), mode)) {
+    if (ret && ret->init(size, id, user_id, username, level_id, accepted, upload_time, replacement, note_data, account_id, accepted_time, std::move(thumbnailUrl), mode)) {
         ret->autorelease();
         return ret;
     }
@@ -37,7 +46,7 @@ ThumbnailNode* ThumbnailNode::create(const CCSize& size, int id, int user_id, co
     return nullptr;
 }
 
-bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
+bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, const std::string& accepted_time, std::string thumbnailUrl, ThumbnailNode::Mode mode) {
     if (!CCLayer::init())
         return false;
 
@@ -76,12 +85,12 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
     m_accepted = accepted;
     m_uploadTime = upload_time;
     m_replacement = replacement;
-    m_submissionNote = submission_note;
+    m_noteData = note_data;
     m_accountId = account_id;
     m_acceptedTime = accepted_time;
     m_mode = mode;
     m_showViewButton = (m_mode == Mode::PendingThumbnail);
-    m_levelName = parseSubmissionNoteField(m_submissionNote, "ln");
+    m_levelName = parseNoteDataField(m_noteData, "level_name", "ln");
     m_thumbnailUrl = std::move(thumbnailUrl);
 
     auto levelNameText = (this->m_levelName.empty() ? std::string("Unknown Level") : this->m_levelName);
@@ -109,7 +118,7 @@ bool ThumbnailNode::init(const CCSize& size, int id, int user_id, const std::str
 
     auto viewBtn = geode::Button::createWithNode(ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png"), [this](geode::Button*) {
         auto pendingLayer = m_pendingLayer;
-        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_submissionNote, m_accountId, [pendingLayer]() {
+        CCDirector::get()->pushScene(CCTransitionFade::create(.5f, ThumbnailInfoLayer::scene(m_thumbId, m_userId, m_username, m_levelId, m_accepted, m_uploadTime, m_replacement, m_noteData, m_accountId, [pendingLayer]() {
             if (pendingLayer) {
                 pendingLayer->reloadPage();
             }
@@ -279,7 +288,7 @@ void ThumbnailNode::updateBadges() {
     const float badgeHeight = 24.f;
     const float badgeRowHeight = badgeHeight + badgeGap;
 
-    bool isCreator = parseSubmissionNoteField(this->m_submissionNote, "ci") == numToString<int>(this->m_accountId);
+    bool isCreator = parseNoteDataField(this->m_noteData, "creator_id", "ci") == numToString<int>(this->m_accountId);
 
     if (isCreator && !this->m_creatorNode) {
         this->m_creatorNode = CCNode::create();

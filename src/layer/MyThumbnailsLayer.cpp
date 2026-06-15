@@ -214,7 +214,19 @@ void MyThumbnailsLayer::fetchPage(int page) {
             entry.level_id = item["level_id"].asInt().unwrapOrDefault();
             entry.accepted_time = item["accepted_time"].asString().unwrapOr("");
             entry.upload_time = item["upload_time"].asString().unwrapOr("-");
-            entry.submission_note = item["submission_note"].asString().unwrapOrDefault();
+            if (item.contains("note_data") && item["note_data"].isObject()) {
+                auto nd = item["note_data"];
+                matjson::Value relevantObj = matjson::makeObject({
+                    {"level_name", nd.contains("level_name") ? nd["level_name"] : matjson::Value("")},
+                    {"creator_id", nd.contains("creator_id") ? nd["creator_id"] : matjson::Value(0)},
+                    {"percentage", nd.contains("percentage") ? nd["percentage"] : matjson::Value(0.0)},
+                    {"attempt_time", nd.contains("attempt_time") ? nd["attempt_time"] : matjson::Value(0.0)},
+                    {"message", nd.contains("message") ? nd["message"] : matjson::Value("")}
+                });
+                entry.note_data = relevantObj.dump(matjson::NO_INDENTATION);
+            } else {
+                entry.note_data = "";
+            }
             m_uploads.push_back(std::move(entry));
         }
 
@@ -242,7 +254,7 @@ void MyThumbnailsLayer::updateUI() {
             m_mode == UploadMode::Active,
             entry.upload_time,
             false,
-            entry.submission_note,
+            entry.note_data,
             currentUserId,
             entry.accepted_time,
             fmt::format("https://levelthumbs.prevter.me/thumbnail/{}", entry.level_id),

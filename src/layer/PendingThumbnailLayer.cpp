@@ -285,8 +285,19 @@ void PendingThumbnailLayer::fetchPage(int page) {
                 auto uploadTime = item["upload_time"].asString().unwrapOrDefault();
                 e.upload_time = std::move(uploadTime);
                 e.replacement = item["replacement"].asBool().unwrapOr(false);
-                auto submissionNote = item["submission_note"].asString().unwrapOrDefault();
-                e.submission_note = std::move(submissionNote);
+                std::string noteDataStr = "";
+                if (item.contains("note_data") && item["note_data"].isObject()) {
+                    auto nd = item["note_data"];
+                    matjson::Value relevantObj = matjson::makeObject({
+                        {"level_name", nd.contains("level_name") ? nd["level_name"] : matjson::Value("")},
+                        {"creator_id", nd.contains("creator_id") ? nd["creator_id"] : matjson::Value(0)},
+                        {"percentage", nd.contains("percentage") ? nd["percentage"] : matjson::Value(0.0)},
+                        {"attempt_time", nd.contains("attempt_time") ? nd["attempt_time"] : matjson::Value(0.0)},
+                        {"message", nd.contains("message") ? nd["message"] : matjson::Value("")}
+                    });
+                    noteDataStr = relevantObj.dump(matjson::NO_INDENTATION);
+                }
+                e.note_data = std::move(noteDataStr);
                 e.account_id = item["account_id"].asInt().unwrapOrDefault();
                 this->m_pendingItems.push_back(std::move(e));
             }
@@ -376,7 +387,7 @@ void PendingThumbnailLayer::updateUI() {
             item.accepted,
             item.upload_time,
             item.replacement,
-            item.submission_note,
+            item.note_data,
             item.account_id,
             "",
             "",

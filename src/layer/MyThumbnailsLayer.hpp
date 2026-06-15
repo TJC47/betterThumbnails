@@ -12,7 +12,7 @@ struct MyThumbnailEntry {
     int id = 0;
     int level_id = 0;
     std::string accepted_time;
-    std::string submission_note;
+    std::string note_data;
     std::string upload_time;
 };
 

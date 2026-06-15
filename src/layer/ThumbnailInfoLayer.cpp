@@ -13,16 +13,16 @@
 
 using namespace geode::prelude;
 
-CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
+CCScene* ThumbnailInfoLayer::scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback) {
     auto scene = CCScene::create();
     scene->addChild(ThumbnailInfoLayer::create(
-        id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id, std::move(onAcceptedCallback)));
+        id, user_id, username, level_id, accepted, upload_time, replacement, note_data, account_id, std::move(onAcceptedCallback)));
     return scene;
 }
 
-ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
+ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback) {
     auto ret = new ThumbnailInfoLayer;
-    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, submission_note, account_id)) {
+    if (ret && ret->init(id, user_id, username, level_id, accepted, upload_time, replacement, note_data, account_id)) {
         ret->autorelease();
         return ret;
     }
@@ -30,7 +30,7 @@ ThumbnailInfoLayer* ThumbnailInfoLayer::create(int id, int user_id, const std::s
     return nullptr;
 }
 
-bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback) {
+bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback) {
     if (!CCLayer::init())
         return false;
 
@@ -45,7 +45,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
     m_acceptedFlag = accepted;
     m_uploadTime = upload_time;
     m_replacementFlag = replacement;
-    m_submissionNote = submission_note;
+    m_noteData = note_data;
     m_onAcceptedCallback = std::move(onAcceptedCallback);
 
     auto bg = createLayerBG();
@@ -158,33 +158,22 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             }
         });
 
-    if (!m_submissionNote.empty()) {
-        std::map<std::string, std::string> fields;
-        std::stringstream ss(m_submissionNote);
-        std::string token;
-        while (std::getline(ss, token, ';')) {
-            size_t pos = token.find('=');
-            if (pos != std::string::npos) {
-                fields[token.substr(0, pos)] = token.substr(pos + 1);
-            }
-        }
+    if (!m_noteData.empty()) {
+        std::string level_name;
+        std::string prStr;
+        std::string tmStr;
+        std::string messageText;
 
-        std::string level_name = fields["ln"];
-
-        std::string prStr = fields["pr"];
-        if (!prStr.empty()) {
-            char* end;
-            float prVal = std::strtof(prStr.c_str(), &end);
-            if (end != prStr.c_str()) {
+        if (m_noteData.starts_with("{")) {
+            auto jsonRes = matjson::parse(m_noteData);
+            if (jsonRes.isOk()) {
+                auto fields = jsonRes.unwrap();
+                level_name = fields["level_name"].asString().unwrapOrDefault();
+                float prVal = static_cast<float>(fields["percentage"].asDouble().unwrapOr(0.0));
                 prStr = fmt::format("{:.2f}", prVal);
-            }
-        }
-        std::string tmStr = fields["tm"];
-        if (!tmStr.empty()) {
-            char* end;
-            float tmVal = std::strtof(tmStr.c_str(), &end);
-            if (end != tmStr.c_str()) {
+                float tmVal = static_cast<float>(fields["attempt_time"].asDouble().unwrapOr(0.0));
                 tmStr = fmt::format("{:.2f}", tmVal);
+                messageText = fields["message"].asString().unwrapOrDefault();
             }
         }
         // progressions and attempts label
@@ -217,7 +206,7 @@ bool ThumbnailInfoLayer::init(int id, int user_id, const std::string& username, 
             // accepted ? "Yes" : "No",
             replacement ? "Yes" : "No",
             id,
-            fields["m"]);
+            messageText);
 
         m_infoTextArea = MDTextArea::create(infoText, thumbBg->getContentSize() - CCSize(90.f, 70.f));
         m_infoTextArea->setVisible(false);

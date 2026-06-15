@@ -11,11 +11,11 @@ using namespace geode::prelude;
 
 class ThumbnailInfoLayer : public CCLayer {
 public:
-    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id);
-    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
-    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
+    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id);
+    static CCScene* scene(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback = {});
+    static ThumbnailInfoLayer* create(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback = {});
 
-    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, std::function<void()> onAcceptedCallback = {});
+    bool init(int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, std::function<void()> onAcceptedCallback = {});
 
     void keyBackClicked() override;
 
@@ -42,7 +42,7 @@ private:
     bool m_acceptedFlag = false;
     std::string m_uploadTime;
     bool m_replacementFlag = false;
-    std::string m_submissionNote;
+    std::string m_noteData;
     std::function<void()> m_onAcceptedCallback;
 
     async::TaskHolder<web::WebResponse> m_listener;

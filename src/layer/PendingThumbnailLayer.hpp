@@ -16,7 +16,7 @@ struct PendingThumbEntry {
     bool accepted = false;
     std::string upload_time;
     bool replacement = false;
-    std::string submission_note;
+    std::string note_data;
     int account_id = 0;
 };
 

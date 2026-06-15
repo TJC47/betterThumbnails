@@ -23,7 +23,7 @@ public:
     bool m_accepted = false;
     std::string m_uploadTime;
     bool m_replacement = false;
-    std::string m_submissionNote;
+    std::string m_noteData;
     int m_accountId = 0;
     std::string m_acceptedTime;
     bool m_showViewButton = true;
@@ -42,8 +42,8 @@ public:
     bool m_openOnLevelLoaded = false;
     cue::LoadingCircle* m_levelLoadingCircle = nullptr;
     int m_levelFetchRetries = 0;
-    static ThumbnailNode* create(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time = "", std::string thumbnailUrl = "", Mode mode = Mode::MyThumbnail);
-    bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& submission_note, int account_id, const std::string& accepted_time = "", std::string thumbnailUrl = "", Mode mode = Mode::MyThumbnail);
+    static ThumbnailNode* create(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, const std::string& accepted_time = "", std::string thumbnailUrl = "", Mode mode = Mode::MyThumbnail);
+    bool init(const cocos2d::CCSize& size, int id, int user_id, const std::string& username, int level_id, bool accepted, const std::string& upload_time, bool replacement, const std::string& note_data, int account_id, const std::string& accepted_time = "", std::string thumbnailUrl = "", Mode mode = Mode::MyThumbnail);
     void fetchLevel();
     void updateBadges();
     void setPendingLayer(PendingThumbnailLayer* pendingLayer);
