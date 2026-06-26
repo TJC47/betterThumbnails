@@ -106,8 +106,7 @@ jobs:
               embed-title: "[${{ github.event.repository.name }}] Nightly Release"
               embed-description: |
                 **Nightly build for commit [`${{ github.sha }}`](${{ github.event.repository.html_url}}/commit/${{ github.sha }})**.
-                > ```text
-                ${{ github.event.head_commit.message }}```
+                ${{ github.event.head_commit.message }}
                 > [`View Changes`](${{ github.event.repository.html_url }}/compare/${{ steps.getrelease.outputs.tag }}...nightly)
                 # > [***__Download__***](https://github.com/TJC47/betterThumbnails/releases/download/nightly/tjc47.better_level_thumbnails.geode)
               embed-color: "#0062b1"
