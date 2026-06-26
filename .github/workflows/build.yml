@@ -114,6 +114,7 @@ jobs:
               embed-color: "#0062b1"
               embed-url: ${{ steps.publish-nightly.outputs.url }}
               embed-author: ${{ github.actor }}
+              content: "-# <@1520204294760960000>"
               embed-author-icon: "https://avatars.githubusercontent.com/u/${{ github.actor_id }}?v=4"
               embed-thumbnail: "https://raw.githubusercontent.com/${{ github.repository }}/refs/tags/nightly/logo.png"
               embed-timestamp: "now"
