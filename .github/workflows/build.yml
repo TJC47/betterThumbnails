@@ -89,7 +89,7 @@ jobs:
                 **Development build for commit ${{ github.sha }}**.
                 > [`View Changes`](${{ github.event.repository.html_url }}/compare/${{ steps.getrelease.outputs.tag }}...nightly)
               files: |
-                ./artifacts/Build Output/*.*
+                ./artifacts/**/*
 
           - name: Check for Discord webhook URL
             id: check-discord
