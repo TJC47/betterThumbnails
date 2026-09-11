@@ -52,7 +52,7 @@ bool ThumbnailDashboardLayer::init() {
     m_acceptanceStatsNode = CCNode::create();
     m_acceptanceStatsNode->setAnchorPoint({0.5f, 0.5f});
     m_acceptanceStatsNode->setContentSize({140.f, 60.f});
-    m_acceptanceStatsNode->setPosition({screenSize.width / 2.f - 100.f, screenSize.height - 80.f});
+    m_acceptanceStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 80.f});
     this->addChild(m_acceptanceStatsNode);
 
     auto acceptanceStatsBg = NineSlice::create("square02_001.png");
@@ -75,7 +75,7 @@ bool ThumbnailDashboardLayer::init() {
     m_activeThumbnailsNode = CCNode::create();
     m_activeThumbnailsNode->setContentSize({140.f, 60.f});
     m_activeThumbnailsNode->setAnchorPoint({0.5f, 0.5f});
-    m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 100.f, screenSize.height - 80.f});
+    m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 80.f});
     this->addChild(m_activeThumbnailsNode);
 
     auto activeThumbnailsBg = NineSlice::create("square02_001.png");
@@ -93,6 +93,52 @@ bool ThumbnailDashboardLayer::init() {
     m_activeThumbnailsLabel->limitLabelWidth(m_activeThumbnailsNode->getContentWidth(), 0.6f, 0.2f);
     m_activeThumbnailsLabel->setPosition({m_activeThumbnailsNode->getContentSize().width / 2.f, m_activeThumbnailsNode->getContentSize().height / 2.f - 5.f});
     m_activeThumbnailsNode->addChild(m_activeThumbnailsLabel);
+
+    // thumbnail energy yay yipee
+   m_energyNode = CCNode::create();
+   m_energyNode->setContentSize({140.f, 60.f});
+   m_energyNode->setAnchorPoint({0.5f, 0.5f});
+   m_energyNode->setPosition({
+    screenSize.width / 2.f,
+    screenSize.height - 80.f
+   });
+   this->addChild(m_energyNode);
+
+   auto energyBg = NineSlice::create("square02_001.png");
+   energyBg->setContentSize(m_energyNode->getContentSize());
+   energyBg->setOpacity(150);
+   energyBg->setPosition(m_energyNode->getContentSize() / 2.f);
+   m_energyNode->addChild(energyBg);
+
+   m_energyTitle = CCLabelBMFont::create(
+    "Thumbnail Energy",
+    "goldFont.fnt"
+   );
+   m_energyTitle->limitLabelWidth(
+    m_energyNode->getContentWidth(),
+    0.5f,
+    0.2f
+    );
+    m_energyTitle->setPosition({
+    m_energyNode->getContentSize().width / 2.f,
+    m_energyNode->getContentSize().height - 10.f
+    });
+    m_energyNode->addChild(m_energyTitle);
+
+    m_energyLabel = CCLabelBMFont::create(
+    "0",
+    "bigFont.fnt"
+    );
+    m_energyLabel->limitLabelWidth(
+    m_energyNode->getContentWidth(),
+    0.6f,
+    0.2f
+    );
+    m_energyLabel->setPosition({
+    m_energyNode->getContentSize().width / 2.f,
+    m_energyNode->getContentSize().height / 2.f - 5.f
+    });
+    m_energyNode->addChild(m_energyLabel);
 
     // Acceptance rate progress bar
     m_progressBar = ProgressBar::create(ProgressBarStyle::Solid);
@@ -383,6 +429,8 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         int acceptedUploadCount = data["accepted_upload_count"].asInt().unwrapOrDefault();
         int accountId = data["account_id"].asInt().unwrapOrDefault();
         int activeThumbnailCount = data["active_thumbnail_count"].asInt().unwrapOrDefault();
+        int energyLeft = data["energy_left"].asInt().unwrapOrDefault();
+        std::string energyRefillTime = data["energy_refill_time"].asString().unwrapOr("");
         int id = data["id"].asInt().unwrapOrDefault();
         int levelCount = data["level_count"].asInt().unwrapOrDefault();
         int pendingUploadCount = data["pending_upload_count"].asInt().unwrapOrDefault();
@@ -394,6 +442,8 @@ void ThumbnailDashboardLayer::fetchDashboard() {
         m_userStats.uploadCount = uploadCount;
         m_userStats.acceptedUploadCount = acceptedUploadCount;
         m_userStats.activeThumbnailCount = activeThumbnailCount;
+        m_userStats.energyLeft = energyLeft;
+        m_userStats.energyRefillTime = energyRefillTime;
         m_userStats.pendingUploadCount = pendingUploadCount;
         m_userStats.username = username;
 
@@ -444,6 +494,7 @@ void ThumbnailDashboardLayer::updateUI() {
 
         m_acceptanceStatsNode->setVisible(false);
         m_progressBar->setVisible(false);
+        m_energyNode->setVisible(false);
         m_activeThumbnailsNode->setPosition({screenSize.width / 2.f, screenSize.height - 80.f});
         m_uploadStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 150.f});
         m_acceptanceUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 150.f});
@@ -482,8 +533,10 @@ void ThumbnailDashboardLayer::updateUI() {
 
         m_acceptanceStatsNode->setVisible(true);
         m_progressBar->setVisible(true);
-        m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 100.f, screenSize.height - 80.f});
+        m_energyNode->setVisible(true);
+        m_activeThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 80.f});
         m_uploadStatsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 180.f});
+        m_energyNode->setPosition({screenSize.width / 2.f, screenSize.height - 80.f});
         m_acceptanceUploadsNode->setPosition({screenSize.width / 2.f, screenSize.height - 180.f});
         m_uniqueLevelsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 180.f});
         m_rejectedUploadsNode->setPosition({screenSize.width / 2.f - 150.f, screenSize.height - 250.f});
@@ -491,6 +544,7 @@ void ThumbnailDashboardLayer::updateUI() {
         m_replacedThumbnailsNode->setPosition({screenSize.width / 2.f + 150.f, screenSize.height - 250.f});
 
         m_acceptanceLabel->setTargetCount(rate);
+        m_energyLabel->setString(std::to_string(m_userStats.energyLeft).c_str());
         m_activeThumbnailsLabel->setTargetCount(m_userStats.activeThumbnailCount);
         m_uploadLabel->setTargetCount(uploadCount);
         m_progressBar->updateProgress(static_cast<float>(rate));
